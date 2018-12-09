@@ -5,34 +5,34 @@
 @using OneRosterSync.Net.Utils;
 
 @{
-    ViewData["Title"] = "DataSyncLines";
+    ViewData["Title"] = $"{ViewData["DistrictName"]} - All Records";
+    var allRouteData = Model.RouteValue.ToDictionary(rv => rv.Key, rv => rv.Value.ToString());
+
+    var districtId = Model.RouteValue["districtId"];
+    var filter = Model.RouteValue["filter"];
+    var table = Model.RouteValue["table"];
+    var loadStatus = Model.RouteValue["loadStatus"];
+    var syncStatus = Model.RouteValue["syncStatus"];
+
+    var loadStatusEnum = Html.GetEnumSelectList<OneRosterSync.Net.Models.LoadStatus>();
+    var syncStatusEnum = Html.GetEnumSelectList<OneRosterSync.Net.Models.SyncStatus>();
 }
 
-<h2>Data Updates</h2>
+<h2>@ViewData["DistrictName"]: All Records</h2>
 
 <div class="row">
-    <div class="col-lg-4">
-        Total Records: @Model.TotalRecordCount<br />
-        <nav aria-label="Products navigation example">
-            <vc:pager paging-list="@Model" />
-        </nav>
-    </div>
-    <div class="col-lg-4">
-        <form method="get" class="form-inline">
-            <input type="hidden" name="districtId" value="@Model.RouteValue["districtId"]" />
-            <button type="submit" class="btn btn-info">
-                <span class="glyphicon " aria-hidden="true"></span> Clear Filter
-            </button>
-        </form>
-    </div>
+    Total Records: @Model.TotalRecordCount
+    <nav aria-label="Products navigation example">
+        <vc:pager paging-list="@Model" />
+    </nav>
 </div>
 
 <div class="row">
     <form method="get" class="form-inline">
-        <input type="hidden" name="districtId" value="@Model.RouteValue["districtId"]" />
-        <input name="filter" class="form-control" placeholder="Source/Target Id" value="@Model.RouteValue["filter"]" />
+        <input type="hidden" name="districtId" value="@districtId" />
+        <input name="filter" class="form-control" placeholder="Source/Target Id" asp-for="@filter" />
 
-        <select name="table" class="form-control" placeholder="table">
+        <select class="form-control" asp-for="@table">
             <option value="">(Table)</option>
             <option value="CsvOrg">CsvOrg</option>
             <option value="CsvCourse">CsvCourse</option>
@@ -41,11 +41,11 @@
             <option value="CsvEnrollment">CsvEnrollment</option>
         </select>
 
-        <select name="loadStatus" class="form-control" placeholder="loadStatus" asp-items="Html.GetEnumSelectList<OneRosterSync.Net.Models.LoadStatus>()">
+        <select class="form-control" asp-for="@loadStatus" asp-items="loadStatusEnum">
             <option value="">(Load Status)</option>
         </select>
 
-        <select name="syncStatus" class="form-control" placeholder="syncStatus" asp-items="Html.GetEnumSelectList<OneRosterSync.Net.Models.SyncStatus>()">
+        <select class="form-control" asp-for="@syncStatus" asp-items="syncStatusEnum">
             <option value="">(Sync Status)</option>
         </select>
 
@@ -53,15 +53,16 @@
             <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Filter Records
         </button>
 
+        <a class="btn btn-primary" asp-action="DataSyncLines"
+           asp-all-route-data="@allRouteData" role="button">Clear Filters</a>
     </form>
 </div>
+
+<br />
 
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.District)
-            </th>
             <th>
                 @Html.DisplayNameFor(model => model.Table)
             </th>
@@ -101,9 +102,6 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.District.DistrictId)
-                </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Table)
                 </td>

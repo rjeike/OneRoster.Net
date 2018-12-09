@@ -133,9 +133,26 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToDistrict(district.DistrictId);
         }
 
+        /// <summary>
+        /// Display all matching records for the District (DataSyncLines)
+        /// </summary>
+        /// <param name="districtId"></param>
+        /// <param name="page"></param>
+        /// <param name="table">CSV Table to filter</param>
+        /// <param name="filter">Filter for Source and/or Target Id</param>
+        /// <param name="loadStatus"></param>
+        /// <param name="syncStatus"></param>
         [HttpGet]
-        public async Task<IActionResult> DataSyncLines(int districtId, int page = 1, string table = null, string filter = null, LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
+        public async Task<IActionResult> DataSyncLines(int districtId, 
+            int page = 1, string table = null, string filter = null, 
+            LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
         {
+            District district = await db.Districts.FindAsync(districtId);
+            if (district == null)
+                return NotFound($"District {districtId} not found");
+
+            ViewData["DistrictName"] = district.Name;
+
             var query = db.DataSyncLines
                 .Where(l => l.DistrictId == districtId);
 
