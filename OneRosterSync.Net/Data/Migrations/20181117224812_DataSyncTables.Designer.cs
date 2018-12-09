@@ -3,19 +3,21 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20181117224812_DataSyncTables")]
+    partial class DataSyncTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.4-rtm-31024")
+                .HasAnnotation("ProductVersion", "2.1.2-rtm-30932")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -190,7 +192,7 @@ namespace OneRosterSync.Net.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime?>("Completed");
+                    b.Property<DateTime>("Completed");
 
                     b.Property<DateTime>("Created");
 
@@ -233,11 +235,7 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<int>("DataSyncLineId");
 
-                    b.Property<int>("LoadStatus");
-
                     b.Property<DateTime>("Modified");
-
-                    b.Property<string>("Table");
 
                     b.Property<int>("Version");
 
@@ -263,8 +261,6 @@ namespace OneRosterSync.Net.Data.Migrations
                     b.Property<int>("DistrictId");
 
                     b.Property<string>("Error");
-
-                    b.Property<bool>("IncludeInSync");
 
                     b.Property<DateTime>("LastSeen");
 
@@ -297,22 +293,13 @@ namespace OneRosterSync.Net.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("BasePath");
-
                     b.Property<DateTime>("Created");
 
                     b.Property<TimeSpan?>("DailyProcessingTime");
 
-                    b.Property<string>("EmailsEachProcess");
-
-                    b.Property<string>("EmailsOnChanges");
-
-                    b.Property<bool>("IsApprovalRequired");
-
                     b.Property<DateTime>("Modified");
 
-                    b.Property<string>("Name")
-                        .IsRequired();
+                    b.Property<string>("Name");
 
                     b.Property<DateTime?>("NextProcessingTime");
 

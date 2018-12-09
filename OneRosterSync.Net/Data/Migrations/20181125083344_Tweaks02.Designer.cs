@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20181125083344_Tweaks02")]
+    partial class Tweaks02
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,15 +258,23 @@ namespace OneRosterSync.Net.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("BasePath");
+
                     b.Property<DateTime>("Created");
 
                     b.Property<string>("Data");
 
                     b.Property<int>("DistrictId");
 
+                    b.Property<string>("EmailsEachProcess");
+
+                    b.Property<string>("EmailsOnChanges");
+
                     b.Property<string>("Error");
 
                     b.Property<bool>("IncludeInSync");
+
+                    b.Property<bool>("IsApprovalRequired");
 
                     b.Property<DateTime>("LastSeen");
 
@@ -297,17 +307,9 @@ namespace OneRosterSync.Net.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("BasePath");
-
                     b.Property<DateTime>("Created");
 
                     b.Property<TimeSpan?>("DailyProcessingTime");
-
-                    b.Property<string>("EmailsEachProcess");
-
-                    b.Property<string>("EmailsOnChanges");
-
-                    b.Property<bool>("IsApprovalRequired");
 
                     b.Property<DateTime>("Modified");
 
