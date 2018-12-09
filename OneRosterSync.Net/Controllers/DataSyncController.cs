@@ -55,9 +55,21 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public IActionResult DistrictList()
+        public async Task<IActionResult> DistrictList()
         {
-            return View(db.Districts.ToList());
+            var model = await db.Districts.Select(d => new DistrictViewModel
+            {
+                DistrictId = d.DistrictId,
+                Name = d.Name,
+                NumRecords = db.DataSyncLines.Count(l => l.DistrictId == d.DistrictId),
+                TimeOfDay = d.DailyProcessingTime.ToString(),
+                ProcessingStatus = d.ProcessingStatus.ToString(),
+                Modified = d.Modified.ToLocalTime().ToString(),
+            })
+            .Take(100) // TODO add pagination
+            .ToListAsync();
+                
+            return View(model);
         }
 
         [HttpGet]
@@ -67,7 +79,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         private IActionResult RedirectToDistrict(int districtId) =>
-            RedirectToAction(nameof(DistrictEdit), new { districtId });
+            RedirectToAction(nameof(DistrictDashboard), new { districtId });
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DistrictCreate([Bind("Name")] District district)
@@ -81,7 +93,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public IActionResult DistrictEdit(int districtId)
+        public IActionResult DistrictDashboard(int districtId)
         {
             District district = db.Districts.Find(districtId);
             if (district == null)
