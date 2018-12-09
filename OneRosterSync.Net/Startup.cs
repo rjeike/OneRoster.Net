@@ -9,9 +9,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OneRosterSync.Net.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading;
+using OneRosterSync.Net.Data;
+using OneRosterSync.Net.Processing;
 
 namespace OneRosterSync.Net
 {
@@ -41,6 +43,14 @@ namespace OneRosterSync.Net
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddHostedService<RosterScheduler>();
+
+            const int NumTaskQueueProcessors = 1;
+            for (int i = 0; i < NumTaskQueueProcessors; i++)
+                services.AddHostedService<BackgroundTaskQueueProcessor>();
+
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
