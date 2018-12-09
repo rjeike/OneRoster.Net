@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Processing;
+using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net
 {
@@ -43,6 +44,12 @@ namespace OneRosterSync.Net
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddPaging(options => 
+            {
+                options.ViewName = "_Pager";
+                options.DefaultNumberOfPagesToShow = 5;
+            });
 
             services.AddHostedService<RosterScheduler>();
 
