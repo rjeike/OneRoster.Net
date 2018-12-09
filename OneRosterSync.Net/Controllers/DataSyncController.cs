@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Processing;
+using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -131,13 +134,32 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DataSyncLines(int districtId)
+        public async Task<IActionResult> DataSyncLines(int districtId, int page = 1, string table = null, string filter = null, LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
         {
-            var model = await db.DataSyncLines
-                .Where(l => l.DistrictId == districtId)
-                .OrderByDescending(l => l.LastSeen)
-                .Take(20)
-                .ToListAsync();
+            var query = db.DataSyncLines
+                .Where(l => l.DistrictId == districtId);
+
+            if (!string.IsNullOrEmpty(table))
+                query = query.Where(l => l.Table == table);
+
+            if (!string.IsNullOrEmpty(filter))
+                query = query.Where(l => l.SourceId.Contains(filter) || l.TargetId.Contains(filter));
+
+            if (loadStatus.HasValue)
+                query = query.Where(l => l.LoadStatus == loadStatus.Value);
+
+            if (syncStatus.HasValue)
+                query = query.Where(l => l.SyncStatus == syncStatus.Value);
+
+            var orderedQuery = query.OrderByDescending(l => l.LastSeen);
+
+            var model = await PagingList.CreateAsync(orderedQuery, 10, page);
+
+            model.Action = nameof(DataSyncLines);
+            model.RouteValue = new RouteValueDictionary
+            {
+                { "districtId", districtId }
+            };
 
             return View(model);
         }

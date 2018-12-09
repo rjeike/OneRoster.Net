@@ -1,11 +1,60 @@
-﻿@using OneRosterSync.Net.Utils;
-@model IEnumerable<OneRosterSync.Net.Models.DataSyncLine>
+﻿@model ReflectionIT.Mvc.Paging.PagingList<OneRosterSync.Net.Models.DataSyncLine>
+@using ReflectionIT.Mvc.Paging
+@addTagHelper *, ReflectionIT.Mvc.Paging
+
+@using OneRosterSync.Net.Utils;
 
 @{
     ViewData["Title"] = "DataSyncLines";
 }
 
 <h2>Data Updates</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        Total Records: @Model.TotalRecordCount<br />
+        <nav aria-label="Products navigation example">
+            <vc:pager paging-list="@Model" />
+        </nav>
+    </div>
+    <div class="col-lg-4">
+        <form method="get" class="form-inline">
+            <input type="hidden" name="districtId" value="@Model.RouteValue["districtId"]" />
+            <button type="submit" class="btn btn-info">
+                <span class="glyphicon " aria-hidden="true"></span> Clear Filter
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <form method="get" class="form-inline">
+        <input type="hidden" name="districtId" value="@Model.RouteValue["districtId"]" />
+        <input name="filter" class="form-control" placeholder="Source/Target Id" value="@Model.RouteValue["filter"]" />
+
+        <select name="table" class="form-control" placeholder="table">
+            <option value="">(Table)</option>
+            <option value="CsvOrg">CsvOrg</option>
+            <option value="CsvCourse">CsvCourse</option>
+            <option value="CsvClass">CsvClass</option>
+            <option value="CsvUser">CsvUser</option>
+            <option value="CsvEnrollment">CsvEnrollment</option>
+        </select>
+
+        <select name="loadStatus" class="form-control" placeholder="loadStatus" asp-items="Html.GetEnumSelectList<OneRosterSync.Net.Models.LoadStatus>()">
+            <option value="">(Load Status)</option>
+        </select>
+
+        <select name="syncStatus" class="form-control" placeholder="syncStatus" asp-items="Html.GetEnumSelectList<OneRosterSync.Net.Models.SyncStatus>()">
+            <option value="">(Sync Status)</option>
+        </select>
+
+        <button type="submit" class="btn btn-info">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Filter Records
+        </button>
+
+    </form>
+</div>
 
 <table class="table">
     <thead>
