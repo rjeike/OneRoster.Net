@@ -1,0 +1,83 @@
+﻿@model OneRosterSync.Net.Models.District
+@{
+    ViewData["Title"] = "Edit District";
+}
+
+<h2>School District: <b>@Model.Name</b></h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>Edit District Details</h4>
+        <hr />
+        <div class="row">
+            <div class="col-md-8">
+                <form asp-action="DistrictEdit">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="DistrictId" />
+                    <div class="form-group">
+                        <label asp-for="Name" class="control-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DailyProcessingTime" class="control-label"></label>
+                        <input asp-for="DailyProcessingTime" class="form-control" />
+                        <span asp-validation-for="DailyProcessingTime" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Save" class="btn btn-default" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+
+        <h4>Manage Automation</h4>
+        <hr />
+
+        <div class="col-md-8">
+            <form asp-action="DistrictProcess">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="DistrictId" />
+                <div class="form-group">
+                    <label asp-for="NextProcessingTime" class="control-label"></label>:
+                    @(Model.NextProcessingTime.HasValue ? Model.NextProcessingTime.ToString() : "(none)")
+                </div>
+                <div class="form-group">
+                    <label asp-for="ProcessingStatus" class="control-label"></label>:
+                    @Model.ProcessingStatus
+                </div>
+                <div class="form-group">
+                    <label asp-for="Modified" class="control-label"></label>:
+                    @Model.Modified
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="Start Processing" class="btn btn-default" />
+                </div>
+            </form>
+            <br />
+            <a asp-action="DataSyncLines" asp-route-districtId="@Model.DistrictId" target="_blank">Data Sync Records</a>
+            <br />
+            <a asp-action="SelectCourses" asp-route-districtId="@Model.DistrictId" target="_blank">Select Courses</a>
+            <br />
+            <form asp-action="Apply">
+                <input type="hidden" asp-for="DistrictId" />
+                <div class="form-group">
+                    <input type="submit" value="Apply Changes to LMS" class="btn btn-default" />
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<div class="row">
+    <h4>Processing History</h4>
+    <hr />
+
+    <div class="col-md-9">
+        @await Component.InvokeAsync("WhatsNew", new { district = Model })
+    </div>
+</div>

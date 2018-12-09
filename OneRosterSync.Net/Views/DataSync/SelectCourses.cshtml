@@ -1,0 +1,44 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLine>
+
+@{
+    ViewData["Title"] = "Select Courses";
+    int districtId = 1;
+
+    string CourseDescription(DataSyncLine line)
+    {
+        var cvsCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(line.RawData);
+        return $"{line.SourceId} - {cvsCourse.title}";
+    }
+
+    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourceId, selected: l.IncludeInSync));
+}
+
+<h2>Select Courses</h2>
+
+<h4>DataSyncLine</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="SelectCourses">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @Html.Hidden("districtId", districtId)
+
+            <select name="SelectedCourses" asp-items="list" multiple size="20"></select>
+
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <h4>Currently selected courses</h4>
+        <ul>
+            @foreach (var course in Model.Where(l => l.IncludeInSync))
+            {
+                <li>@CourseDescription(course)</li>
+            }
+        </ul>
+    </div>
+</div>
+
+

@@ -1,0 +1,94 @@
+﻿@using OneRosterSync.Net.Utils;
+@model IEnumerable<OneRosterSync.Net.Models.DataSyncLine>
+
+@{
+    ViewData["Title"] = "DataSyncLines";
+}
+
+<h2>Data Updates</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.District)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Table)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SourceId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TargetId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.RawData)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LoadStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SyncStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Error)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LastSeen)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Version)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Created)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Modified)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.District.DistrictId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Table)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SourceId)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TargetId)
+                </td>
+                <td>
+                    <pre>@Utilities.FormatJson(item.RawData)</pre>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LoadStatus)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SyncStatus)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Error)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LastSeen)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Version)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Created)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Modified)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

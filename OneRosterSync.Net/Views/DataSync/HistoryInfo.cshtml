@@ -1,0 +1,78 @@
+﻿@model OneRosterSync.Net.Models.DataSyncHistory
+
+@{
+    ViewData["Title"] = "History";
+}
+
+<h2>History</h2>
+
+<div>
+    <h4>DataSyncHistory</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.District)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.District.Name)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Started)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Started)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Completed)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Completed)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NumRows)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NumRows)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NumAdded)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NumAdded)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NumModified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NumModified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NumDeleted)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NumDeleted)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Version)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Version)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Created)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Created)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Modified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Modified)
+        </dd>
+    </dl>
+</div>
+
+<div>
+
+</div>
