@@ -14,6 +14,7 @@
     <PackageReference Include="Csvhelper" Version="9.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.3" PrivateAssets="All" />
+    <PackageReference Include="ReflectionIT.Mvc.Paging" Version="3.3.0" />
   </ItemGroup>
 
 </Project>
