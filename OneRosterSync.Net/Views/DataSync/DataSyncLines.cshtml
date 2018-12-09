@@ -5,7 +5,7 @@
 @using OneRosterSync.Net.Utils;
 
 @{
-    ViewData["Title"] = $"{ViewData["DistrictName"]} - All Records";
+    ViewData["Title"] = $"{ViewData["DistrictName"]} - Records";
     var allRouteData = Model.RouteValue.ToDictionary(rv => rv.Key, rv => rv.Value.ToString());
 
     var districtId = Model.RouteValue["districtId"];
@@ -18,14 +18,7 @@
     var syncStatusEnum = Html.GetEnumSelectList<OneRosterSync.Net.Models.SyncStatus>();
 }
 
-<h2>@ViewData["DistrictName"]: All Records</h2>
-
-<div class="row">
-    Total Records: @Model.TotalRecordCount
-    <nav aria-label="Products navigation example">
-        <vc:pager paging-list="@Model" />
-    </nav>
-</div>
+<h2>@ViewData["DistrictName"]: Records</h2>
 
 <div class="row">
     <form method="get" class="form-inline">
@@ -59,6 +52,20 @@
 </div>
 
 <br />
+
+<div class="row">
+    <div class="col-md-4">
+        <a asp-action="DistrictDashboard" asp-all-route-data="@allRouteData"><< Back to District Dashboard</a>
+        <br />
+        <br />
+        Matching Records: @Model.TotalRecordCount.ToString("N0")
+    </div>
+    <div class="pull-right">
+        <nav aria-label="Products navigation example">
+            <vc:pager paging-list="@Model" />
+        </nav>
+    </div>
+</div>
 
 <table class="table">
     <thead>
