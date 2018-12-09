@@ -22,3 +22,13 @@ The benefits include:
 +---------------+      +---------------+       +---------------+ 
 ```
 
+# Processing Stages
+1. Scheduled - a District is manually scheduled for processing via the UI
+1. Queued - the background processor picked it up and queued it for processing
+1. LoadProcessing - loading the CSV into SQL tables
+1. Analyzing - data has been loaded, now looing for deleted records
+1. PendingApproval - waiting for a human to approve the changes before applying them to the target LMS
+1. Approved - human has approved, ready to be applied
+1. Applying - processing the changes, calling the LMS web services
+1. Finished
+
