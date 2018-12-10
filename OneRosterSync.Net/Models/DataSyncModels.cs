@@ -72,13 +72,13 @@ namespace OneRosterSync.Net.Models
     public enum ProcessingStatus
     {
         None = 0,
-        ManuallyScheduled = 1,
-        QueuedForProcessing = 2,
-        LoadProcessing = 3,
-        AnalyzingProcessing = 4,
+        Scheduled = 1,
+        //Queued = 2,
+        Loading = 3,
+        Analyzing = 4,
         PendingApproval = 5,
-        ApprovedReadyToApply = 6,
-        ApplyProcessing = 7,
+        Approved = 6,
+        Applying = 7,
         Finished =100,
     }
 
