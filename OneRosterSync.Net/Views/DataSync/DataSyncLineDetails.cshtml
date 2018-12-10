@@ -1,0 +1,66 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistoryDetail>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.DataSyncHistoryDetailId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataSyncHistoryId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataSyncLineId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataOrig)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataNew)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LoadStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Table)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Created)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.DataSyncHistoryDetailId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DataSyncHistoryId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DataSyncLineId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DataOrig)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DataNew)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LoadStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Table)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Created)
+            </td>
+            <td>
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

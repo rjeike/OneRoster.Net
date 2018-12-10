@@ -138,7 +138,7 @@ namespace OneRosterSync.Net.Controllers
         {
             District d = db.Districts.Find(district.DistrictId);
             //d.NextProcessingTime = DateTime.UtcNow.AddSeconds(1);
-            d.ProcessingStatus = ProcessingStatus.ManuallyScheduled;
+            d.ProcessingStatus = ProcessingStatus.Scheduled;
             d.Touch();
             await db.SaveChangesAsync();
 
@@ -205,6 +205,12 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> HistoryDetailsList(int dataSyncHistoryId)
         {
+            DataSyncHistory history = await db.DataSyncHistories
+                .Include(h => h.District)
+                .SingleOrDefaultAsync(h => h.DataSyncHistoryId == dataSyncHistoryId);
+
+            ViewData["DistrictName"] = history.District.Name;
+
             var model = await db.DataSyncHistoryDetails
                 .Where(d => d.DataSyncHistoryId == dataSyncHistoryId) 
                 .OrderByDescending(d => d.Modified)
@@ -249,6 +255,7 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int districtId)
         {
+            /*
             var query = db.DataSyncLines
                 .Where(l => l.DistrictId == districtId && l.SyncStatus == SyncStatus.ReadyToApply);
 
@@ -268,11 +275,21 @@ namespace OneRosterSync.Net.Controllers
                     i = 0;
                 }
             }
+            */
+
+            District district = db.Districts.Find(districtId);
+            district.ProcessingStatus = ProcessingStatus.Approved;
+            district.Touch();
             await db.SaveChangesAsync();
 
             return RedirectToDistrict(districtId);
         }
 
-
+        public async Task<JsonResult> Test()
+        {
+            ApiManager apiManager = new ApiManager();
+            string result = await apiManager.Update(new { foo = "bar" });
+            return Json(result);
+        }
     }
 }

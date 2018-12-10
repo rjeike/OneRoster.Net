@@ -43,7 +43,8 @@ namespace OneRosterSync.Net.Processing
                         DateTime now = DateTime.UtcNow;
                         var districts = await db.Districts
                             .Where(d => d.NextProcessingTime.HasValue && d.NextProcessingTime <= now 
-                                || d.ProcessingStatus == Models.ProcessingStatus.ManuallyScheduled)
+                                || d.ProcessingStatus == Models.ProcessingStatus.Scheduled
+                                || d.ProcessingStatus == Models.ProcessingStatus.Approved)
                             .ToListAsync();
 
                         // walk the districts ready to be processed
@@ -69,7 +70,7 @@ namespace OneRosterSync.Net.Processing
                                     next = next.Value.AddDays(1);
                             }
                             district.NextProcessingTime = next;
-                            district.ProcessingStatus = Models.ProcessingStatus.QueuedForProcessing;
+                            //district.ProcessingStatus = Models.ProcessingStatus.Queued;
                             district.Touch();
                             await db.SaveChangesAsync();
                         }

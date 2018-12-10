@@ -1,54 +1,54 @@
 ﻿@using OneRosterSync.Net.Utils;
 @model IEnumerable<OneRosterSync.Net.Models.DataSyncHistoryDetail>
-    @{
-        ViewData["Title"] = "HistoryDetailsList";
-    }
+@{
+    ViewData["Title"] = "HistoryDetailsList";
+}
 
-    <h2>HistoryDetailsList</h2>
+<h2>@ViewData["DistrictName"]: Data Sync Changes</h2>
 
-    <table class="table">
-        <thead>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Table)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataOrig)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DataNew)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LoadStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Created)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
             <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.Table)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.DataOrig)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.DataNew)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.LoadStatus)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.Created)
-                </th>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Table)
+                </td>
+                <td>
+                    @if (item.DataOrig != null)
+                    {
+                        <pre>@Utilities.FormatJson(item.DataOrig)</pre>
+                    }
+                </td>
+                <td>
+                    <pre>@Utilities.FormatJson(item.DataNew)</pre>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LoadStatus)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Created)
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Table)
-                    </td>
-                    <td>
-                        @if (item.DataOrig != null)
-                        {
-                            <pre>@Utilities.FormatJson(item.DataOrig)</pre>
-                        }
-                    </td>
-                    <td>
-                        <pre>@Utilities.FormatJson(item.DataNew)</pre>
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.LoadStatus)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Created)
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        }
+    </tbody>
+</table>
