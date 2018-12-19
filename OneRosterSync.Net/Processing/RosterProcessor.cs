@@ -71,7 +71,7 @@ namespace OneRosterSync.Net.Processing
                 await db.SaveChangesAsync();
 
                 DateTime start = DateTime.UtcNow;
-                string basePath = @"C:\dev\SummitK12\CSVSample\";
+                string basePath = @"CSVSample\";
 
                 var processor = new CsvFileProcessor
                 {
