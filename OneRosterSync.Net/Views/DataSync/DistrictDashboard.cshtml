@@ -37,39 +37,48 @@
         <hr />
 
         <div class="col-md-8">
-            <form asp-action="DistrictProcess">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input type="hidden" asp-for="DistrictId" />
-                <div class="form-group">
-                    <label asp-for="NextProcessingTime" class="control-label"></label>:
-                    @(Model.NextProcessingTime.HasValue ? Model.NextProcessingTime.ToString() : "(none)")
-                </div>
-                <div class="form-group">
-                    <label asp-for="ProcessingStatus" class="control-label"></label>:
-                    @Model.ProcessingStatus
-                </div>
-                <div class="form-group">
-                    <label asp-for="Modified" class="control-label"></label>:
-                    @Model.Modified
-                </div>
+            <div class="row">
+                <div class=" col-lg-12">
+                    <form asp-action="DistrictProcess">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="DistrictId" />
+                        <div class="form-group">
+                            <label asp-for="NextProcessingTime" class="control-label"></label>:
+                            @(Model.NextProcessingTime.HasValue ? Model.NextProcessingTime.ToString() : "(none)")
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ProcessingStatus" class="control-label"></label>:
+                            @Model.ProcessingStatus
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Modified" class="control-label"></label>:
+                            @Model.Modified
+                        </div>
 
-                <div class="form-group">
-                    <input type="submit" value="Start Processing" class="btn btn-default" />
+                        <div class="form-group">
+                            <input type="submit" value="Start Processing" class="btn btn-default" />
+                        </div>
+                    </form>
                 </div>
-            </form>
-            <br />
-            <a asp-action="DataSyncLines" asp-route-districtId="@Model.DistrictId" >Data Sync Records</a>
-            <br />
-            <a asp-action="SelectCourses" asp-route-districtId="@Model.DistrictId" >Select Courses</a>
-            <br />
-            <form asp-action="Apply">
-                <input type="hidden" asp-for="DistrictId" />
-                <div class="form-group">
-                    <input type="submit" value="Apply Changes to LMS" class="btn btn-default" />
+            </div>
+            <div class="row">
+                <div class=" col-lg-12">
+                    <a asp-action="DataSyncLines" asp-route-districtId="@Model.DistrictId" class="btn btn-primary active" role="button" aria-pressed="true">Data Sync Records</a>
+                    <a asp-action="SelectCourses" asp-route-districtId="@Model.DistrictId" class="btn btn-primary active" role="button" aria-pressed="true">Select Courses</a>
                 </div>
-            </form>
+            </div>
+            <br />
+            <div class="row">
+                <div class=" col-lg-12">
+                    <form asp-action="Apply">
+                        <input type="hidden" asp-for="DistrictId" />
+                        <div class="form-group">
+                            <input type="submit" value="Apply Changes to LMS" class="btn btn-default" />
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-
     </div>
 </div>
 
