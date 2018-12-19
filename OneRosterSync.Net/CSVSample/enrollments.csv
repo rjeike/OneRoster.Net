@@ -1,0 +1,4 @@
+sourcedId,status,dateLastModified,classSourcedId,schoolSourcedId,userSourcedId,role,,,
+123456789_student,active,2012-04-23T18:25:43.511Z,3221301,Sch_S00002,14043,student,,,
+234658901_student,active,2012-04-23T18:25:43.511Z,3221314,Sch_S00002,14058,student,,,
+234658902_student,active,2012-04-23T18:25:43.511Z,3221314,Sch_S00002,15474,student,,,
