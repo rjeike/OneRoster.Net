@@ -15,6 +15,16 @@ namespace OneRosterSync.Net.Data
         {
         }
 
+        /// <summary>
+        /// Save a diagram of the current database schema
+        /// Creates a file called "OneRoster.dgml"
+        /// </summary>
+        /// <param name="directoryPath">base directory to save file</param>
+        public void SaveDgmlFile(string directoryPath)
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(directoryPath, "OneRoster.dgml"), this.AsDgml(), System.Text.Encoding.UTF8);
+        }
+
         public new int SaveChanges()
         {
             try
