@@ -1,0 +1,30 @@
+﻿Updated: 12/24/18
+by Randall Eike
+
+High
+====
+* Create Fake APIs
+* Figure out authentication and authorization for API access
+* Add to district
+    - Base Path for Zip
+    - Approval Required?
+    - Email lists for each time and errors
+* Put list of Classes on Dashboard
+* Create more sample files
+* Add warning / success message system to Controller and Views
+
+Medium
+======
+* Clean up UI
+* UnZip file and move to processing folder
+* Figure out tho exclude empty strings fields in CSV load
+* Add File Logging. log4net?  Other library?
+* Make sure we can support empty fields in CSV (Json parsing)
+* Put exception handling around file processing
+* Delete District, and sub items (to clean up testing DB)
+* Integration Testing
+https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-2.2
+
+Low
+====
+
