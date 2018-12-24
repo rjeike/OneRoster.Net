@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Processing;
+using OneRosterSync.Net.Utils;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
@@ -76,6 +77,53 @@ namespace OneRosterSync.Net.Controllers
         public IActionResult DistrictCreate()
         {
             return View();
+        }
+
+        /// <summary>
+        /// Delete a District and all associated records
+        /// Should NOT BE AVAILABLE to regular users
+        /// </summary>
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DistrictDelete(int districtId)
+        {
+            var district = db.Districts.Find(districtId);
+
+            // retrieve entire list of histories
+            var histories = await db.DataSyncHistories
+                .Where(h => h.DistrictId == districtId)
+                .ToListAsync();
+
+            // delete the histories in chunks
+            await histories
+                .AsQueryable()
+                .ForEachInChunksAsync(
+                    chunkSize: 50,
+                    action: history =>
+                    {
+                        // for each history, delete the details associated with it as well
+                        var details = db.DataSyncHistoryDetails
+                            .Where(d => d.DataSyncHistoryId == history.DataSyncHistoryId)
+                            .ToList();
+                        db.DataSyncHistoryDetails.RemoveRange(details);
+                    }, 
+                    // commit changes after each chunk
+                    onChunkComplete: async () => await db.SaveChangesAsync());
+
+            db.DataSyncHistories.RemoveRange(histories);
+            await db.SaveChangesAsync();
+
+            // now delete the lines
+            var lines = await db.DataSyncLines
+                .Where(l => l.DistrictId == districtId)
+                .ToListAsync();
+            db.DataSyncLines.RemoveRange(lines);
+            await db.SaveChangesAsync();
+
+            // finally, delete the district itself!
+            db.Districts.Remove(district);
+            await db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(DistrictList));
         }
 
         private IActionResult RedirectToDistrict(int districtId) =>
@@ -253,7 +301,7 @@ namespace OneRosterSync.Net.Controllers
 
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Apply(int districtId)
+        public async Task<IActionResult> ApproveChanges(int districtId)
         {
             /*
             var query = db.DataSyncLines
