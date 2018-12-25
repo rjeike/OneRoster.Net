@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Processing;
-using OneRosterSync.Net.Utils;
+using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers

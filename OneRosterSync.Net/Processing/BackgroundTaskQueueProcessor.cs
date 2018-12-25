@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OneRosterSync.Net.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace OneRosterSync.Net.Processing
 
         protected async override Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("BackgroundTaskQueueProcessor is starting.");
+            Logger.Here().LogInformation("BackgroundTaskQueueProcessor is starting.");
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -35,11 +36,11 @@ namespace OneRosterSync.Net.Processing
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, $"Error occurred executing {nameof(workItem)}.");
+                    Logger.Here().LogError(ex, $"Error occurred executing {nameof(workItem)}.");
                 }
             }
 
-            Logger.LogInformation("BackgroundTaskQueueProcessor is stopping.");
+            Logger.Here().LogInformation("BackgroundTaskQueueProcessor is stopping.");
         }
     }
 }

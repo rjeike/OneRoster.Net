@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
+using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
@@ -51,7 +52,7 @@ namespace OneRosterSync.Net.Processing
                 if (i > 0)
                     await Db.SaveChangesAsync();
 
-                Logger.LogInformation($"Processed Csv file {filePath}");
+                Logger.Here().LogInformation($"Processed Csv file {filePath}");
             }
         }
 

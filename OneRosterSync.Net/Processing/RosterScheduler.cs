@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Data;
+using OneRosterSync.Net.Extensions;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -30,7 +31,7 @@ namespace OneRosterSync.Net.Processing
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Starting RosterScheduler");
+            Logger.Here().LogInformation("Starting RosterScheduler");
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -52,10 +53,10 @@ namespace OneRosterSync.Net.Processing
                         {
                             TaskQueue.QueueBackgroundWorkItem(async token =>
                             {
-                                Logger.LogInformation($"Begin processing District {district.DistrictId}.");
+                                Logger.Here().LogInformation($"Begin processing District {district.DistrictId}.");
                                 var rosterProcessor = new RosterProcessor(Services, Logger);
                                 await rosterProcessor.ProcessDistrict(district.DistrictId, cancellationToken);
-                                Logger.LogInformation($"Done processing District {district.DistrictId}.");
+                                Logger.Here().LogInformation($"Done processing District {district.DistrictId}.");
                             });
 
                             // update the next processing to be the time of day called for either today or tomorrow if already passed
@@ -78,7 +79,7 @@ namespace OneRosterSync.Net.Processing
                 }
             }
 
-            Logger.LogInformation("Stopping RosterScheduler");
+            Logger.Here().LogInformation("Stopping RosterScheduler");
         }
     }
 }

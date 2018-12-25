@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
+using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
@@ -47,7 +48,7 @@ namespace OneRosterSync.Net.Processing
                             break;
 
                         default:
-                            Logger.LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
+                            Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
                             break;
                     }
                 }
@@ -149,7 +150,7 @@ namespace OneRosterSync.Net.Processing
 
                         case LoadStatus.None:
                         case LoadStatus.NoChange:
-                            Logger.LogWarning($"NoChange / None should not be flagged for Sync: {_class.RawData}");
+                            Logger.Here().LogWarning($"NoChange / None should not be flagged for Sync: {_class.RawData}");
                             break;
                     }
                 }
@@ -165,7 +166,7 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex.Message);
+                Logger.Here().LogError(ex.Message);
                 throw;
             }
             finally

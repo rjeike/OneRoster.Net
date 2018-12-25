@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Models;
+using OneRosterSync.Net.Extensions;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -32,8 +33,8 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, Route("update")]
         public JsonResult Update([FromBody] string data)
         {
-            Logger.LogInformation($"Recieved data from Mock API {data}");
-            return new JsonResult(new { myvar = "booyah" });
+            Logger.Here().LogInformation($"Recieved data from Mock API {data}");
+            return new JsonResult(new { myvar = data });
         }
     }
 }
