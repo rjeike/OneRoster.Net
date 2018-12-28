@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
@@ -88,8 +86,8 @@ namespace OneRosterSync.Net.Processing
                 await processor.ProcessFile<CsvCourse>(@"courses.csv");
                 await processor.ProcessFile<CsvAcademicSession>(@"academicSessions.csv");
                 await processor.ProcessFile<CsvClass>(@"classes.csv");
-                await processor.ProcessFile<CsvEnrollment>(@"enrollments.csv");
                 await processor.ProcessFile<CsvUser>(@"users.csv");
+                await processor.ProcessFile<CsvEnrollment>(@"enrollments.csv");
 
                 await MarkDeleted(db, district.DistrictId, start);
 
@@ -121,48 +119,60 @@ namespace OneRosterSync.Net.Processing
                     .Where(l => l.DistrictId == district.DistrictId)
                     .Where(l => l.IncludeInSync && l.SyncStatus == SyncStatus.ReadyToApply);
 
-                /* 
-                 * Web Services:
-                 * create class
-                 * create user
-                 * modify user
-                 * deactivate user
-                 * enroll user to class
-                 * unenroll user from class
-                 */
+                var api = new ApiManager(Logger);
 
-                var api = new ApiManager();
-
-                foreach (DataSyncLine _class in await lines.Where(l => l.Table == "CsvClass").ToListAsync())
+                string[] entities = new string[]
                 {
-                    switch (_class.LoadStatus)
+                    "Org",
+                    "Course",
+                    "AcademicSession",
+                    "Class",
+                    "User",
+                    "Enrollment",
+                };
+
+                foreach (string entity in entities)
+                {
+                    string csvEntity = $"Csv{entity}";
+                    foreach (DataSyncLine line in await lines.Where(l => l.Table == csvEntity).ToListAsync())
                     {
-                        case LoadStatus.Added:
-                            await api.Update(_class);
+                        switch (line.LoadStatus)
+                        {
+                            case LoadStatus.Added:
+                            case LoadStatus.Modified:
+                            case LoadStatus.Deleted:
+                                ApiPostBase data = ApiPostBase.CreateApiPost(entity, line.RawData);
 
-                            // TODO update SyncStatus
-                            break;
+                                data.DistrictId = district.DistrictId.ToString();
+                                data.DistrictName = district.Name;
+                                data.LastSeen = line.LastSeen;
+                                data.SourceId = line.SourceId;
+                                data.TargetId = line.TargetId;
+                                data.Status = line.LoadStatus.ToString();
 
-                        case LoadStatus.Modified:
-                        case LoadStatus.Deleted:
-                            // ignore modified and deleted
-                            break;
+                                ApiResponse response = await api.Post(data.EntityType.ToLower(), data);
+                                if (response.Success)
+                                {
+                                    line.SyncStatus = SyncStatus.Applied;
+                                    if (!string.IsNullOrEmpty(response.TargetId))
+                                        line.TargetId = response.TargetId;
+                                    line.Error = null;
+                                }
+                                else
+                                {
+                                    line.SyncStatus = SyncStatus.ApplyFailed;
+                                    line.Error = response.ErrorMessage;
+                                }
+                                await db.SaveChangesAsync();
+                                break;
 
-                        case LoadStatus.None:
-                        case LoadStatus.NoChange:
-                            Logger.Here().LogWarning($"NoChange / None should not be flagged for Sync: {_class.RawData}");
-                            break;
+                            case LoadStatus.None:
+                            case LoadStatus.NoChange:
+                                Logger.Here().LogWarning($"NoChange / None should not be flagged for Sync: {line.RawData}");
+                                break;
+                        }
                     }
                 }
-
-                foreach (DataSyncLine user in await lines.Where(l => l.Table == "CsvUser").ToListAsync())
-                {
-                }
-
-                foreach (DataSyncLine enrollment in await lines.Where(l => l.Table == "CsvEnrollment").ToListAsync())
-                {
-                }
-
             }
             catch (Exception ex)
             {
@@ -171,8 +181,6 @@ namespace OneRosterSync.Net.Processing
             }
             finally
             {
-                await Task.Delay(5000);
-
                 district.ProcessingStatus = ProcessingStatus.Finished;
                 district.Touch();
                 await db.SaveChangesAsync();
@@ -180,10 +188,12 @@ namespace OneRosterSync.Net.Processing
 
         }
 
-        private async Task MarkDeleted(ApplicationDbContext db, int districtId, DateTime start)
+        /// <summary>
+        /// Identifies records that were missing from the feed and marks them as Deleted
+        /// </summary>
+        private static async Task MarkDeleted(ApplicationDbContext db, int districtId, DateTime start)
         {
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
-
             int i = 0;
             foreach (var line in await lines.Where(l => l.LastSeen < start).ToListAsync())
             {
@@ -194,9 +204,7 @@ namespace OneRosterSync.Net.Processing
                     i = 0;
                 }
             }
-
-            if (i > 0)
-                await db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
 
 
@@ -210,19 +218,14 @@ namespace OneRosterSync.Net.Processing
         {
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
 
-            var orgs = await lines
-                .Where(l => l.Table == "CsvOrg")
-                .ToListAsync();
-            foreach (var org in orgs)
+            foreach (var org in await lines.Where(l => l.Table == nameof(CsvOrg)).ToListAsync())
             {
                 org.SyncStatus = SyncStatus.ReadyToApply;
                 org.Touch();
             }
             await db.SaveChangesAsync();
 
-            var courses = await lines
-                .Where(l => l.Table == "CsvCourse" && l.IncludeInSync)
-                .ToListAsync();
+            var courses = await lines.Where(l => l.Table == nameof(CsvCourse) && l.IncludeInSync).ToListAsync();
             foreach (var course in courses.Where(c =>  c.LoadStatus != LoadStatus.NoChange))
             {
                 course.SyncStatus = SyncStatus.ReadyToApply;
@@ -230,9 +233,7 @@ namespace OneRosterSync.Net.Processing
             }
             await db.SaveChangesAsync();
 
-            var classes = await lines
-                .Where(l => l.Table == "CsvClass")
-                .ToListAsync();
+            var classes = await lines.Where(l => l.Table == nameof(CsvClass)).ToListAsync();
 
             foreach (var _class in classes.Where(c => c.LoadStatus != LoadStatus.NoChange || !c.IncludeInSync))
             {
@@ -246,21 +247,13 @@ namespace OneRosterSync.Net.Processing
             }
             await db.SaveChangesAsync();
 
-            // set of ides that 
-            HashSet<string> classIds = classes
-                .Where(c => c.IncludeInSync)
-                .Select(c => c.SourceId)
-                .ToHashSet();
+            // set of class ids that are to be included
+            HashSet<string> classIds = classes.Where(c => c.IncludeInSync).Select(c => c.SourceId).ToHashSet();
 
             int i = 0;
-            var enrollments = await lines
-                .Where(l => l.Table == "CsvEnrollment")
-                .ToListAsync();
+            var enrollments = await lines.Where(l => l.Table == nameof(CsvEnrollment)).ToListAsync();
 
-            List<DataSyncLine> users = await lines
-                .Where(l => l.Table == nameof(CsvUser))
-                //.Where(u => u.LoadStatus != LoadStatus.NoChange)
-                .ToListAsync();
+            List<DataSyncLine> users = await lines.Where(l => l.Table == nameof(CsvUser)).ToListAsync();
 
             var userMap = users.ToDictionary(k => k.SourceId, v => v);
 
