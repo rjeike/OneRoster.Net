@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Data;
+using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Processing;
-using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
@@ -40,13 +40,16 @@ namespace OneRosterSync.Net.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly IBackgroundTaskQueue TaskQueue;
+        private readonly ILogger Logger;
 
         public DataSyncController(
             IBackgroundTaskQueue taskQueue,
-            ApplicationDbContext db)
+            ApplicationDbContext db,
+            ILogger<DataSyncController> logger)
         {
             TaskQueue = taskQueue;
             this.db = db;
+            Logger = logger;
         }
 
         [HttpGet]
@@ -67,7 +70,6 @@ namespace OneRosterSync.Net.Controllers
                 ProcessingStatus = d.ProcessingStatus.ToString(),
                 Modified = d.Modified.ToLocalTime().ToString(),
             })
-            .Take(100) // TODO add pagination
             .ToListAsync();
                 
             return View(model);
@@ -303,41 +305,12 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveChanges(int districtId)
         {
-            /*
-            var query = db.DataSyncLines
-                .Where(l => l.DistrictId == districtId && l.SyncStatus == SyncStatus.ReadyToApply);
-
-            int i = 0;
-            foreach (var line in query)
-            {
-                // TODO call API and handle result
-                if (string.IsNullOrEmpty(line.TargetId))
-                    line.TargetId = Guid.NewGuid().ToString();
-
-                line.SyncStatus = SyncStatus.Applied;
-                line.Touch();
-
-                if (++i > 50)
-                {
-                    await db.SaveChangesAsync();
-                    i = 0;
-                }
-            }
-            */
-
             District district = db.Districts.Find(districtId);
             district.ProcessingStatus = ProcessingStatus.Approved;
             district.Touch();
             await db.SaveChangesAsync();
 
             return RedirectToDistrict(districtId);
-        }
-
-        public async Task<JsonResult> Test()
-        {
-            ApiManager apiManager = new ApiManager();
-            string result = await apiManager.Update(new { foo = "bar" });
-            return Json(result);
         }
     }
 }
