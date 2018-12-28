@@ -5,6 +5,11 @@
     <UserSecretsId>aspnet-OneRosterSync.Net-94D3C070-C255-4FF0-8CE5-36666CD4B8EE</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>C:\dev\SummitK12\OneRosterSync.Net\OneRosterSync.Net\OneRosterSync.Net.xml</DocumentationFile>
+    <NoWarn>1701;1702;1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Data\Migrations\20181117224240_DataSyncTables.cs" />
     <Compile Remove="Data\Migrations\20181117224240_DataSyncTables.Designer.cs" />
@@ -21,6 +26,7 @@
     <PackageReference Include="Serilog.Filters.Expressions" Version="2.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="4.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>

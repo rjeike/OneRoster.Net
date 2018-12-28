@@ -15,6 +15,9 @@ using System.Threading;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Processing;
 using ReflectionIT.Mvc.Paging;
+using Swashbuckle.AspNetCore.Swagger;
+using System.Reflection;
+using System.IO;
 
 namespace OneRosterSync.Net
 {
@@ -58,6 +61,17 @@ namespace OneRosterSync.Net
                 services.AddHostedService<BackgroundTaskQueueProcessor>();
 
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+
+            // Register the Swagger generator, defining 1 or more Swagger documents
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "Mock LMS OneRoster.Net APIs", Version = "v1" });
+
+                // Set the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,6 +93,16 @@ namespace OneRosterSync.Net
             app.UseCookiePolicy();
 
             app.UseAuthentication();
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Mock APIs v1");
+            });
 
             app.UseMvc(routes =>
             {
