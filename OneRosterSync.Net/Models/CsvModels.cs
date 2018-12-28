@@ -5,11 +5,22 @@ namespace OneRosterSync.Net.Models
 #pragma warning disable IDE1006 // Naming Styles
     public class CsvBaseObject
     {
+        /// <summary>
+        /// Unique identifier for the object
+        /// </summary>
         public string sourcedId { get; set; }
 
+        /// <summary>
+        /// 4.13.8.     StatusType
+        /// active, tobedeleted, inactive
+        /// Note: this project will determine deletion status automatically if this field is omitted
+        /// </summary>
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string status { get; set; }
 
+        /// <summary>
+        /// Date the record was last modified
+        /// </summary>
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string dateLastModified { get; set; }
 
@@ -17,19 +28,48 @@ namespace OneRosterSync.Net.Models
         public bool isDeleted => status?.ToLower() == "deleted";
     }
 
+    /// <summary>
+    /// Organizations (i.e. Schools that belong to the District)
+    /// </summary>
     public class CsvOrg : CsvBaseObject
     {
+        /// <summary>
+        /// Name of the org
+        /// </summary>
         public string name { get; set; }
+
+        /// <summary>
+        /// From section OneRoster spec 4.13.4. OrgType
+        /// department, school, district, local, state, national
+        /// </summary>
         public string type { get; set; }
+
+        /// <summary>
+        /// NCES ID National Center for Education Statistics) for the school/district.
+        /// </summary>
         public string identifier { get; set; }
     }
 
     public class CsvAcademicSession : CsvBaseObject
     {
+        /// <summary>
+        /// Name of this academic session
+        /// </summary>
         public string title { get; set; }
+
+        /// <summary>
+        /// 4.13.7.     SessionType
+        /// gradingPeriod, semester, schoolYear, term
+        /// </summary>
         public string type { get; set; }
         public string startDate { get; set; }
         public string endDate { get; set; }
+
+        /// <summary>
+        /// The school year for which the academic session contributes. 
+        /// This year should be that in which the school year ends.
+        /// (Format is: YYYY).
+        /// </summary>
         public string schoolYear { get; set; }
     }
 
