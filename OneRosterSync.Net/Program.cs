@@ -38,6 +38,7 @@ namespace OneRosterSync.Net
                 // log just MockApiController
                 .WriteTo.Logger(lc1 => lc1
                     .Filter.ByIncludingOnly("SourceContext = 'OneRosterSync.Net.Controllers.MockApiController'")
+                    //.Filter.ByIncludingOnly($"SourceContext = '{typeof(OneRosterSync.Net.Controllers.MockApiController).AssemblyQualifiedName}'")
                         .WriteTo.File(
                             path: basePath + @"MockAPI.log",
                             restrictedToMinimumLevel: LogEventLevel.Information,
