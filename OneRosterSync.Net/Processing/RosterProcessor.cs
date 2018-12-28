@@ -25,6 +25,11 @@ namespace OneRosterSync.Net.Processing
             Logger = logger;
         }
 
+        /// <summary>
+        /// Process a district's OneRoster CSV feed
+        /// </summary>
+        /// <param name="districtId">District Id</param>
+        /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
         public async Task ProcessDistrict(int districtId, CancellationToken cancellationToken)
         {
             using (var scope = Services.CreateScope())
@@ -53,6 +58,10 @@ namespace OneRosterSync.Net.Processing
             }
         }
 
+        /// <summary>
+        /// Load the District CSV data into the database
+        /// This is the first step of the Processing
+        /// </summary>
         private async Task LoadDistrictData(ApplicationDbContext db, District district)
         {
             DataSyncHistory history = null;
@@ -70,13 +79,12 @@ namespace OneRosterSync.Net.Processing
                 await db.SaveChangesAsync();
 
                 DateTime start = DateTime.UtcNow;
-                string basePath = @"CSVSample\";
 
                 var processor = new CsvFileProcessor
                 {
                     Db = db,
                     DistrictId = district.DistrictId,
-                    BasePath = basePath,
+                    BasePath = @"CSVSample\", // TODO pull this from the district
                     History = history,
                     Logger = Logger,
                     ChunkSize = 50,
@@ -93,9 +101,9 @@ namespace OneRosterSync.Net.Processing
 
                 await Analyze(db, district.DistrictId);
             }
-            catch (Exception /* ex*/)
+            catch (Exception ex)
             {
-                //history.Error = ex.Message;
+                Logger.Here().LogError(ex, "Error Loading District Data.");
             }
             finally
             {
@@ -185,7 +193,6 @@ namespace OneRosterSync.Net.Processing
                 district.Touch();
                 await db.SaveChangesAsync();
             }
-
         }
 
         /// <summary>
@@ -209,11 +216,11 @@ namespace OneRosterSync.Net.Processing
 
 
         /// <summary>
+        /// Analyze the records to determine which should be included in the feed
+        /// based on dependencies.
+        /// 
         /// TODO Speed up performance
         /// </summary>
-        /// <param name="db"></param>
-        /// <param name="districtId"></param>
-        /// <returns></returns>
         private async Task Analyze(ApplicationDbContext db, int districtId)
         {
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
