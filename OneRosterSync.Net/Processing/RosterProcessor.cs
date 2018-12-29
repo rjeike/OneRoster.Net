@@ -278,8 +278,8 @@ namespace OneRosterSync.Net.Processing
                     continue;
 
                 // if there is no change AND already included in the sync, skip
-                if (enrollment.LoadStatus == LoadStatus.NoChange && enrollment.IncludeInSync)
-                    continue;
+                //if (enrollment.LoadStatus == LoadStatus.NoChange && enrollment.IncludeInSync)
+                //    continue;
 
                 // check that the user referenced exists (should alway exist, perhaps should log error)
                 DataSyncLine user = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId] : null;

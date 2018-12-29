@@ -123,6 +123,11 @@
             </td>
             <td>
                 <pre>@JsonUtilities.FormatJson(item.RawData)</pre>
+                @if (!string.IsNullOrEmpty(item.EnrollmentMap))
+                {
+                    <span>Enrollment Map</span>
+                    <pre>@JsonUtilities.FormatJson(item.EnrollmentMap)</pre>
+                }
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.LoadStatus)
