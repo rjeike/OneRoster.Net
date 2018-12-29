@@ -27,31 +27,32 @@ namespace OneRosterSync.Net.Processing
             using (var file = System.IO.File.OpenText(filePath))
             {
                 DateTime now = DateTime.UtcNow;
-                var csv = new CsvHelper.CsvReader(file);
-
-                string table = null;
-
-                csv.Read();
-                csv.ReadHeader();
-                int i = 0;
-                for (; await csv.ReadAsync(); i++)
+                using (var csv = new CsvHelper.CsvReader(file))
                 {
-                    var record = csv.GetRecord<T>();
-                    table = table ?? record.GetType().Name;
+                    csv.Configuration.MissingFieldFound = null;
+                    csv.Configuration.HasHeaderRecord = true;
 
-                    bool newRecord = await ProcessRecord(record, table, now);
+                    string table = null;
 
-                    if (newRecord || i > ChunkSize)
+                    csv.Read();
+                    csv.ReadHeader();
+                    for (int i = 0; await csv.ReadAsync(); i++)
                     {
-                        await Db.SaveChangesAsync();
-                        i = 0;
+                        var record = csv.GetRecord<T>();
+                        table = table ?? record.GetType().Name;
+
+                        bool newRecord = await ProcessRecord(record, table, now);
+
+                        if (newRecord || i > ChunkSize)
+                        {
+                            await Db.SaveChangesAsync();
+                            i = 0;
+                        }
                     }
-                }
 
-                // commit any last changes
-                if (i > 0)
+                    // commit any last changes
                     await Db.SaveChangesAsync();
-
+                }
                 Logger.Here().LogInformation($"Processed Csv file {filePath}");
             }
         }
