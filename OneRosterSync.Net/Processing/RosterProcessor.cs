@@ -297,11 +297,11 @@ namespace OneRosterSync.Net.Processing
                     user.Touch();
                 }
 
-                var em = new EnrollmentMap
+                enrollment.EnrollmentMap = JsonConvert.SerializeObject(new EnrollmentMap
                 {
                     classTargetId = classMap[csvEnrollment.classSourcedId].TargetId,
                     userTargetId = user.TargetId,
-                };
+                });
 
                 await committer.InvokeIfChunk();
             }

@@ -73,7 +73,6 @@ namespace OneRosterSync.Net.Models
     {
         None = 0,
         Scheduled = 1,
-        //Queued = 2,
         Loading = 3,
         Analyzing = 4,
         PendingApproval = 5,
@@ -89,6 +88,8 @@ namespace OneRosterSync.Net.Models
 
         [Required]
         public string Name { get; set; }
+
+        public string TargetId { get; set; }
 
         // The time of day to process this district's files
         [DisplayName("Daily Processing Time (time of day)")]
@@ -142,6 +143,11 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("Include in sync processing?")]
         public bool IncludeInSync { get; set; }
+
+        /// <summary>
+        /// Kludge for tracking TargetIds of an Enrollment
+        /// </summary>
+        public string EnrollmentMap { get; set; }
 
         public virtual ICollection<DataSyncHistoryDetail> DataSyncHistoryDetails { get; set; }
     }
