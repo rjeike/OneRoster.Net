@@ -234,7 +234,7 @@ namespace OneRosterSync.Net.Processing
             // This loads the entire set of DataSyncLines associated with the district into memory
             // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
             // Performance testing is needed...
-            var cache = new DataLineCache();
+            var cache = new DataLineCache(Logger);
             await cache.Load(lines);
 
             foreach (var org in cache.GetMap<CsvOrg>().Values)
@@ -270,16 +270,18 @@ namespace OneRosterSync.Net.Processing
             var enrollments = cache.GetMap<CsvEnrollment>().Values;
             var userMap = cache.GetMap<CsvUser>();
 
-            foreach (var enrollment in enrollments /*.Where(e => e.LoadStatus != LoadStatus.NoChange)*/)
+            foreach (var enrollment in enrollments)
             {
+                // check if the enrollment is included in the classes, if not skip
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
                 if (!classMap.Keys.Contains(csvEnrollment.classSourcedId))
                     continue;
 
-                // no change AND already included in the sync
+                // if there is no change AND already included in the sync, skip
                 if (enrollment.LoadStatus == LoadStatus.NoChange && enrollment.IncludeInSync)
                     continue;
 
+                // check that the user referenced exists (should alway exist, perhaps should log error)
                 DataSyncLine user = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId] : null;
                 if (user == null)
                     continue;
