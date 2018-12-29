@@ -36,11 +36,11 @@
                 <td>
                     @if (item.DataOrig != null)
                     {
-                        <pre>@Utilities.FormatJson(item.DataOrig)</pre>
+                        <pre>@JsonUtilities.FormatJson(item.DataOrig)</pre>
                     }
                 </td>
                 <td>
-                    <pre>@Utilities.FormatJson(item.DataNew)</pre>
+                    <pre>@JsonUtilities.FormatJson(item.DataNew)</pre>
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.LoadStatus)

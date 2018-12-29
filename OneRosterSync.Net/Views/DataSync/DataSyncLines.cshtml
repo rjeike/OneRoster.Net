@@ -122,7 +122,7 @@
                 @Html.DisplayFor(modelItem => item.TargetId)
             </td>
             <td>
-                <pre>@Utilities.FormatJson(item.RawData)</pre>
+                <pre>@JsonUtilities.FormatJson(item.RawData)</pre>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.LoadStatus)
