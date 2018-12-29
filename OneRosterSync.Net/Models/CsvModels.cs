@@ -8,6 +8,7 @@ namespace OneRosterSync.Net.Models
         /// <summary>
         /// Unique identifier for the object
         /// </summary>
+        [JsonProperty(Order = -2)]
         public string sourcedId { get; set; }
 
         /// <summary>
@@ -15,13 +16,13 @@ namespace OneRosterSync.Net.Models
         /// active, tobedeleted, inactive
         /// Note: this project will determine deletion status automatically if this field is omitted
         /// </summary>
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonProperty(Order = -2, NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string status { get; set; }
 
         /// <summary>
         /// Date the record was last modified
         /// </summary>
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
+        [JsonProperty(Order = -2, NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string dateLastModified { get; set; }
 
         [JsonIgnore]
@@ -31,6 +32,7 @@ namespace OneRosterSync.Net.Models
     /// <summary>
     /// Organizations (i.e. Schools that belong to the District)
     /// </summary>
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvOrg : CsvBaseObject
     {
         /// <summary>
@@ -50,6 +52,7 @@ namespace OneRosterSync.Net.Models
         public string identifier { get; set; }
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvAcademicSession : CsvBaseObject
     {
         /// <summary>
@@ -73,17 +76,19 @@ namespace OneRosterSync.Net.Models
         public string schoolYear { get; set; }
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvCourse : CsvBaseObject
     {
-        //public string schoolYearSourcedId { get; set; }
+        public string schoolYearSourcedId { get; set; }
         public string title { get; set; }
         public string courseCode { get; set; }
-        //public string grades { get; set; }
+        public string grades { get; set; }
         public string orgSourcedId { get; set; }
-        //public string subjects { get; set; }
-        //public string subjectCodes { get; set; }
+        public string subjects { get; set; }
+        public string subjectCodes { get; set; }
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvClass : CsvBaseObject
     {
         public string title { get; set; }
@@ -94,6 +99,7 @@ namespace OneRosterSync.Net.Models
         public string termSourcedIds { get; set; }
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvEnrollment : CsvBaseObject
     {
         public string classSourcedId { get; set; }
@@ -102,6 +108,7 @@ namespace OneRosterSync.Net.Models
         public string role { get; set; }
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class CsvUser : CsvBaseObject
     {
         public string enabledUser { get; set; }
