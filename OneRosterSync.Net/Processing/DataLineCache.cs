@@ -43,7 +43,10 @@ namespace OneRosterSync.Net.Processing
 
         public Dictionary<string, DataSyncLine> GetMap<T>() where T : CsvBaseObject
         {
-            return Cache[nameof(T)];
+            string key = typeof(T).Name;
+            return Cache.ContainsKey(key) 
+                ? Cache[key] 
+                : new Dictionary<string, DataSyncLine>();
         }
     }
 }
