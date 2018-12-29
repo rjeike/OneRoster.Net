@@ -28,6 +28,14 @@ namespace OneRosterSync.Net.Processing
         }
 
         /// <summary>
+        /// Helper for saving data in chunks
+        /// </summary>
+        private static ActionCounter CreateCommitter(ApplicationDbContext db) =>
+            new ActionCounter(
+                asyncAction: async () => { await db.SaveChangesAsync(); },
+                chunkSize: 50);
+
+        /// <summary>
         /// Process a district's OneRoster CSV feed
         /// </summary>
         /// <param name="districtId">District Id</param>
@@ -202,18 +210,14 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private static async Task MarkDeleted(ApplicationDbContext db, int districtId, DateTime start)
         {
+            var committer = CreateCommitter(db);
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
-            int i = 0;
             foreach (var line in await lines.Where(l => l.LastSeen < start).ToListAsync())
             {
                 line.LoadStatus = LoadStatus.Deleted;
-                if (++i > 50)
-                {
-                    await db.SaveChangesAsync();
-                    i = 0;
-                }
+                await committer.InvokeIfChunk();
             }
-            await db.SaveChangesAsync();
+            await committer.InvokeIfAny();
         }
 
 
@@ -225,9 +229,7 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Analyze(ApplicationDbContext db, int districtId)
         {
-            var committer = new ActionCounter(
-                asyncAction: async() => { await db.SaveChangesAsync(); }, 
-                chunkSize: 50);
+            var committer = CreateCommitter(db);
 
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
 
