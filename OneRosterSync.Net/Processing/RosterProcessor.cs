@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
+using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -223,6 +225,10 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Analyze(ApplicationDbContext db, int districtId)
         {
+            var committer = new ActionCounter(
+                asyncAction: async() => { await db.SaveChangesAsync(); }, 
+                chunkSize: 50);
+
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
 
             foreach (var org in await lines.Where(l => l.Table == nameof(CsvOrg)).ToListAsync())
@@ -230,7 +236,7 @@ namespace OneRosterSync.Net.Processing
                 org.SyncStatus = SyncStatus.ReadyToApply;
                 org.Touch();
             }
-            await db.SaveChangesAsync();
+            await committer.Invoke();
 
             var courses = await lines.Where(l => l.Table == nameof(CsvCourse) && l.IncludeInSync).ToListAsync();
             foreach (var course in courses.Where(c =>  c.LoadStatus != LoadStatus.NoChange))
@@ -238,13 +244,13 @@ namespace OneRosterSync.Net.Processing
                 course.SyncStatus = SyncStatus.ReadyToApply;
                 course.Touch();
             }
-            await db.SaveChangesAsync();
+            await committer.Invoke();
 
             var classes = await lines.Where(l => l.Table == nameof(CsvClass)).ToListAsync();
 
             foreach (var _class in classes.Where(c => c.LoadStatus != LoadStatus.NoChange || !c.IncludeInSync))
             {
-                CsvClass csvClass = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
+                CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
                 if (courses.Select(c => c.SourceId).Contains(csvClass.courseSourcedId))
                 {
                     _class.IncludeInSync = true;
@@ -252,12 +258,11 @@ namespace OneRosterSync.Net.Processing
                     _class.Touch();
                 }
             }
-            await db.SaveChangesAsync();
+            await committer.Invoke();
 
             // set of class ids that are to be included
             HashSet<string> classIds = classes.Where(c => c.IncludeInSync).Select(c => c.SourceId).ToHashSet();
 
-            int i = 0;
             var enrollments = await lines.Where(l => l.Table == nameof(CsvEnrollment)).ToListAsync();
 
             List<DataSyncLine> users = await lines.Where(l => l.Table == nameof(CsvUser)).ToListAsync();
@@ -266,7 +271,7 @@ namespace OneRosterSync.Net.Processing
 
             foreach (var enrollment in enrollments /*.Where(e => e.LoadStatus != LoadStatus.NoChange)*/)
             {
-                CsvEnrollment csvEnrollment = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
+                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
                 if (!classIds.Contains(csvEnrollment.classSourcedId))
                     continue;
 
@@ -290,13 +295,9 @@ namespace OneRosterSync.Net.Processing
                     }
                 }
 
-                if (++i > 50)
-                {
-                    await db.SaveChangesAsync();
-                    i = 0;
-                }
+                await committer.InvokeIfChunk();
             }
-            await db.SaveChangesAsync();
+            await committer.InvokeIfAny();
         }
     }
 }
