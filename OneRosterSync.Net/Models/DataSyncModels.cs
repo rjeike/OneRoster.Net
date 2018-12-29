@@ -191,4 +191,10 @@ namespace OneRosterSync.Net.Models
         public string Table { get; set; }
     }
 
+    public class EnrollmentMap
+    {
+        public string classTargetId { get; set; }
+        public string userTargetId { get; set; }
+    }
+
 }

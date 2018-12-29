@@ -224,8 +224,6 @@ namespace OneRosterSync.Net.Processing
         /// <summary>
         /// Analyze the records to determine which should be included in the feed
         /// based on dependencies.
-        /// 
-        /// TODO Speed up performance
         /// </summary>
         private async Task Analyze(ApplicationDbContext db, int districtId)
         {
@@ -233,14 +231,20 @@ namespace OneRosterSync.Net.Processing
 
             var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
 
-            foreach (var org in await lines.Where(l => l.Table == nameof(CsvOrg)).ToListAsync())
+            // This loads the entire set of DataSyncLines associated with the district into memory
+            // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
+            // Performance testing is needed...
+            var cache = new DataLineCache();
+            await cache.Load(lines);
+
+            foreach (var org in cache.GetMap<CsvOrg>().Values)
             {
                 org.SyncStatus = SyncStatus.ReadyToApply;
                 org.Touch();
             }
             await committer.Invoke();
 
-            var courses = await lines.Where(l => l.Table == nameof(CsvCourse) && l.IncludeInSync).ToListAsync();
+            var courses = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).ToList();
             foreach (var course in courses.Where(c =>  c.LoadStatus != LoadStatus.NoChange))
             {
                 course.SyncStatus = SyncStatus.ReadyToApply;
@@ -248,9 +252,9 @@ namespace OneRosterSync.Net.Processing
             }
             await committer.Invoke();
 
-            var classes = await lines.Where(l => l.Table == nameof(CsvClass)).ToListAsync();
+            var classMap = cache.GetMap<CsvClass>();
 
-            foreach (var _class in classes.Where(c => c.LoadStatus != LoadStatus.NoChange || !c.IncludeInSync))
+            foreach (var _class in classMap.Values.Where(c => c.LoadStatus != LoadStatus.NoChange || !c.IncludeInSync))
             {
                 CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
                 if (courses.Select(c => c.SourceId).Contains(csvClass.courseSourcedId))
@@ -259,43 +263,43 @@ namespace OneRosterSync.Net.Processing
                     _class.SyncStatus = SyncStatus.ReadyToApply;
                     _class.Touch();
                 }
+                await committer.InvokeIfChunk();
             }
-            await committer.Invoke();
+            await committer.InvokeIfAny();
 
-            // set of class ids that are to be included
-            HashSet<string> classIds = classes.Where(c => c.IncludeInSync).Select(c => c.SourceId).ToHashSet();
-
-            var enrollments = await lines.Where(l => l.Table == nameof(CsvEnrollment)).ToListAsync();
-
-            List<DataSyncLine> users = await lines.Where(l => l.Table == nameof(CsvUser)).ToListAsync();
-
-            var userMap = users.ToDictionary(k => k.SourceId, v => v);
+            var enrollments = cache.GetMap<CsvEnrollment>().Values;
+            var userMap = cache.GetMap<CsvUser>();
 
             foreach (var enrollment in enrollments /*.Where(e => e.LoadStatus != LoadStatus.NoChange)*/)
             {
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
-                if (!classIds.Contains(csvEnrollment.classSourcedId))
+                if (!classMap.Keys.Contains(csvEnrollment.classSourcedId))
                     continue;
 
                 // no change AND already included in the sync
                 if (enrollment.LoadStatus == LoadStatus.NoChange && enrollment.IncludeInSync)
                     continue;
 
+                DataSyncLine user = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId] : null;
+                if (user == null)
+                    continue;
+
                 enrollment.IncludeInSync = true;
                 enrollment.SyncStatus = SyncStatus.ReadyToApply;
                 enrollment.Touch();
 
-                DataSyncLine user = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId] : null;
-
-                if (user != null)
+                if (user.LoadStatus != LoadStatus.NoChange || !user.IncludeInSync)
                 {
-                    if (user.LoadStatus != LoadStatus.NoChange || !user.IncludeInSync)
-                    {
-                        user.IncludeInSync = true;
-                        user.SyncStatus = SyncStatus.ReadyToApply;
-                        user.Touch();
-                    }
+                    user.IncludeInSync = true;
+                    user.SyncStatus = SyncStatus.ReadyToApply;
+                    user.Touch();
                 }
+
+                var em = new EnrollmentMap
+                {
+                    classTargetId = classMap[csvEnrollment.classSourcedId].TargetId,
+                    userTargetId = user.TargetId,
+                };
 
                 await committer.InvokeIfChunk();
             }
