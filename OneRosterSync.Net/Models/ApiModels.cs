@@ -60,6 +60,11 @@ namespace OneRosterSync.Net.Models
         /// Descriptive name of type of the data
         /// </summary>
         public string EntityType { get; protected set; }
+
+        /// <summary>
+        /// Kludge for tracking TargetIds of an Enrollment
+        /// </summary>
+        public EnrollmentMap EnrollmentMap { get; set; }
     }
 
     public class ApiPost<T> : ApiPostBase where T : CsvBaseObject

@@ -107,9 +107,10 @@ namespace OneRosterSync.Net.Processing
                 await processor.ProcessFile<CsvUser>(@"users.csv");
                 await processor.ProcessFile<CsvEnrollment>(@"enrollments.csv");
 
-                await MarkDeleted(db, district.DistrictId, start);
-
-                await Analyze(db, district.DistrictId);
+                var lines = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId);
+                var analyzer = new Analyzer(Logger, district, lines, CreateCommitter(db));
+                await analyzer.MarkDeleted(start);
+                await analyzer.Analyze();
             }
             catch (Exception ex)
             {
@@ -149,43 +150,29 @@ namespace OneRosterSync.Net.Processing
                     "Enrollment",
                 };
 
+                DataLineCache cache = new DataLineCache(Logger);
                 foreach (string entity in entities)
                 {
-                    string csvEntity = $"Csv{entity}";
-                    foreach (DataSyncLine line in await lines.Where(l => l.Table == csvEntity).ToListAsync())
+                    /*
+                    if (entity == "Enrollment")
+                    {
+                        //await Analyze(db, district.DistrictId);
+                        await cache.Load(db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId));
+                    }
+                    */
+
+                    foreach (DataSyncLine line in await lines.Where(l => l.Table == $"Csv{entity}" && l.SyncStatus == SyncStatus.ReadyToApply).ToListAsync())
                     {
                         switch (line.LoadStatus)
                         {
                             case LoadStatus.Added:
                             case LoadStatus.Modified:
                             case LoadStatus.Deleted:
-                                ApiPostBase data = ApiPostBase.CreateApiPost(entity, line.RawData);
-
-                                data.DistrictId = district.DistrictId.ToString();
-                                data.DistrictName = district.Name;
-                                data.LastSeen = line.LastSeen;
-                                data.SourceId = line.SourceId;
-                                data.TargetId = line.TargetId;
-                                data.Status = line.LoadStatus.ToString();
-
-                                ApiResponse response = await api.Post(data.EntityType.ToLower(), data);
-                                if (response.Success)
-                                {
-                                    line.SyncStatus = SyncStatus.Applied;
-                                    if (!string.IsNullOrEmpty(response.TargetId))
-                                        line.TargetId = response.TargetId;
-                                    line.Error = null;
-                                }
-                                else
-                                {
-                                    line.SyncStatus = SyncStatus.ApplyFailed;
-                                    line.Error = response.ErrorMessage;
-                                }
-                                await db.SaveChangesAsync();
+                            case LoadStatus.NoChange:
+                                await ApplyLine(entity, line, api, db, district, cache);
                                 break;
 
                             case LoadStatus.None:
-                            case LoadStatus.NoChange:
                                 Logger.Here().LogWarning($"NoChange / None should not be flagged for Sync: {line.RawData}");
                                 break;
                         }
@@ -205,107 +192,67 @@ namespace OneRosterSync.Net.Processing
             }
         }
 
-        /// <summary>
-        /// Identifies records that were missing from the feed and marks them as Deleted
-        /// </summary>
-        private static async Task MarkDeleted(ApplicationDbContext db, int districtId, DateTime start)
+        private static async Task ApplyLine(string entity, DataSyncLine line, ApiManager api, ApplicationDbContext db, District district, DataLineCache cache)
         {
-            var committer = CreateCommitter(db);
-            var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
-            foreach (var line in await lines.Where(l => l.LastSeen < start).ToListAsync())
+            ApiPostBase data = ApiPostBase.CreateApiPost(entity, line.RawData);
+
+            data.DistrictId = district.DistrictId.ToString();
+            data.DistrictName = district.Name;
+            data.LastSeen = line.LastSeen;
+            data.SourceId = line.SourceId;
+            data.TargetId = line.TargetId;
+            data.Status = line.LoadStatus.ToString();
+
+            if (entity == "Enrollment")
             {
-                line.LoadStatus = LoadStatus.Deleted;
-                await committer.InvokeIfChunk();
-            }
-            await committer.InvokeIfAny();
-        }
+                // kludge...
+                //var classMap = cache.GetMap<CsvClass>();
+                //var userMap = cache.GetMap<CsvUser>();
+                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
 
+                var lines = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId);
+                DataSyncLine _class = lines.Where(l => l.Table == "CsvClass").SingleOrDefault(l => l.SourceId == csvEnrollment.classSourcedId);
+                DataSyncLine user = lines.Where(l => l.Table == "CsvUser").SingleOrDefault(l => l.SourceId == csvEnrollment.userSourcedId);
 
-        /// <summary>
-        /// Analyze the records to determine which should be included in the feed
-        /// based on dependencies.
-        /// </summary>
-        private async Task Analyze(ApplicationDbContext db, int districtId)
-        {
-            var committer = CreateCommitter(db);
-
-            var lines = db.DataSyncLines.Where(l => l.DistrictId == districtId);
-
-            // This loads the entire set of DataSyncLines associated with the district into memory
-            // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
-            // Performance testing is needed...
-            var cache = new DataLineCache(Logger);
-            await cache.Load(lines);
-
-            foreach (var org in cache.GetMap<CsvOrg>().Values)
-            {
-                org.SyncStatus = SyncStatus.ReadyToApply;
-                org.Touch();
-            }
-            await committer.Invoke();
-
-            var courses = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).ToList();
-            foreach (var course in courses.Where(c =>  c.LoadStatus != LoadStatus.NoChange))
-            {
-                course.SyncStatus = SyncStatus.ReadyToApply;
-                course.Touch();
-            }
-            await committer.Invoke();
-
-            var classMap = cache.GetMap<CsvClass>();
-
-            foreach (var _class in classMap.Values.Where(c => c.LoadStatus != LoadStatus.NoChange || !c.IncludeInSync))
-            {
-                CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
-                if (courses.Select(c => c.SourceId).Contains(csvClass.courseSourcedId))
+                data.EnrollmentMap = new EnrollmentMap
                 {
-                    _class.IncludeInSync = true;
-                    _class.SyncStatus = SyncStatus.ReadyToApply;
-                    _class.Touch();
+                    //classTargetId = classMap.ContainsKey(csvEnrollment.classSourcedId) ? classMap[csvEnrollment.classSourcedId].TargetId : null,
+                    //userTargetId = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId].TargetId : null,
+                    classTargetId = _class?.TargetId,
+                    userTargetId = user?.TargetId,
+                };
+                // cache it in the database - for display only
+                line.EnrollmentMap = JsonConvert.SerializeObject(data.EnrollmentMap);
+            }
+
+            ApiResponse response = await api.Post(data.EntityType.ToLower(), data);
+            if (response.Success)
+            {
+                line.SyncStatus = SyncStatus.Applied;
+                if (!string.IsNullOrEmpty(response.TargetId))
+                    line.TargetId = response.TargetId;
+                line.Error = null;
+
+                /*
+                switch (entity)
+                {
+                    case "Class":
+                        //var enrollments = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId).Where(l => l.Table == nameof(CsvEnrollment)).Where(l => l.)
+                        break;
+
+                    case "User":
+                        break;
                 }
-                await committer.InvokeIfChunk();
+                */
             }
-            await committer.InvokeIfAny();
-
-            var enrollments = cache.GetMap<CsvEnrollment>().Values;
-            var userMap = cache.GetMap<CsvUser>();
-
-            foreach (var enrollment in enrollments)
+            else
             {
-                // check if the enrollment is included in the classes, if not skip
-                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
-                if (!classMap.Keys.Contains(csvEnrollment.classSourcedId))
-                    continue;
-
-                // if there is no change AND already included in the sync, skip
-                //if (enrollment.LoadStatus == LoadStatus.NoChange && enrollment.IncludeInSync)
-                //    continue;
-
-                // check that the user referenced exists (should alway exist, perhaps should log error)
-                DataSyncLine user = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId] : null;
-                if (user == null)
-                    continue;
-
-                enrollment.IncludeInSync = true;
-                enrollment.SyncStatus = SyncStatus.ReadyToApply;
-                enrollment.Touch();
-
-                if (user.LoadStatus != LoadStatus.NoChange || !user.IncludeInSync)
-                {
-                    user.IncludeInSync = true;
-                    user.SyncStatus = SyncStatus.ReadyToApply;
-                    user.Touch();
-                }
-
-                enrollment.EnrollmentMap = JsonConvert.SerializeObject(new EnrollmentMap
-                {
-                    classTargetId = classMap[csvEnrollment.classSourcedId].TargetId,
-                    userTargetId = user.TargetId,
-                });
-
-                await committer.InvokeIfChunk();
+                line.SyncStatus = SyncStatus.ApplyFailed;
+                line.Error = response.ErrorMessage;
             }
-            await committer.InvokeIfAny();
+
+            line.Touch();
+            await db.SaveChangesAsync();
         }
     }
 }

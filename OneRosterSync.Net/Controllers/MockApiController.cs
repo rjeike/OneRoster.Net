@@ -54,6 +54,7 @@ namespace OneRosterSync.Net.Controllers
 
         /// <summary>
         /// Enrollment updates
+        /// Note that the LMS Target IDs for class and user are included in the EnrollmentMap object
         /// </summary>
         [HttpPost, Route("enrollment")]
         public async Task<JsonResult> Enrollment([FromBody] ApiPost<CsvEnrollment> enrollment) { return await ProcessEntity<CsvEnrollment>(enrollment); }
