@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace OneRosterSync.Net.Processing
 {
-    public class ApiManager
+    public class ApiManager : IDisposable
     {
         HttpClient client;
         ILogger Logger;
@@ -27,6 +27,11 @@ namespace OneRosterSync.Net.Processing
             client.DefaultRequestHeaders.Accept.Add(
                 new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json");
+        }
+
+        public void Dispose()
+        {
+            client.Dispose();
         }
 
         public async Task<ApiResponse> Post(string entity, object data) 
