@@ -35,10 +35,18 @@ namespace OneRosterSync.Net.Processing
             await Repo.Committer.InvokeIfAny();
         }
 
+        /// <summary>
+        /// This is used to determine if any change needs to be pushed to the LMS
+        /// Basically if a record has changed OR has never been Applied
+        /// which can happen if a record is loaded and later caused to be included in the Sync
+        /// </summary>
         private static bool IsUnappliedChange(DataSyncLine line) =>
             line.LoadStatus != LoadStatus.NoChange || 
             line.SyncStatus != SyncStatus.Applied;
 
+        /// <summary>
+        /// Helper to mark a record to be included in the next push to LMS
+        /// </summary>
         private static void IncludeReadyTouch(DataSyncLine line)
         {
             line.IncludeInSync = true;
@@ -52,9 +60,7 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public async Task Analyze()
         {
-            // This loads the entire set of DataSyncLines associated with the district into memory
-            // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
-            // Performance testing is needed...
+            // load some small tables into memory for performance
             var cache = new DataLineCache(Logger);
             await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
@@ -80,12 +86,7 @@ namespace OneRosterSync.Net.Processing
             }
             await Repo.Committer.InvokeIfAny();
 
-            //var enrollments = cache.GetMap<CsvEnrollment>().Values;
-            //var userMap = cache.GetMap<CsvUser>();
-
-            var users = Repo.Lines<CsvUser>();
-
-            //foreach (var enrollment in enrollments)
+            // process all enrollments in the database associated with the District (in chunks of 200)
             await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200, 
                 action: async (enrollment) =>
                 {
@@ -94,14 +95,15 @@ namespace OneRosterSync.Net.Processing
                     // figure out if we need to process this enrollment
                     if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
                         !classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-                        !IsUnappliedChange(enrollment)                              // only include if unapplied change in enrollment
-                        // || !userMap.ContainsKey(csvEnrollment.userSourcedId)// finally, user should exist
-                        )          
+                        !IsUnappliedChange(enrollment))                             // only include if unapplied change in enrollment
                         return;
 
-                    var user = await users.SingleOrDefaultAsync(l => l.SourceId == csvEnrollment.userSourcedId);
-                    if (user == null)
+                    var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourceId == csvEnrollment.userSourcedId);
+                    if (user == null) // should never happen
+                    {
+                        Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
                         return;
+                    }
 
                     // mark enrollment for sync
                     IncludeReadyTouch(enrollment);
@@ -111,7 +113,7 @@ namespace OneRosterSync.Net.Processing
                     if (IsUnappliedChange(user))
                         IncludeReadyTouch(user);
                 }, 
-                onChunkComplete: async () => { await Repo.Committer.Invoke(); });
+                onChunkComplete: async () => await Repo.Committer.Invoke());
 
             await Repo.Committer.Invoke();
         }

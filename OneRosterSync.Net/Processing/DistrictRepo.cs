@@ -21,9 +21,7 @@ namespace OneRosterSync.Net.Processing
             Db = db;
             DistrictId = districtId;
 
-            Committer = new ActionCounter(
-                asyncAction: async () => { await db.SaveChangesAsync(); },
-                chunkSize: 50);
+            Committer = new ActionCounter(async () => await db.SaveChangesAsync(), chunkSize: 50);
         }
 
         public ActionCounter Committer { get; private set; }
