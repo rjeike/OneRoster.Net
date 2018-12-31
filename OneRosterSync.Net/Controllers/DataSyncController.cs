@@ -100,12 +100,12 @@ namespace OneRosterSync.Net.Controllers
                 .AsQueryable()
                 .ForEachInChunksAsync(
                     chunkSize: 50,
-                    action: history =>
+                    action: async history =>
                     {
                         // for each history, delete the details associated with it as well
-                        var details = db.DataSyncHistoryDetails
+                        var details = await db.DataSyncHistoryDetails
                             .Where(d => d.DataSyncHistoryId == history.DataSyncHistoryId)
-                            .ToList();
+                            .ToListAsync();
                         db.DataSyncHistoryDetails.RemoveRange(details);
                     }, 
                     // commit changes after each chunk

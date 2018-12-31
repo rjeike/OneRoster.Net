@@ -16,34 +16,57 @@ namespace OneRosterSync.Net
     {
         public static void Main(string[] args)
         {
-            string outputTemplate = 
-                "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message}{NewLine}in method {MemberName} at {FilePath}:{LineNumber}{NewLine}{Exception}{NewLine}";
+            const string outputTemplate =
+                "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}" +
+                "{Message}{NewLine}" +
+                "in Method {MemberName} at {FilePath}:{LineNumber}{NewLine}" +
+                "{Exception}{NewLine}";
+
+            const string processingOutputTemplate =
+                "[{Timestamp:HH:mm:ss} {Level}] {Message}{NewLine}" +
+                "in Method {MemberName} at {FilePath}:{LineNumber}{NewLine}" +
+                "{Exception}{NewLine}";
+
+            const string apiOutputTemplate =
+                "[{Timestamp:HH:mm:ss}] {Message}{NewLine}";
 
             // TODO - a better way to generate default directory?
             //string basePath = @"C:\temp\logs\OneRoster.Net\";
             string basePath = @"Logs\";
 
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                .WriteTo.Console()
 
-                // default logger - everything
-                .WriteTo.File(
-                    path: basePath + @"Default.log", 
-                    outputTemplate: outputTemplate, 
-                    rollingInterval: RollingInterval.Day)
+                // Default logger (to console)
+                .WriteTo.Logger(l => l
+                    .MinimumLevel.Debug()
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                    .WriteTo.Console())
 
-                // log just MockApiController
-                .WriteTo.Logger(lc1 => lc1
+                // Errors
+                .WriteTo.Logger(l => l
+                    .MinimumLevel.Error()
+                    .WriteTo.File(
+                        path: basePath + @"Errors.log",
+                        outputTemplate: outputTemplate,
+                        rollingInterval: RollingInterval.Day))
+
+                // Processor Logger
+                .WriteTo.Logger(l => l
+                    .Filter.ByIncludingOnly("SourceContext like 'OneRosterSync.Net.Processing%'")
+                    .WriteTo.File(
+                        path: basePath + @"Processing.log", 
+                        outputTemplate: processingOutputTemplate, 
+                        rollingInterval: RollingInterval.Day))
+
+                // MockAPI Logger
+                .WriteTo.Logger(l => l
                     .Filter.ByIncludingOnly("SourceContext = 'OneRosterSync.Net.Controllers.MockApiController'")
-                    //.Filter.ByIncludingOnly($"SourceContext = '{typeof(OneRosterSync.Net.Controllers.MockApiController).AssemblyQualifiedName}'")
-                        .WriteTo.File(
-                            path: basePath + @"MockAPI.log",
-                            restrictedToMinimumLevel: LogEventLevel.Information,
-                            outputTemplate: outputTemplate,
-                            rollingInterval: RollingInterval.Day))
+                    .WriteTo.File(
+                        path: basePath + @"MockApi.log",
+                        restrictedToMinimumLevel: LogEventLevel.Information,
+                        outputTemplate: apiOutputTemplate,
+                        rollingInterval: RollingInterval.Day))
 
                 .CreateLogger();
 
@@ -68,18 +91,5 @@ namespace OneRosterSync.Net
                 Log.CloseAndFlush();
             }
         }
-
-        /*
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-               .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddConsole();
-                    logging.AddDebug();
-                    logging.AddSerilog();
-                });
-        */
     }
 }
