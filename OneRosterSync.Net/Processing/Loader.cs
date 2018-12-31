@@ -11,47 +11,46 @@ using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
-    public class CsvFileProcessor
+    public class Loader
     {
-        public ApplicationDbContext Db { get; set; }
-        public int DistrictId { get; set; }
-        public string BasePath { get; set; }
-        public DataSyncHistory History { get; set; }
-        public ILogger Logger;
-        public int ChunkSize { get; set; } = 50;
+        private readonly ILogger Logger;
+        private readonly DistrictRepo Repo;
 
-        public async Task ProcessFile<T>(string filename) where T : CsvBaseObject
+        private readonly string BasePath;
+        private readonly DataSyncHistory History;
+
+        public Loader(ILogger logger, DistrictRepo repo, string basePath, DataSyncHistory history)
         {
+            Logger = logger;
+            Repo = repo;
+            BasePath = basePath;
+            History = history;
+        }
+
+        public async Task LoadFile<T>(string filename) where T : CsvBaseObject
+        {
+            DateTime now = DateTime.UtcNow;
             string filePath = BasePath + filename;
+            string table = typeof(T).Name;
 
             using (var file = System.IO.File.OpenText(filePath))
             {
-                DateTime now = DateTime.UtcNow;
                 using (var csv = new CsvHelper.CsvReader(file))
                 {
                     csv.Configuration.MissingFieldFound = null;
                     csv.Configuration.HasHeaderRecord = true;
-
-                    string table = null;
 
                     csv.Read();
                     csv.ReadHeader();
                     for (int i = 0; await csv.ReadAsync(); i++)
                     {
                         var record = csv.GetRecord<T>();
-                        table = table ?? record.GetType().Name;
-
                         bool newRecord = await ProcessRecord(record, table, now);
-
-                        if (newRecord || i > ChunkSize)
-                        {
-                            await Db.SaveChangesAsync();
-                            i = 0;
-                        }
+                        await Repo.Committer.InvokeIfChunk();
                     }
 
                     // commit any last changes
-                    await Db.SaveChangesAsync();
+                    await Repo.Committer.InvokeIfAny();
                 }
                 Logger.Here().LogInformation($"Processed Csv file {filePath}");
             }
@@ -62,7 +61,7 @@ namespace OneRosterSync.Net.Processing
             History.NumRows++;
             string data = JsonConvert.SerializeObject(record);
 
-            DataSyncLine line = await Db.DataSyncLines.SingleOrDefaultAsync(l => l.DistrictId == DistrictId && l.SourceId == record.sourcedId);
+            DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourceId == record.sourcedId);
             bool newRecord = line == null;
 
             if (newRecord)
@@ -78,12 +77,12 @@ namespace OneRosterSync.Net.Processing
                 line = new DataSyncLine
                 {
                     SourceId = record.sourcedId,
-                    DistrictId = DistrictId,
+                    DistrictId = Repo.DistrictId,
                     LoadStatus = LoadStatus.Added,
                     LastSeen = now,
                     Table = table,
                 };
-                Db.DataSyncLines.Add(line);
+                Repo.AddLine(line);
             }
             else // existing record, check if it has changed
             {
@@ -125,7 +124,7 @@ namespace OneRosterSync.Net.Processing
                 LoadStatus = line.LoadStatus,
                 Table = table,
             };
-            Db.DataSyncHistoryDetails.Add(detail);
+            Repo.PushHistoryDetail(detail);
 
             line.RawData = data;
             line.SourceId = record.sourcedId;
