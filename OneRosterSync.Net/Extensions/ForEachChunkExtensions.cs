@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OneRosterSync.Net.Extensions
 {
-    public static class CollectionExtensions
+    public static class ForEachChunkExtensions
     {
         /// <summary>
         /// Takes a collection and breaks it into "chunks" according to chunkSize
@@ -31,6 +31,10 @@ namespace OneRosterSync.Net.Extensions
             }
         }
 
+
+        /// <summary>
+        /// Same as ForEachChunk except action is async
+        /// </summary>
         public static async Task ForEachChunkAsync<T>(this IQueryable<T> collection, int chunkSize, Func<List<T>, Task> action)
         {
             for (int chunk = 0; ; chunk++)
@@ -48,7 +52,6 @@ namespace OneRosterSync.Net.Extensions
         }
 
 
-
         /// <summary>
         /// This is equivalent to the standard ForEach extension, but divides the
         /// original collection into chunks rather than pulling it all in one query.
@@ -63,29 +66,22 @@ namespace OneRosterSync.Net.Extensions
         {
             collection.ForEachChunk(chunkSize, chunk =>
             {
-                chunk.ForEach(action);
+                foreach (T item in chunk)
+                    action(item);
                 onChunkComplete.Invoke();
             });
         }
 
-        public static async Task ForEachInChunksAsync<T>(this IQueryable<T> collection, int chunkSize, Action<T> action, Func<Task> onChunkComplete)
-        {
-            await collection.AsQueryable().ForEachChunkAsync(chunkSize, async (chunk) =>
-            {
-                chunk.ForEach(action);
-                await onChunkComplete();
-            });
-        }
 
+        /// <summary>
+        /// Same as ForEachInChunks except both action and onChunkComplete are async
+        /// </summary>
         public static async Task ForEachInChunksAsync<T>(this IQueryable<T> collection, int chunkSize, Func<T, Task> action, Func<Task> onChunkComplete)
         {
             await collection.AsQueryable().ForEachChunkAsync(chunkSize, async (chunk) =>
             {
                 foreach (T item in chunk)
-                {
                     await action(item);
-                }
-                //await chunk.AsQueryable().ForEachAsync(async item => await action(item));
                 await onChunkComplete();
             });
         }
