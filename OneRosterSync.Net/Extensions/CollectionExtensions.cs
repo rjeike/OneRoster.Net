@@ -77,15 +77,17 @@ namespace OneRosterSync.Net.Extensions
             });
         }
 
-        /*
         public static async Task ForEachInChunksAsync<T>(this IQueryable<T> collection, int chunkSize, Func<T, Task> action, Func<Task> onChunkComplete)
         {
             await collection.AsQueryable().ForEachChunkAsync(chunkSize, async (chunk) =>
             {
-                await chunk.AsQueryable().ForEachAsync(async item => await action(item));
+                foreach (T item in chunk)
+                {
+                    await action(item);
+                }
+                //await chunk.AsQueryable().ForEachAsync(async item => await action(item));
                 await onChunkComplete();
             });
         }
-        */
     }
 }
