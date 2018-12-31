@@ -10,22 +10,6 @@ namespace OneRosterSync.Net.Models
     /// </summary>
     public class ApiPostBase
     {
-        static public ApiPostBase CreateApiPost(string entity, string json)
-        {
-            switch (entity)
-            {
-                case "Org": return new ApiPost<CsvOrg>(json);
-                case "Course": return new ApiPost<CsvCourse>(json);
-                case "AcademicSession": return new ApiPost<CsvAcademicSession>(json);
-                case "Class": return new ApiPost<CsvClass>(json);
-                case "User": return new ApiPost<CsvUser>(json);
-                case "Enrollment": return new ApiPost<CsvEnrollment>(json);
-
-                default:
-                    throw new ArgumentException($"unsupported entity: {entity}");
-            }
-        }
-
         /// <summary>
         /// District identifier (in LMS sid)
         /// </summary>
@@ -60,11 +44,6 @@ namespace OneRosterSync.Net.Models
         /// Descriptive name of type of the data
         /// </summary>
         public string EntityType { get; protected set; }
-
-        /// <summary>
-        /// Kludge for tracking TargetIds of an Enrollment
-        /// </summary>
-        public EnrollmentMap EnrollmentMap { get; set; }
     }
 
     public class ApiPost<T> : ApiPostBase where T : CsvBaseObject
@@ -88,14 +67,24 @@ namespace OneRosterSync.Net.Models
         public T Data { get; set; }
     }
 
-    /*
-    public class ApiPostOrg : ApiPost<CsvOrg> { }
-    public class ApiPostCourse : ApiPost<CsvCourse> { }
-    public class ApiPostAcademicSession : ApiPost<CsvAcademicSession> { }
-    public class ApiPostClass : ApiPost<CsvClass> { }
-    public class ApiPostUser : ApiPost<CsvUser> { }
-    public class ApiPostEnrollment : ApiPost<CsvEnrollment> { }
-    */
+    public class ApiEnrollmentPost : ApiPost<CsvEnrollment>
+    {
+        public ApiEnrollmentPost() 
+            : base()
+        {
+        }
+
+        public ApiEnrollmentPost(string json)
+            : base(json)
+        {
+        }
+
+        /// <summary>
+        /// Kludge for tracking TargetIds of an Enrollment
+        /// </summary>
+        public EnrollmentMap EnrollmentMap { get; set; }
+    }
+
 
     /// <summary>
     /// Expected response from LMS API call
