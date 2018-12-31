@@ -77,12 +77,10 @@ namespace OneRosterSync.Net.Models
     public enum ProcessingStatus
     {
         None = 0,
-        Scheduled = 1,
         Loading = 2,
         LoadingDone = 3,
         Analyzing = 4,
         AnalyzingDone = 5,
-        Approved = 6,
         Applying = 7,
         ApplyingDone = 8,
     }
@@ -121,6 +119,9 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("Email List on changes")]
         public string EmailsOnChanges { get; set; }
+
+        [DisplayName("Next Processing Action to take")]
+        public ProcessingAction ProcessingAction { get; set; }
     }
 
     public class DataSyncLine : DataObject

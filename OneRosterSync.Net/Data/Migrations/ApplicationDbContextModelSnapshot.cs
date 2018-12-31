@@ -314,6 +314,8 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<DateTime?>("NextProcessingTime");
 
+                    b.Property<int>("ProcessingAction");
+
                     b.Property<int>("ProcessingStatus");
 
                     b.Property<string>("TargetId");

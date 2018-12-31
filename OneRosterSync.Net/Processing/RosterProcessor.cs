@@ -32,6 +32,68 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         /// <param name="districtId">District Id</param>
         /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
+        public async Task Process(int districtId, CancellationToken cancellationToken)
+        {
+            using (var scope = Services.CreateScope())
+            {
+                using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
+                {
+                    DistrictRepo repo = new DistrictRepo(Logger, db, districtId);
+                    District district = repo.District;
+                    ProcessingAction action = district.ProcessingAction;
+                    district.ProcessingAction = ProcessingAction.None; // clear the action out
+                    district.Touch();
+                    await repo.Committer.Invoke();
+
+                    switch (district.ProcessingStatus)
+                    {
+                        case ProcessingStatus.Loading:
+                        case ProcessingStatus.Applying:
+                        case ProcessingStatus.Analyzing:
+                            // already in process, bail out?
+                            Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case ProcessingAction.None:
+                            break;
+
+                        case ProcessingAction.LoadSample:
+                            throw new NotImplementedException();
+
+                        case ProcessingAction.Load:
+                            await Load(repo);
+                            break;
+
+                        case ProcessingAction.Analyze:
+                            await Analyze(repo);
+                            break;
+
+                        case ProcessingAction.Apply:
+                            await Apply(repo);
+                            break;
+
+                        case ProcessingAction.FullProcess:
+                            await Load(repo);
+                            await Analyze(repo);
+                            await Apply(repo);
+                            break;
+                    }
+                }
+            }
+        }
+
+        /*
+        /// <summary>
+        /// Process a district's OneRoster CSV feed
+        /// </summary>
+        /// <param name="districtId">District Id</param>
+        /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
         public async Task ProcessDistrict(int districtId, CancellationToken cancellationToken)
         {
             using (var scope = Services.CreateScope())
@@ -46,7 +108,6 @@ namespace OneRosterSync.Net.Processing
                     switch (district.ProcessingStatus)
                     {
                         case ProcessingStatus.Scheduled:
-                            DateTime start = DateTime.UtcNow;
                             await Load(repo);
                             await Analyze(repo); // must pass start time before Load!!!
                             break;
@@ -62,6 +123,7 @@ namespace OneRosterSync.Net.Processing
                 }
             }
         }
+        */
 
         /// <summary>
         /// Load the District CSV data into the database
@@ -161,7 +223,5 @@ namespace OneRosterSync.Net.Processing
                 await repo.Committer.Invoke();
             }
         }
-
-
     }
 }

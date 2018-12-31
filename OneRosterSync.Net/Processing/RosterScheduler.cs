@@ -9,12 +9,13 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
+using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
     public class RosterScheduler : BackgroundService
     {
-        private const int DelayBetweenProcessingMS = 5 * 1000;
+        private const int DelayBetweenProcessingMS = 3 * 1000;
         private readonly ILogger Logger;
         private readonly IServiceProvider Services;
         private readonly IBackgroundTaskQueue TaskQueue;
@@ -41,12 +42,16 @@ namespace OneRosterSync.Net.Processing
                 {
                     using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
                     {
-                        DateTime now = DateTime.UtcNow;
-                        var districts = await db.Districts
-                            .Where(d => d.NextProcessingTime.HasValue && d.NextProcessingTime <= now 
-                                || d.ProcessingStatus == Models.ProcessingStatus.Scheduled
-                                || d.ProcessingStatus == Models.ProcessingStatus.Approved)
-                            .ToListAsync();
+                        var now = DateTime.UtcNow;
+
+                        // First find districts scheduled and mark them "FullProcess"
+                        var districts = await db.Districts.Where(d => d.NextProcessingTime.HasValue && d.NextProcessingTime <= now).ToListAsync();
+                        foreach (var d in districts)
+                            d.ProcessingAction = ProcessingAction.FullProcess;
+                        await db.SaveChangesAsync();
+
+                        // Now find any district that has any ProcessingAction
+                        districts = await db.Districts.Where(d => d.ProcessingAction != ProcessingAction.None).ToListAsync();
 
                         // walk the districts ready to be processed
                         foreach (var district in districts)
@@ -55,7 +60,7 @@ namespace OneRosterSync.Net.Processing
                             {
                                 Logger.Here().LogInformation($"Begin processing District {district.DistrictId}.");
                                 var rosterProcessor = new RosterProcessor(Services, Logger);
-                                await rosterProcessor.ProcessDistrict(district.DistrictId, cancellationToken);
+                                await rosterProcessor.Process(district.DistrictId, cancellationToken);
                                 Logger.Here().LogInformation($"Done processing District {district.DistrictId}.");
                             });
 
@@ -71,7 +76,6 @@ namespace OneRosterSync.Net.Processing
                                     next = next.Value.AddDays(1);
                             }
                             district.NextProcessingTime = next;
-                            //district.ProcessingStatus = Models.ProcessingStatus.Queued;
                             district.Touch();
                             await db.SaveChangesAsync();
                         }

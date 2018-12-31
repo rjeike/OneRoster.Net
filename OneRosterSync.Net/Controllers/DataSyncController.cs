@@ -183,17 +183,18 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToDistrict(district.DistrictId);
         }
 
+        /*
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DistrictProcess(District district)
         {
             District d = db.Districts.Find(district.DistrictId);
-            //d.NextProcessingTime = DateTime.UtcNow.AddSeconds(1);
             d.ProcessingStatus = ProcessingStatus.Scheduled;
             d.Touch();
             await db.SaveChangesAsync();
 
             return RedirectToDistrict(district.DistrictId);
         }
+        */
 
         /// <summary>
         /// Display all matching records for the District (DataSyncLines)
@@ -301,7 +302,7 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToDistrict(districtId);
         }
 
-
+        /*
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveChanges(int districtId)
         {
@@ -312,5 +313,22 @@ namespace OneRosterSync.Net.Controllers
 
             return RedirectToDistrict(districtId);
         }
+        */
+
+        private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
+        {
+            District district = db.Districts.Find(districtId);
+
+            district.ProcessingAction = processingAction;
+            await db.SaveChangesAsync();
+
+            return RedirectToDistrict(districtId);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Load(int districtId) => await Process(districtId, ProcessingAction.Load);
+        [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> LoadSample(int districtId) => await Process(districtId, ProcessingAction.LoadSample);
+        [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Analyze(int districtId) => await Process(districtId, ProcessingAction.Analyze);
+        [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Apply(int districtId) => await Process(districtId, ProcessingAction.Apply);
+        [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> FullProcess(int districtId) => await Process(districtId, ProcessingAction.FullProcess);
     }
 }
