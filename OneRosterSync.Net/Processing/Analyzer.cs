@@ -13,16 +13,12 @@ namespace OneRosterSync.Net.Processing
     public class Analyzer
     {
         private readonly ILogger Logger;
-        private readonly District District;
-        private readonly IQueryable<DataSyncLine> Lines;
-        private readonly ActionCounter Committer;
+        private readonly DistrictRepo Repo;
 
-        public Analyzer(ILogger logger, District district, IQueryable<DataSyncLine> lines, ActionCounter committer)
+        public Analyzer(ILogger logger, DistrictRepo repo)
         {
             Logger = logger;
-            District = district;
-            Lines = lines;
-            Committer = committer;
+            Repo = repo;
         }
 
         /// <summary>
@@ -30,12 +26,12 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public async Task MarkDeleted(DateTime start)
         {
-            foreach (var line in await Lines.Where(l => l.LastSeen < start).ToListAsync())
+            foreach (var line in await Repo.Lines().Where(l => l.LastSeen < start).ToListAsync())
             {
                 line.LoadStatus = LoadStatus.Deleted;
-                await Committer.InvokeIfChunk();
+                await Repo.Committer.InvokeIfChunk();
             }
-            await Committer.InvokeIfAny();
+            await Repo.Committer.InvokeIfAny();
         }
 
         private static bool IsUnappliedChange(DataSyncLine line) =>
@@ -59,17 +55,17 @@ namespace OneRosterSync.Net.Processing
             // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
             // Performance testing is needed...
             var cache = new DataLineCache(Logger);
-            await cache.Load(Lines);
+            await cache.Load(Repo.Lines());
 
             // include all Orgs in sync by default
             foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
                 IncludeReadyTouch(org);
-            await Committer.Invoke();
+            await Repo.Committer.Invoke();
 
             // courses are manually marked for sync, so choose only those
             foreach (var course in cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Where(IsUnappliedChange))
                 IncludeReadyTouch(course);
-            await Committer.Invoke();
+            await Repo.Committer.Invoke();
 
             // now walk the classes and include those which map to an included course
             var classMap = cache.GetMap<CsvClass>();
@@ -79,9 +75,9 @@ namespace OneRosterSync.Net.Processing
                 CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
                 if (courseIds.Contains(csvClass.courseSourcedId))
                     IncludeReadyTouch(_class);
-                await Committer.InvokeIfChunk();
+                await Repo.Committer.InvokeIfChunk();
             }
-            await Committer.InvokeIfAny();
+            await Repo.Committer.InvokeIfAny();
 
             var enrollments = cache.GetMap<CsvEnrollment>().Values;
             var userMap = cache.GetMap<CsvUser>();
@@ -106,9 +102,9 @@ namespace OneRosterSync.Net.Processing
                     IncludeReadyTouch(user);
 
                 // commit changes
-                await Committer.InvokeIfChunk();
+                await Repo.Committer.InvokeIfChunk();
             }
-            await Committer.InvokeIfAny();
+            await Repo.Committer.InvokeIfAny();
         }
     }
 }
