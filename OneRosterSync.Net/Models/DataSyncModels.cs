@@ -27,6 +27,16 @@ namespace OneRosterSync.Net.Models
         }
     }
 
+    public enum ProcessingAction
+    {
+        None = 0,
+        Load = 1,
+        LoadSample = 2,
+        Analyze = 3,
+        Apply = 4,
+        FullProcess = 5,
+    }
+
     public enum LoadStatus
     {
         None = 0,
@@ -62,23 +72,19 @@ namespace OneRosterSync.Net.Models
         /// Failures also tracked
         /// </summary>
         ApplyFailed = 4,
-
-        /// <summary>
-        /// Admin has rejected this change
-        /// </summary>
-        Rejected = 5,
     }
 
     public enum ProcessingStatus
     {
         None = 0,
         Scheduled = 1,
-        Loading = 3,
+        Loading = 2,
+        LoadingDone = 3,
         Analyzing = 4,
-        PendingApproval = 5,
+        AnalyzingDone = 5,
         Approved = 6,
         Applying = 7,
-        Finished =100,
+        ApplyingDone = 8,
     }
 
     public class District : DataObject
@@ -196,11 +202,4 @@ namespace OneRosterSync.Net.Models
 
         public string Table { get; set; }
     }
-
-    public class EnrollmentMap
-    {
-        public string classTargetId { get; set; }
-        public string userTargetId { get; set; }
-    }
-
 }
