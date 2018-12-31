@@ -28,14 +28,6 @@ namespace OneRosterSync.Net.Processing
         }
 
         /// <summary>
-        /// Helper for saving data in chunks
-        /// </summary>
-        private static ActionCounter CreateCommitter(ApplicationDbContext db) =>
-            new ActionCounter(
-                asyncAction: async () => { await db.SaveChangesAsync(); },
-                chunkSize: 50);
-
-        /// <summary>
         /// Process a district's OneRoster CSV feed
         /// </summary>
         /// <param name="districtId">District Id</param>
@@ -46,18 +38,21 @@ namespace OneRosterSync.Net.Processing
             {
                 using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
                 {
-                    District district = db.Districts.Find(districtId);
+                    DistrictRepo repo = new DistrictRepo(Logger, db, districtId);
+                    District district = repo.District;
                     district.Touch();
-                    await db.SaveChangesAsync();
+                    await repo.Committer.Invoke();
 
                     switch (district.ProcessingStatus)
                     {
                         case ProcessingStatus.Scheduled:
-                            await LoadDistrictData(db, district);
+                            DateTime start = DateTime.UtcNow;
+                            await Load(repo);
+                            await Analyze(repo); // must pass start time before Load!!!
                             break;
 
                         case ProcessingStatus.Approved:
-                            await ApplyDistrictData(db, district);
+                            await Apply(repo);
                             break;
 
                         default:
@@ -72,45 +67,23 @@ namespace OneRosterSync.Net.Processing
         /// Load the District CSV data into the database
         /// This is the first step of the Processing
         /// </summary>
-        private async Task LoadDistrictData(ApplicationDbContext db, District district)
+        private async Task Load(DistrictRepo repo)
         {
             DataSyncHistory history = null;
             try
             {
-                district.ProcessingStatus = ProcessingStatus.Loading;
-                await db.SaveChangesAsync();
+                history = repo.PushHistory();
+                repo.District.ProcessingStatus = ProcessingStatus.Loading;
+                await repo.Committer.Invoke();
 
-                history = new DataSyncHistory
-                {
-                    DistrictId = district.DistrictId,
-                    Started = DateTime.UtcNow,
-                };
-                db.DataSyncHistories.Add(history);
-                await db.SaveChangesAsync();
+                var loader = new Loader(Logger, repo, @"CSVSample\", history);
 
-                DateTime start = DateTime.UtcNow;
-
-                var processor = new CsvFileProcessor
-                {
-                    Db = db,
-                    DistrictId = district.DistrictId,
-                    BasePath = @"CSVSample\", // TODO pull this from the district
-                    History = history,
-                    Logger = Logger,
-                    ChunkSize = 50,
-                };
-
-                await processor.ProcessFile<CsvOrg>(@"orgs.csv");
-                await processor.ProcessFile<CsvCourse>(@"courses.csv");
-                await processor.ProcessFile<CsvAcademicSession>(@"academicSessions.csv");
-                await processor.ProcessFile<CsvClass>(@"classes.csv");
-                await processor.ProcessFile<CsvUser>(@"users.csv");
-                await processor.ProcessFile<CsvEnrollment>(@"enrollments.csv");
-
-                var lines = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId);
-                var analyzer = new Analyzer(Logger, district, lines, CreateCommitter(db));
-                await analyzer.MarkDeleted(start);
-                await analyzer.Analyze();
+                await loader.LoadFile<CsvOrg>(@"orgs.csv");
+                await loader.LoadFile<CsvCourse>(@"courses.csv");
+                await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
+                await loader.LoadFile<CsvClass>(@"classes.csv");
+                await loader.LoadFile<CsvUser>(@"users.csv");
+                await loader.LoadFile<CsvEnrollment>(@"enrollments.csv");
             }
             catch (Exception ex)
             {
@@ -118,141 +91,77 @@ namespace OneRosterSync.Net.Processing
             }
             finally
             {
-                district.ProcessingStatus = ProcessingStatus.PendingApproval;
-                district.Touch();
-                if (history != null)
-                    history.Completed = DateTime.UtcNow;
-                await db.SaveChangesAsync();
+                repo.District.ProcessingStatus = ProcessingStatus.LoadingDone;
+                repo.District.Touch();
+                //history.Completed = DateTime.UtcNow;
+                await repo.Committer.Invoke();
             }
         }
 
-        private async Task ApplyDistrictData(ApplicationDbContext db, District district)
+        /// <summary>
+        /// Load the District CSV data into the database
+        /// This is the first step of the Processing
+        /// </summary>
+        private async Task Analyze(DistrictRepo repo)
+        {
+            DataSyncHistory history = null;
+            try
+            {
+                history = repo.CurrentHistory;
+                repo.District.ProcessingStatus = ProcessingStatus.Loading;
+                await repo.Committer.Invoke();
+
+                var analyzer = new Analyzer(Logger, repo);
+                await analyzer.MarkDeleted(history.Started);
+                await analyzer.Analyze();
+            }
+            catch (Exception ex)
+            {
+                Logger.Here().LogError(ex, "Error Analyzing District Data.");
+            }
+            finally
+            {
+                repo.District.ProcessingStatus = ProcessingStatus.AnalyzingDone;
+                repo.District.Touch();
+                //history.Completed = DateTime.UtcNow;
+                await repo.Committer.Invoke();
+            }
+        }
+
+
+        private async Task Apply(DistrictRepo repo)
         {
             try
             {
-                district.ProcessingStatus = ProcessingStatus.Applying;
-                district.Touch();
-                await db.SaveChangesAsync();
+                repo.District.ProcessingStatus = ProcessingStatus.Applying;
+                repo.District.Touch();
+                await repo.Committer.Invoke();
 
-                var lines = db.DataSyncLines
-                    .Where(l => l.DistrictId == district.DistrictId)
-                    .Where(l => l.IncludeInSync && l.SyncStatus == SyncStatus.ReadyToApply);
-
-                var api = new ApiManager(Logger);
-
-                string[] entities = new string[]
+                using (var api = new ApiManager(Logger))
                 {
-                    "Org",
-                    "Course",
-                    "AcademicSession",
-                    "Class",
-                    "User",
-                    "Enrollment",
-                };
+                    var applier = new Applier(Logger, repo, api);
 
-                DataLineCache cache = new DataLineCache(Logger);
-                foreach (string entity in entities)
-                {
-                    /*
-                    if (entity == "Enrollment")
-                    {
-                        //await Analyze(db, district.DistrictId);
-                        await cache.Load(db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId));
-                    }
-                    */
-
-                    foreach (DataSyncLine line in await lines.Where(l => l.Table == $"Csv{entity}" && l.SyncStatus == SyncStatus.ReadyToApply).ToListAsync())
-                    {
-                        switch (line.LoadStatus)
-                        {
-                            case LoadStatus.Added:
-                            case LoadStatus.Modified:
-                            case LoadStatus.Deleted:
-                            case LoadStatus.NoChange:
-                                await ApplyLine(entity, line, api, db, district, cache);
-                                break;
-
-                            case LoadStatus.None:
-                                Logger.Here().LogWarning($"NoChange / None should not be flagged for Sync: {line.RawData}");
-                                break;
-                        }
-                    }
+                    await applier.ApplyLines<CsvOrg>();
+                    await applier.ApplyLines<CsvCourse>();
+                    await applier.ApplyLines<CsvAcademicSession>();
+                    await applier.ApplyLines<CsvClass>();
+                    await applier.ApplyLines<CsvUser>();
+                    await applier.ApplyLines<CsvEnrollment>();
                 }
             }
             catch (Exception ex)
             {
-                Logger.Here().LogError(ex.Message);
+                Logger.Here().LogError(ex, "Error Applying District Data");
                 throw;
             }
             finally
             {
-                district.ProcessingStatus = ProcessingStatus.Finished;
-                district.Touch();
-                await db.SaveChangesAsync();
+                repo.District.ProcessingStatus = ProcessingStatus.ApplyingDone;
+                repo.District.Touch();
+                await repo.Committer.Invoke();
             }
         }
 
-        private static async Task ApplyLine(string entity, DataSyncLine line, ApiManager api, ApplicationDbContext db, District district, DataLineCache cache)
-        {
-            ApiPostBase data = ApiPostBase.CreateApiPost(entity, line.RawData);
 
-            data.DistrictId = district.DistrictId.ToString();
-            data.DistrictName = district.Name;
-            data.LastSeen = line.LastSeen;
-            data.SourceId = line.SourceId;
-            data.TargetId = line.TargetId;
-            data.Status = line.LoadStatus.ToString();
-
-            if (entity == "Enrollment")
-            {
-                // kludge...
-                //var classMap = cache.GetMap<CsvClass>();
-                //var userMap = cache.GetMap<CsvUser>();
-                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
-
-                var lines = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId);
-                DataSyncLine _class = lines.Where(l => l.Table == "CsvClass").SingleOrDefault(l => l.SourceId == csvEnrollment.classSourcedId);
-                DataSyncLine user = lines.Where(l => l.Table == "CsvUser").SingleOrDefault(l => l.SourceId == csvEnrollment.userSourcedId);
-
-                data.EnrollmentMap = new EnrollmentMap
-                {
-                    //classTargetId = classMap.ContainsKey(csvEnrollment.classSourcedId) ? classMap[csvEnrollment.classSourcedId].TargetId : null,
-                    //userTargetId = userMap.ContainsKey(csvEnrollment.userSourcedId) ? userMap[csvEnrollment.userSourcedId].TargetId : null,
-                    classTargetId = _class?.TargetId,
-                    userTargetId = user?.TargetId,
-                };
-                // cache it in the database - for display only
-                line.EnrollmentMap = JsonConvert.SerializeObject(data.EnrollmentMap);
-            }
-
-            ApiResponse response = await api.Post(data.EntityType.ToLower(), data);
-            if (response.Success)
-            {
-                line.SyncStatus = SyncStatus.Applied;
-                if (!string.IsNullOrEmpty(response.TargetId))
-                    line.TargetId = response.TargetId;
-                line.Error = null;
-
-                /*
-                switch (entity)
-                {
-                    case "Class":
-                        //var enrollments = db.DataSyncLines.Where(l => l.DistrictId == district.DistrictId).Where(l => l.Table == nameof(CsvEnrollment)).Where(l => l.)
-                        break;
-
-                    case "User":
-                        break;
-                }
-                */
-            }
-            else
-            {
-                line.SyncStatus = SyncStatus.ApplyFailed;
-                line.Error = response.ErrorMessage;
-            }
-
-            line.Touch();
-            await db.SaveChangesAsync();
-        }
     }
 }
