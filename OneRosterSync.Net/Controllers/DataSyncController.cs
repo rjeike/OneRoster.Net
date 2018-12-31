@@ -70,6 +70,7 @@ namespace OneRosterSync.Net.Controllers
                 ProcessingStatus = d.ProcessingStatus.ToString(),
                 Modified = d.Modified.ToLocalTime().ToString(),
             })
+            .OrderByDescending(d => d.Modified)
             .ToListAsync();
                 
             return View(model);
