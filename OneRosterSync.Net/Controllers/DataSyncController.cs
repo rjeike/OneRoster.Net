@@ -89,42 +89,9 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DistrictDelete(int districtId)
         {
-            var district = db.Districts.Find(districtId);
+            var repo = new DistrictRepo(Logger, db, districtId);
 
-            // retrieve entire list of histories
-            var histories = await db.DataSyncHistories
-                .Where(h => h.DistrictId == districtId)
-                .ToListAsync();
-
-            // delete the histories in chunks
-            await histories
-                .AsQueryable()
-                .ForEachInChunksAsync(
-                    chunkSize: 50,
-                    action: async history =>
-                    {
-                        // for each history, delete the details associated with it as well
-                        var details = await db.DataSyncHistoryDetails
-                            .Where(d => d.DataSyncHistoryId == history.DataSyncHistoryId)
-                            .ToListAsync();
-                        db.DataSyncHistoryDetails.RemoveRange(details);
-                    }, 
-                    // commit changes after each chunk
-                    onChunkComplete: async () => await db.SaveChangesAsync());
-
-            db.DataSyncHistories.RemoveRange(histories);
-            await db.SaveChangesAsync();
-
-            // now delete the lines
-            var lines = await db.DataSyncLines
-                .Where(l => l.DistrictId == districtId)
-                .ToListAsync();
-            db.DataSyncLines.RemoveRange(lines);
-            await db.SaveChangesAsync();
-
-            // finally, delete the district itself!
-            db.Districts.Remove(district);
-            await db.SaveChangesAsync();
+            await repo.DeleteDistrict();
 
             return RedirectToAction(nameof(DistrictList));
         }
@@ -184,18 +151,6 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToDistrict(district.DistrictId);
         }
 
-        /*
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DistrictProcess(District district)
-        {
-            District d = db.Districts.Find(district.DistrictId);
-            d.ProcessingStatus = ProcessingStatus.Scheduled;
-            d.Touch();
-            await db.SaveChangesAsync();
-
-            return RedirectToDistrict(district.DistrictId);
-        }
-        */
 
         /// <summary>
         /// Display all matching records for the District (DataSyncLines)
@@ -237,10 +192,7 @@ namespace OneRosterSync.Net.Controllers
             var model = await PagingList.CreateAsync(orderedQuery, 10, page);
 
             model.Action = nameof(DataSyncLines);
-            model.RouteValue = new RouteValueDictionary
-            {
-                { "districtId", districtId }
-            };
+            model.RouteValue = new RouteValueDictionary { { "districtId", districtId } };
 
             return View(model);
         }
@@ -303,19 +255,6 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToDistrict(districtId);
         }
 
-        /*
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApproveChanges(int districtId)
-        {
-            District district = db.Districts.Find(districtId);
-            district.ProcessingStatus = ProcessingStatus.Approved;
-            district.Touch();
-            await db.SaveChangesAsync();
-
-            return RedirectToDistrict(districtId);
-        }
-        */
-
         private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = db.Districts.Find(districtId);
@@ -333,43 +272,45 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> FullProcess(int districtId) => await Process(districtId, ProcessingAction.FullProcess);
 
 
-        private DataSyncLineReportLine ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
+        /// <summary>
+        /// Probably a better way to do this.  Group query?
+        /// </summary>
+        private async Task<DataSyncLineReportLine> ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
         {
             var lines = repo.Lines<T>();
             return new DataSyncLineReportLine
             {
                 Entity = typeof(T).Name,
 
-                IncludeInSync = lines.Count(l => l.IncludeInSync),
+                IncludeInSync = await lines.CountAsync(l => l.IncludeInSync),
 
-                Added = lines.Count(l => l.LoadStatus == LoadStatus.Added),
-                Modified = lines.Count(l => l.LoadStatus == LoadStatus.Modified),
-                NoChange = lines.Count(l => l.LoadStatus == LoadStatus.NoChange),
-                Deleted = lines.Count(l => l.LoadStatus == LoadStatus.Deleted),
+                Added = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Added),
+                Modified = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Modified),
+                NoChange = await lines.CountAsync(l => l.LoadStatus == LoadStatus.NoChange),
+                Deleted = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Deleted),
 
-                Loaded = lines.Count(l => l.SyncStatus == SyncStatus.Loaded),
-                ReadyToApply = lines.Count(l => l.SyncStatus == SyncStatus.ReadyToApply),
-                Applied = lines.Count(l => l.SyncStatus == SyncStatus.Applied),
-                AppliedFailed = lines.Count(l => l.SyncStatus == SyncStatus.ApplyFailed),
+                Loaded = await lines.CountAsync(l => l.SyncStatus == SyncStatus.Loaded),
+                ReadyToApply = await lines.CountAsync(l => l.SyncStatus == SyncStatus.ReadyToApply),
+                Applied = await lines.CountAsync(l => l.SyncStatus == SyncStatus.Applied),
+                AppliedFailed = await lines.CountAsync(l => l.SyncStatus == SyncStatus.ApplyFailed),
 
-                TotalRecords = lines.Count(),
+                TotalRecords = await lines.CountAsync(),
             };
         }
 
         [HttpGet]
-        //public async Task<IActionResult> DistrictReport(int districtId)
-        public IActionResult DistrictReport(int districtId)
+        public async Task<IActionResult> DistrictReport(int districtId)
         {
             var repo = new DistrictRepo(Logger, db, districtId);
 
-            var model = new[]
+            var model = new DataSyncLineReportLine[]
             {
-                ReportLine<CsvOrg>(repo),
-                ReportLine<CsvCourse>(repo),
-                ReportLine<CsvAcademicSession>(repo),
-                ReportLine<CsvClass>(repo),
-                ReportLine<CsvUser>(repo),
-                ReportLine<CsvEnrollment>(repo),
+                await ReportLine<CsvOrg>(repo),
+                await ReportLine<CsvCourse>(repo),
+                await ReportLine<CsvAcademicSession>(repo),
+                await ReportLine<CsvClass>(repo),
+                await ReportLine<CsvUser>(repo),
+                await ReportLine<CsvEnrollment>(repo),
             };
 
             return View(model);
