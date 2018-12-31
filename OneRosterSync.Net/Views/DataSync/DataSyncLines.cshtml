@@ -148,10 +148,10 @@
                 @Html.DisplayFor(modelItem => item.Version)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Created)
+                @item.Created.ToLocalTime()
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Modified)
+                @item.Modified.ToLocalTime()
             </td>
         </tr>
         }

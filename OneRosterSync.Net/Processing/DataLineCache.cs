@@ -21,7 +21,7 @@ namespace OneRosterSync.Net.Processing
             Logger = logger;
         }
 
-        public async Task Load(IQueryable<DataSyncLine> filter)
+        public async Task Load(IQueryable<DataSyncLine> filter, IEnumerable<string> tables)
         {
             Cache.Clear();
 
@@ -31,7 +31,7 @@ namespace OneRosterSync.Net.Processing
             sw.Start();
 
             // could possibly use GroupBy instead, but this might be fine
-            string[] tables = await filter.Select(l => l.Table).Distinct().ToArrayAsync();
+            //string[] tables = await filter.Select(l => l.Table).Distinct().ToArrayAsync();
             foreach (string table in tables)
                 Cache[table] = await filter
                     .Where(l => l.Table == table)

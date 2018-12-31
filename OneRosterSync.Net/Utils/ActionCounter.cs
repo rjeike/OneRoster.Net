@@ -3,6 +3,10 @@ using System.Threading.Tasks;
 
 namespace OneRosterSync.Net.Utils
 {
+    /// <summary>
+    /// Helper class to count requests and only Invoke and only once a 
+    /// "chunk" of requests has been submitted
+    /// </summary>
     public class ActionCounter
     {
         private readonly int ChunkSize;
@@ -13,7 +17,7 @@ namespace OneRosterSync.Net.Utils
         /// <summary>
         /// Bookkeeping of how many times we actually Invoked
         /// </summary>
-        public int TotalInokes { get; private set; }
+        public int TotalInvokes { get; private set; }
 
         /// <summary>
         /// ActionCounter Constructor
@@ -50,7 +54,7 @@ namespace OneRosterSync.Net.Utils
         public async Task Invoke()
         {
             await AsyncAction.Invoke();
-            TotalInokes++;
+            TotalInvokes++;
             Count = 0;
         }
     }

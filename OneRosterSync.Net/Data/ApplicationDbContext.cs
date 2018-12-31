@@ -113,6 +113,5 @@ namespace OneRosterSync.Net.Data
 
             base.OnModelCreating(builder);
         }
-
     }
 }

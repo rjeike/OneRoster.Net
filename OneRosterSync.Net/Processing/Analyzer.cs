@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Utils;
 
@@ -55,7 +56,7 @@ namespace OneRosterSync.Net.Processing
             // This should be comfortable for 50K students or so with a reasonable amount of computer memory.
             // Performance testing is needed...
             var cache = new DataLineCache(Logger);
-            await cache.Load(Repo.Lines());
+            await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
             // include all Orgs in sync by default
             foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
@@ -79,32 +80,40 @@ namespace OneRosterSync.Net.Processing
             }
             await Repo.Committer.InvokeIfAny();
 
-            var enrollments = cache.GetMap<CsvEnrollment>().Values;
-            var userMap = cache.GetMap<CsvUser>();
+            //var enrollments = cache.GetMap<CsvEnrollment>().Values;
+            //var userMap = cache.GetMap<CsvUser>();
 
-            foreach (var enrollment in enrollments)
-            {
-                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
+            var users = Repo.Lines<CsvUser>();
 
-                // figure out if we need to process this enrollment
-                if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
-                    !classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-                    !IsUnappliedChange(enrollment) ||                           // only include if unapplied change in enrollment
-                    !userMap.ContainsKey(csvEnrollment.userSourcedId))          // finally, user should exist
-                    continue;
+            //foreach (var enrollment in enrollments)
+            await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200, 
+                action: async (enrollment) =>
+                {
+                    CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
 
-                // mark enrollment for sync
-                IncludeReadyTouch(enrollment);
+                    // figure out if we need to process this enrollment
+                    if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
+                        !classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
+                        !IsUnappliedChange(enrollment)                              // only include if unapplied change in enrollment
+                        // || !userMap.ContainsKey(csvEnrollment.userSourcedId)// finally, user should exist
+                        )          
+                        return;
 
-                // mark user for sync
-                DataSyncLine user = userMap[csvEnrollment.userSourcedId];
-                if (IsUnappliedChange(user))
-                    IncludeReadyTouch(user);
+                    var user = await users.SingleOrDefaultAsync(l => l.SourceId == csvEnrollment.userSourcedId);
+                    if (user == null)
+                        return;
 
-                // commit changes
-                await Repo.Committer.InvokeIfChunk();
-            }
-            await Repo.Committer.InvokeIfAny();
+                    // mark enrollment for sync
+                    IncludeReadyTouch(enrollment);
+
+                    // mark user for sync
+                    //DataSyncLine user = userMap[csvEnrollment.userSourcedId];
+                    if (IsUnappliedChange(user))
+                        IncludeReadyTouch(user);
+                }, 
+                onChunkComplete: async () => { await Repo.Committer.Invoke(); });
+
+            await Repo.Committer.Invoke();
         }
     }
 }

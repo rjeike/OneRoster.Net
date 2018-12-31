@@ -55,7 +55,7 @@
                 @Html.DisplayFor(modelItem => item.Table)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Created)
+                @item.Created.ToLocalTime()
             </td>
             <td>
                 @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |

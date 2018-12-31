@@ -1,0 +1,94 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLineReportLine>
+
+@{
+    ViewData["Title"] = "DistrictReport";
+}
+
+<h2>District Report</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Entity)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IncludeInSync)
+            </th>
+            <th>
+                Load:
+                @Html.DisplayNameFor(model => model.Added)
+            </th>
+            <th>
+                Load:
+                @Html.DisplayNameFor(model => model.Modified)
+            </th>
+            <th>
+                Load:
+                @Html.DisplayNameFor(model => model.NoChange)
+            </th>
+            <th>
+                Load:
+                @Html.DisplayNameFor(model => model.Deleted)
+            </th>
+            <th>
+                Sync:
+                @Html.DisplayNameFor(model => model.Loaded)
+            </th>
+            <th>
+                Sync:
+                @Html.DisplayNameFor(model => model.ReadyToApply)
+            </th>
+            <th>
+                Sync:
+                @Html.DisplayNameFor(model => model.Applied)
+            </th>
+            <th>
+                Sync:
+                @Html.DisplayNameFor(model => model.AppliedFailed)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalRecords)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Entity)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IncludeInSync)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Added)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Modified)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NoChange)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Deleted)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Loaded)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ReadyToApply)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Applied)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AppliedFailed)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalRecords)
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

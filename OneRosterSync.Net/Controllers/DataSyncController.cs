@@ -330,5 +330,48 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Analyze(int districtId) => await Process(districtId, ProcessingAction.Analyze);
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Apply(int districtId) => await Process(districtId, ProcessingAction.Apply);
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> FullProcess(int districtId) => await Process(districtId, ProcessingAction.FullProcess);
+
+
+        private DataSyncLineReportLine ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
+        {
+            var lines = repo.Lines<T>();
+            return new DataSyncLineReportLine
+            {
+                Entity = typeof(T).Name,
+
+                IncludeInSync = lines.Count(l => l.IncludeInSync),
+
+                Added = lines.Count(l => l.LoadStatus == LoadStatus.Added),
+                Modified = lines.Count(l => l.LoadStatus == LoadStatus.Modified),
+                NoChange = lines.Count(l => l.LoadStatus == LoadStatus.NoChange),
+                Deleted = lines.Count(l => l.LoadStatus == LoadStatus.Deleted),
+
+                Loaded = lines.Count(l => l.SyncStatus == SyncStatus.Loaded),
+                ReadyToApply = lines.Count(l => l.SyncStatus == SyncStatus.ReadyToApply),
+                Applied = lines.Count(l => l.SyncStatus == SyncStatus.Applied),
+                AppliedFailed = lines.Count(l => l.SyncStatus == SyncStatus.ApplyFailed),
+
+                TotalRecords = lines.Count(),
+            };
+        }
+
+        [HttpGet]
+        //public async Task<IActionResult> DistrictReport(int districtId)
+        public IActionResult DistrictReport(int districtId)
+        {
+            var repo = new DistrictRepo(Logger, db, districtId);
+
+            var model = new[]
+            {
+                ReportLine<CsvOrg>(repo),
+                ReportLine<CsvCourse>(repo),
+                ReportLine<CsvAcademicSession>(repo),
+                ReportLine<CsvClass>(repo),
+                ReportLine<CsvUser>(repo),
+                ReportLine<CsvEnrollment>(repo),
+            };
+
+            return View(model);
+        }
     }
 }
