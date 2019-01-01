@@ -49,7 +49,7 @@
             @Html.DisplayNameFor(model => model.IsApprovalRequired)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.IsApprovalRequired)
+            @(Model.IsApprovalRequired ? "yes" : "no")
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.EmailsEachProcess)
@@ -79,13 +79,13 @@
             @Html.DisplayNameFor(model => model.Created)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Created)
+            @(Model.Created.ToLocalTime())
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.Modified)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Modified)
+            @(Model.Modified.ToLocalTime())
         </dd>
     </dl>
 </div>

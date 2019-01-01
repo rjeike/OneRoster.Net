@@ -96,14 +96,17 @@ namespace OneRosterSync.Net.Processing
         private async Task Load(DistrictRepo repo)
         {
             DataSyncHistory history = null;
+            history = repo.PushHistory();
+
+            // clear error before starting
+            history.LoadError = null;
+            repo.District.ProcessingStatus = ProcessingStatus.Loading;
+            await repo.Committer.Invoke();
+
+            var loader = new Loader(Logger, repo, repo.District.BasePath, history);
+
             try
             {
-                history = repo.PushHistory();
-                repo.District.ProcessingStatus = ProcessingStatus.Loading;
-                await repo.Committer.Invoke();
-
-                var loader = new Loader(Logger, repo, repo.District.BasePath, history);
-
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
                 await loader.LoadFile<CsvCourse>(@"courses.csv");
                 await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
@@ -113,16 +116,18 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                Logger.Here().LogError(ex, "Error Loading District Data.");
+                var pe = (ex as ProcessingException)
+                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Load, $"Unhandled exception Loading data for {loader.LastEntity}.", ex);
+                repo.RecordProcessingError(pe);
             }
             finally
             {
                 repo.District.ProcessingStatus = ProcessingStatus.LoadingDone;
                 repo.District.Touch();
-                //history.Completed = DateTime.UtcNow;
                 await repo.Committer.Invoke();
             }
         }
+
 
         /// <summary>
         /// Load the District CSV data into the database
@@ -130,11 +135,21 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Analyze(DistrictRepo repo)
         {
-            DataSyncHistory history = null;
             try
             {
-                history = repo.CurrentHistory;
-                repo.District.ProcessingStatus = ProcessingStatus.Loading;
+                DataSyncHistory history = repo.CurrentHistory;
+
+                if (!string.IsNullOrEmpty(history.LoadError))
+                {
+                    var pe = new ProcessingException(Logger.Here(), ProcessingStage.Analyze, "Can't Analyze with active LoadError.  Reload first.");
+                    repo.RecordProcessingError(pe);
+                    return;
+                }
+
+                // clear error
+                history.AnalyzeError = null;
+
+                repo.District.ProcessingStatus = ProcessingStatus.Analyzing;
                 await repo.Committer.Invoke();
 
                 var analyzer = new Analyzer(Logger, repo);
@@ -143,13 +158,14 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                Logger.Here().LogError(ex, "Error Analyzing District Data.");
+                var pe = (ex as ProcessingException)
+                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Analyze, $"Unhandled exception Analyzing data.", ex);
+                repo.RecordProcessingError(pe);
             }
             finally
             {
                 repo.District.ProcessingStatus = ProcessingStatus.AnalyzingDone;
                 repo.District.Touch();
-                //history.Completed = DateTime.UtcNow;
                 await repo.Committer.Invoke();
             }
         }
@@ -159,6 +175,14 @@ namespace OneRosterSync.Net.Processing
         {
             try
             {
+                if (!string.IsNullOrEmpty(repo.CurrentHistory.LoadError) ||
+                !string.IsNullOrEmpty(repo.CurrentHistory.AnalyzeError))
+                {
+                    var pe = new ProcessingException(Logger.Here(), ProcessingStage.Apply, "Can't Apply with active LoadError or AnalyzeError");
+                    repo.RecordProcessingError(pe);
+                    return;
+                }
+
                 repo.District.ProcessingStatus = ProcessingStatus.Applying;
                 repo.District.Touch();
                 await repo.Committer.Invoke();
@@ -177,8 +201,9 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                Logger.Here().LogError(ex, "Error Applying District Data");
-                throw;
+                var pe = (ex as ProcessingException) ?? 
+                    new ProcessingException(Logger.Here(), ProcessingStage.Apply, $"Unhandled exception Applying data.", ex);
+                repo.RecordProcessingError(pe);
             }
             finally
             {

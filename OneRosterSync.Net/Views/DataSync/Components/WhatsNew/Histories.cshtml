@@ -13,6 +13,11 @@
     }
 }
 
+@if (Model.Any())
+{
+@await Html.PartialAsync("HistoryInfo", Model.OrderByDescending(h => h.Created).First())
+}
+
 
 <table class="table">
     <thead>

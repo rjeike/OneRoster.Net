@@ -1,14 +1,6 @@
 ﻿@model OneRosterSync.Net.Models.DataSyncHistory
 
-@{
-    ViewData["Title"] = "History";
-}
-
-<h2>History</h2>
-
 <div>
-    <h4>DataSyncHistory</h4>
-    <hr />
     <dl class="dl-horizontal">
         <dt>
             @Html.DisplayNameFor(model => model.District)
@@ -16,53 +8,49 @@
         <dd>
             @Html.DisplayFor(model => model.District.Name)
         </dd>
+
+        <dt>@Html.DisplayNameFor(model => model.LoadError)</dt>
+        <dd>@Html.DisplayFor(model => model.LoadError)</dd>
+        <dt>@Html.DisplayNameFor(model => model.AnalyzeError)</dt>
+        <dd>@Html.DisplayFor(model => model.AnalyzeError)</dd>
+        <dt>@Html.DisplayNameFor(model => model.ApplyError)</dt>
+        <dd>@Html.DisplayFor(model => model.ApplyError)</dd>
+
         <dt>
             @Html.DisplayNameFor(model => model.Started)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Started)
+            @(Model.Started.ToLocalTime())
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.NumRows)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.NumRows)
+            @Model.NumRows.ToString("N0")
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.NumAdded)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.NumAdded)
+            @Model.NumAdded.ToString("N0")
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.NumModified)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.NumModified)
+            @Model.NumModified.ToString("N0")
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.NumDeleted)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.NumDeleted)
+            @Model.NumDeleted.ToString("N0")
         </dd>
         <dt>
             @Html.DisplayNameFor(model => model.Version)
         </dt>
         <dd>
             @Html.DisplayFor(model => model.Version)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Created)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Created)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Modified)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Modified)
         </dd>
     </dl>
 </div>

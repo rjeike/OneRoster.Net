@@ -121,5 +121,25 @@ namespace OneRosterSync.Net.Processing
             Db.Districts.Remove(District);
             await Committer.Invoke();
         }
+
+        public void RecordProcessingError(ProcessingException pe)
+        {
+            DataSyncHistory history = CurrentHistory;
+            if (history == null)
+            {
+                Logger.Here().LogError($"No current history.  Developer: create History record before Processing.");
+                return;
+            }
+           
+            switch (pe.ProcessingStage)
+            {
+                case ProcessingStage.Load: CurrentHistory.LoadError = pe.Message; break;
+                case ProcessingStage.Analyze: CurrentHistory.AnalyzeError = pe.Message; break;
+                case ProcessingStage.Apply: CurrentHistory.ApplyError = pe.Message; break;
+                default:
+                    Logger.Here().LogError($"Unexpected Processing Stage in exception: {pe.ProcessingStage}");
+                    break;
+            }
+        }
     }
 }

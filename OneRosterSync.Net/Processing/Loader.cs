@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -11,15 +12,6 @@ using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
-    public class LoadException : Exception
-    {
-        public LoadException(ILogger logger, string message, Exception innerException = null)
-            : base(message, innerException)
-        {
-            logger.LogError(message, innerException);
-        }
-    }
-
     public class Loader
     {
         private readonly ILogger Logger;
@@ -27,6 +19,8 @@ namespace OneRosterSync.Net.Processing
 
         private readonly string BasePath;
         private readonly DataSyncHistory History;
+
+        public string LastEntity { get; private set; }
 
         public Loader(ILogger logger, DistrictRepo repo, string basePath, DataSyncHistory history)
         {
@@ -38,11 +32,12 @@ namespace OneRosterSync.Net.Processing
 
         public async Task LoadFile<T>(string filename) where T : CsvBaseObject
         {
+            LastEntity = typeof(T).Name; // kludge
             DateTime now = DateTime.UtcNow;
-            string filePath = BasePath + filename;
+            string filePath = Path.Combine(BasePath, filename);
             string table = typeof(T).Name;
 
-            using (var file = System.IO.File.OpenText(filePath))
+            using (var file = File.OpenText(filePath))
             {
                 using (var csv = new CsvHelper.CsvReader(file))
                 {
@@ -51,22 +46,23 @@ namespace OneRosterSync.Net.Processing
 
                     csv.Read();
                     csv.ReadHeader();
-                    int errors = 0;
                     for (int i = 0; await csv.ReadAsync(); i++)
                     {
+                        T record = null;
                         try
                         {
-                            var record = csv.GetRecord<T>();
+                            record = csv.GetRecord<T>();
                             await ProcessRecord(record, table, now);
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            errors++;
-                        }
+                            if (ex is ProcessingException)
+                                throw;
 
-                        // enough errors, give up
-                        if (errors > 100)
-                            break;
+                            string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
+                            throw new ProcessingException(Logger.Here(), ProcessingStage.Load, 
+                                $"Unhandled error processing {typeof(T).Name}: {o}", innerException: ex);
+                        }
 
                         await Repo.Committer.InvokeIfChunk();
                     }
@@ -81,18 +77,10 @@ namespace OneRosterSync.Net.Processing
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
         {
             if (string.IsNullOrEmpty(record.sourcedId))
-                throw new LoadException(Logger.Here(), $"Record contains no SourcedId: {JsonConvert.SerializeObject(record)}");
+                throw new ProcessingException(Logger.Here(), ProcessingStage.Load, 
+                    $"Record of type {typeof(T).Name} contains no SourcedId: {JsonConvert.SerializeObject(record)}");
 
-            DataSyncLine line;
-
-            try
-            {
-                line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new LoadException(Logger.Here(), $"Multiple records of type {typeof(T).Name} for sourcedId {record.sourcedId} for {JsonConvert.SerializeObject(record)}", ex);
-            }
+            DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
 
             bool newRecord = line == null;
 

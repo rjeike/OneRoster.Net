@@ -105,7 +105,7 @@ namespace OneRosterSync.Net.Controllers
                 return View(district);
 
             // create default values
-            district.BasePath = @"CSVSample\";
+            district.BasePath = @"CSVSample";
             district.LmsApiEndpoint = @"https://localhost:44312/api/mockapi/";
 
             db.Add(district);
