@@ -111,6 +111,9 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Base Path of CSV File")]
         public string BasePath { get; set; }
 
+        [DisplayName("Endpoint for LMS API")]
+        public string LmsApiEndpoint { get; set; }
+
         [DisplayName("Approval Required?")]
         public bool IsApprovalRequired { get; set; }
 
@@ -142,13 +145,22 @@ namespace OneRosterSync.Net.Models
         public string SourceId { get; set; }
         public string TargetId { get; set; }
         public string Data { get; set; }
+
+        [DisplayName("Data from CSV (as JSON)")]
+        [DataType(DataType.MultilineText)]
         public string RawData { get; set; }
+
+        [DisplayName("Load Status")]
         public LoadStatus LoadStatus { get; set; }
+
+        [DisplayName("Sync Status")]
         public SyncStatus SyncStatus { get; set; }
         public string Error { get; set; }
+
+        [DisplayName("Last Seen")]
         public DateTime LastSeen { get; set; }
 
-        [DisplayName("Include in sync processing?")]
+        [DisplayName("Include in Sync?")]
         public bool IncludeInSync { get; set; }
 
         /// <summary>
@@ -169,7 +181,15 @@ namespace OneRosterSync.Net.Models
         public int DistrictId { get; set; }
 
         public DateTime Started { get; set; }
-        public DateTime? Completed { get; set; }
+
+        public DateTime? LoadStarted { get; set; }
+        public DateTime? LoadCompleted { get; set; }
+
+        public DateTime? AnalyzeStarted { get; set; }
+        public DateTime? AnalyzeCompleted { get; set; }
+
+        public DateTime? ApplyStarted { get; set; }
+        public DateTime? ApplyCompleted { get; set; }
 
         [DisplayName("Rows")]
         public int NumRows { get; set; }
@@ -199,6 +219,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("New Data")]
         public string DataNew { get; set; }
 
+        [DisplayName("Load Status")]
         public LoadStatus LoadStatus { get; set; }
 
         public string Table { get; set; }

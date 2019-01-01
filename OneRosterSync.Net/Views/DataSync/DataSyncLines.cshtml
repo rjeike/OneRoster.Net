@@ -67,7 +67,7 @@
     </div>
 </div>
 
-<table class="table">
+<table class="table table-striped">
     <thead>
         <tr>
             <th>
@@ -80,7 +80,7 @@
                 @Html.DisplayNameFor(model => model.TargetId)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.RawData)
+                Include?
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.LoadStatus)
@@ -89,22 +89,16 @@
                 @Html.DisplayNameFor(model => model.SyncStatus)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.IncludeInSync)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Error)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.LastSeen)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Version)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Created)
+                Data
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Modified)
+                
             </th>
         </tr>
     </thead>
@@ -119,15 +113,10 @@
                 @Html.DisplayFor(modelItem => item.SourceId)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.TargetId)
+                @(item.TargetId ?? "(none)")
             </td>
             <td>
-                <pre>@JsonUtilities.FormatJson(item.RawData)</pre>
-                @if (!string.IsNullOrEmpty(item.EnrollmentMap))
-                {
-                    <span>Enrollment Map</span>
-                    <pre>@JsonUtilities.FormatJson(item.EnrollmentMap)</pre>
-                }
+                @(item.IncludeInSync ? "yes" : "no")
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.LoadStatus)
@@ -136,22 +125,26 @@
                 @Html.DisplayFor(modelItem => item.SyncStatus)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.IncludeInSync)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Error)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastSeen)
+                @item.LastSeen.ToLocalTime()
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Version)
             </td>
             <td>
-                @item.Created.ToLocalTime()
+                <pre>@JsonUtilities.FormatJson(item.RawData)</pre>
+                @if (!string.IsNullOrEmpty(item.EnrollmentMap))
+                {
+                    <span>Enrollment Map</span>
+                    <pre>@JsonUtilities.FormatJson(item.EnrollmentMap)</pre>
+                }
+                @if (!string.IsNullOrEmpty(item.Error))
+                {
+                    <span>Error</span>
+                    <pre>@item.Error</pre>
+                }
             </td>
             <td>
-                @item.Modified.ToLocalTime()
+                @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" });
             </td>
         </tr>
         }

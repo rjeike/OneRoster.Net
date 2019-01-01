@@ -1,0 +1,71 @@
+﻿@model OneRosterSync.Net.Models.DataSyncLine
+
+@{
+    ViewData["Title"] = "DataSyncLineEdit";
+}
+
+<h2>Date Line Details</h2>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-4">
+        <h4>Edit</h4>
+        <form asp-action="DataSyncLineEdit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="DataSyncLineId" />
+            <div class="form-group">
+                <label asp-for="TargetId" class="control-label"></label>
+                <input asp-for="TargetId" class="form-control" />
+                <span asp-validation-for="TargetId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="IncludeInSync" /> @Html.DisplayNameFor(model => model.IncludeInSync)
+                    </label>
+                </div>
+            </div>
+            <!--
+    <div class="form-group">
+        <label asp-for="RawData" class="control-label"></label>
+        <textarea asp-for="RawData" rows="6" class="form-control"></textarea>
+        <span asp-validation-for="RawData" class="text-danger"></span>
+    </div>
+        -->
+            <div class="form-group">
+                <label asp-for="LoadStatus" class="control-label"></label>
+                <select asp-for="LoadStatus" asp-items="Html.GetEnumSelectList<LoadStatus>()" class="form-control"></select>
+                <span asp-validation-for="LoadStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SyncStatus" class="control-label"></label>
+                <select asp-for="SyncStatus" asp-items="Html.GetEnumSelectList<SyncStatus>()" class="form-control"></select>
+                <span asp-validation-for="SyncStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save Changes" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-8">
+        <h4>Details</h4>
+        @await Html.PartialAsync("DataSyncLineDetails", Model)
+    </div>
+
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-12">
+        <h4>Data Line Updates</h4>
+        @await Html.PartialAsync("DataSyncLineHistoryDetailsList", Model.DataSyncHistoryDetails)
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

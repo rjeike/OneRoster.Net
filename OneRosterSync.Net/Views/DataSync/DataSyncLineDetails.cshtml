@@ -1,66 +1,91 @@
-﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistoryDetail>
+﻿@model OneRosterSync.Net.Models.DataSyncLine
+@using OneRosterSync.Net.Utils;
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.DataSyncHistoryDetailId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataSyncHistoryId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataSyncLineId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataOrig)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DataNew)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LoadStatus)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Table)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Created)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataSyncHistoryDetailId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataSyncHistoryId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataSyncLineId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataOrig)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DataNew)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LoadStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Table)
-            </td>
-            <td>
-                @item.Created.ToLocalTime()
-            </td>
-            <td>
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div>
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.District)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.District.Name)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Table)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Table)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.SourceId)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.SourceId)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.TargetId)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.TargetId)
+        </dd>
+        <dt>
+            Include in Sync
+        </dt>
+        <dd>
+            @(Model.IncludeInSync ? "yes" : "no")
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LoadStatus)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.LoadStatus)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.SyncStatus)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.SyncStatus)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Error)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Error)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.LastSeen)
+        </dt>
+        <dd>
+            @Model.LastSeen.ToLocalTime()
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Version)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Version)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Created)
+        </dt>
+        <dd>
+            @(Model.Created.ToLocalTime())
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Modified)
+        </dt>
+        <dd>
+            @(Model.Modified.ToLocalTime())
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.RawData)
+        </dt>
+        <dd>
+            <pre>@JsonUtilities.FormatJson(Model.RawData)</pre>
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.EnrollmentMap)
+        </dt>
+        <dd>
+            <pre>@JsonUtilities.FormatJson(Model.EnrollmentMap)</pre>
+        </dd>
+    </dl>
+</div>

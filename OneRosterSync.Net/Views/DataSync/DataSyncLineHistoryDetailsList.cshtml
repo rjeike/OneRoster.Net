@@ -1,0 +1,50 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistoryDetail>
+@using OneRosterSync.Net.Utils;
+
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.DataOrig)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.DataNew)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.LoadStatus)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Table)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Created)
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <pre>@(string.IsNullOrEmpty(item.DataOrig) ? "(empty)" : JsonUtilities.FormatJson(item.DataOrig))</pre>
+                        </td>
+                        <td>
+                            <pre>@JsonUtilities.FormatJson(item.DataNew)</pre>
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.LoadStatus)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Table)
+                        </td>
+                        <td>
+                            @item.Created.ToLocalTime()
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

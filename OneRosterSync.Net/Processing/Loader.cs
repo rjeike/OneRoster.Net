@@ -11,6 +11,15 @@ using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
+    public class LoadException : Exception
+    {
+        public LoadException(ILogger logger, string message, Exception innerException = null)
+            : base(message, innerException)
+        {
+            logger.LogError(message, innerException);
+        }
+    }
+
     public class Loader
     {
         private readonly ILogger Logger;
@@ -42,10 +51,23 @@ namespace OneRosterSync.Net.Processing
 
                     csv.Read();
                     csv.ReadHeader();
+                    int errors = 0;
                     for (int i = 0; await csv.ReadAsync(); i++)
                     {
-                        var record = csv.GetRecord<T>();
-                        bool newRecord = await ProcessRecord(record, table, now);
+                        try
+                        {
+                            var record = csv.GetRecord<T>();
+                            await ProcessRecord(record, table, now);
+                        }
+                        catch (Exception)
+                        {
+                            errors++;
+                        }
+
+                        // enough errors, give up
+                        if (errors > 100)
+                            break;
+
                         await Repo.Committer.InvokeIfChunk();
                     }
 
@@ -58,11 +80,24 @@ namespace OneRosterSync.Net.Processing
 
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
         {
+            if (string.IsNullOrEmpty(record.sourcedId))
+                throw new LoadException(Logger.Here(), $"Record contains no SourceId: {JsonConvert.SerializeObject(record)}");
+
+            DataSyncLine line;
+
+            try
+            {
+                line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourceId == record.sourcedId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new LoadException(Logger.Here(), $"Multiple records of type {typeof(T).Name} for sourceId {record.sourcedId} for {JsonConvert.SerializeObject(record)}", ex);
+            }
+
+            bool newRecord = line == null;
+
             History.NumRows++;
             string data = JsonConvert.SerializeObject(record);
-
-            DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourceId == record.sourcedId);
-            bool newRecord = line == null;
 
             if (newRecord)
             {

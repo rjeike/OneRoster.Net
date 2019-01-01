@@ -10,6 +10,9 @@ namespace OneRosterSync.Net.Utils
     {
         public static string FormatJson(string json)
         {
+            if (string.IsNullOrEmpty(json))
+                return null;
+
             dynamic parsedJson = JsonConvert.DeserializeObject(json);
             return JsonConvert.SerializeObject(parsedJson, Formatting.Indented);
         }

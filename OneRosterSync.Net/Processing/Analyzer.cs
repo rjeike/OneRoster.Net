@@ -101,6 +101,7 @@ namespace OneRosterSync.Net.Processing
                     var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourceId == csvEnrollment.userSourcedId);
                     if (user == null) // should never happen
                     {
+                        enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";
                         Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
                         return;
                     }

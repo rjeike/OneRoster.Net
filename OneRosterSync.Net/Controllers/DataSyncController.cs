@@ -25,7 +25,6 @@ namespace OneRosterSync.Net.Controllers
 
         public IViewComponentResult Invoke(District district)
         {
-            //District district = db.Districts.Find(districtId);
             var model = db.DataSyncHistories
                 .Where(history => history.DistrictId == district.DistrictId)
                 .OrderByDescending(h => h.Modified)
@@ -105,15 +104,19 @@ namespace OneRosterSync.Net.Controllers
             if (!ModelState.IsValid)
                 return View(district);
 
+            // create default values
+            district.BasePath = @"CSVSample\";
+            district.LmsApiEndpoint = @"https://localhost:44312/api/mockapi/";
+
             db.Add(district);
             await db.SaveChangesAsync();
             return RedirectToDistrict(district.DistrictId);
         }
 
         [HttpGet]
-        public IActionResult DistrictDashboard(int districtId)
+        public async Task<IActionResult> DistrictDashboard(int districtId)
         {
-            District district = db.Districts.Find(districtId);
+            District district = await db.Districts.FindAsync(districtId);
             if (district == null)
                 return NotFound($"District {districtId} not found");
 
@@ -121,7 +124,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DistrictEdit(District district)
+        public async Task<IActionResult> DistrictEditXXX(District district)
         {
             if (!ModelState.IsValid)
                 return View(district);
@@ -140,7 +143,7 @@ namespace OneRosterSync.Net.Controllers
                 }
             }
 
-            District d = db.Districts.Find(district.DistrictId);
+            District d = await db.Districts.FindAsync(district.DistrictId);
 
             d.Name = district.Name;
             d.DailyProcessingTime = district.DailyProcessingTime;
@@ -257,7 +260,7 @@ namespace OneRosterSync.Net.Controllers
 
         private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
-            District district = db.Districts.Find(districtId);
+            District district = await db.Districts.FindAsync(districtId);
 
             district.ProcessingAction = processingAction;
             await db.SaveChangesAsync();
@@ -314,6 +317,82 @@ namespace OneRosterSync.Net.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DataSyncLineEdit(int id)
+        {
+            var model = await db.DataSyncLines
+                .Include(l => l.District)
+                .Include(l => l.DataSyncHistoryDetails)
+                .SingleOrDefaultAsync(l => l.DataSyncLineId == id);
+
+            return View(model);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DataSyncLineEdit(DataSyncLine postedLine)
+        {
+            var line = await db.DataSyncLines.SingleOrDefaultAsync(l => l.DataSyncLineId == postedLine.DataSyncLineId);
+
+            line.TargetId = postedLine.TargetId;
+            line.IncludeInSync = postedLine.IncludeInSync;
+            line.LoadStatus = postedLine.LoadStatus;
+            line.SyncStatus = postedLine.SyncStatus;
+            line.Touch();
+
+            await db.SaveChangesAsync();
+
+            //return RedirectToDistrict(line.DistrictId);
+            return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> DistrictEdit(int id)
+        {
+            var model = await db.Districts.FindAsync(id);
+
+            return View(model);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> DistrictEdit(District postedDistrict)
+        {
+            if (!ModelState.IsValid)
+                return View(postedDistrict);
+
+            var district = await db.Districts.FindAsync(postedDistrict.DistrictId);
+
+            if (postedDistrict.DailyProcessingTime.HasValue)
+            {
+                TimeSpan t = postedDistrict.DailyProcessingTime.Value;
+                TimeSpan min = new TimeSpan(0);
+                TimeSpan max = new TimeSpan(hours: 24, minutes: 0, seconds: 0);
+                if (t < min || t > max)
+                {
+                    ModelState.AddModelError(
+                        key: nameof(postedDistrict.DailyProcessingTime),
+                        errorMessage: "Invalid Daily Processing Time.  Please enter a time between 0:0:0 and 23:59:59.  Or clear to disable daily processing.");
+                    return View(postedDistrict);
+                }
+            }
+
+            district.BasePath = postedDistrict.BasePath;
+            district.DailyProcessingTime = postedDistrict.DailyProcessingTime;
+            district.EmailsEachProcess = postedDistrict.EmailsEachProcess;
+            district.EmailsOnChanges = postedDistrict.EmailsOnChanges;
+            district.IsApprovalRequired = postedDistrict.IsApprovalRequired;
+            district.LmsApiEndpoint = postedDistrict.LmsApiEndpoint;
+            district.Name = postedDistrict.Name;
+            district.TargetId = postedDistrict.TargetId;
+            district.NextProcessingTime = postedDistrict.NextProcessingTime;
+
+            district.Touch();
+
+            await db.SaveChangesAsync();
+
+            return RedirectToDistrict(district.DistrictId);
         }
     }
 }

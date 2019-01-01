@@ -3,43 +3,23 @@
     ViewData["Title"] = "Edit District";
 }
 
-<h2>School District: <b>@Model.Name</b></h2>
-
+<div class="row">
+    <div class="col-md-10">
+        <h2>School District: <b>@Model.Name</b></h2>
+    </div>
+    <div class="col-md-2 pull-right" style="padding-top:10px;">
+        <form asp-action="DistrictDelete">
+            <input type="hidden" asp-for="DistrictId" />
+            <div class="form-group">
+                <input type="submit" value="Delete District" class="btn btn-sm btn-danger" />
+            </div>
+        </form>
+    </div>
+</div>
 <div class="row">
     <div class="col-md-6">
-        <h4>Edit District Details</h4>
-        <hr />
-        <div class="row">
-            <div class="col-md-8">
-                <form asp-action="DistrictEdit">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input type="hidden" asp-for="DistrictId" />
-                    <div class="form-group">
-                        <label asp-for="Name" class="control-label"></label>
-                        <input asp-for="Name" class="form-control" />
-                        <span asp-validation-for="Name" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="DailyProcessingTime" class="control-label"></label>
-                        <input asp-for="DailyProcessingTime" class="form-control" />
-                        <span asp-validation-for="DailyProcessingTime" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" value="Save" class="btn btn-default" />
-                    </div>
-                </form>
-
-                <br />
-
-                <form asp-action="DistrictDelete">
-                    <input type="hidden" asp-for="DistrictId" />
-                    <div class="form-group">
-                        <input type="submit" value="Delete District" class="btn btn-default" />
-                    </div>
-                </form>
-
-            </div>
-        </div>
+        @await Html.PartialAsync("DistrictDetails", Model)
+        <a asp-action="DistrictEdit" asp-route-id="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Edit District</a>
     </div>
     <div class="col-md-6">
 
@@ -72,24 +52,11 @@
                             <label asp-for="Modified" class="control-label"></label>:
                             @Model.Modified.ToLocalTime()
                         </div>
-                        <!--
-                <div class="form-group">
-                    <input type="submit" value="Start Processing" class="btn btn-default" />
-                </div>
-                    -->
                     </form>
                 </div>
             </div>
             <div class="row">
                 <div class=" col-lg-12">
-                    <!--
-    <form asp-action="ApproveChanges">
-        <input type="hidden" asp-for="DistrictId" />
-        <div class="form-group">
-            <input type="submit" value="Apply Changes to LMS" class="btn btn-default" />
-        </div>
-    </form>
-        -->
                     <div>Manually Process step by step:</div>
                     <table>
                         <tbody>
@@ -109,6 +76,9 @@
         </div>
     </div>
 </div>
+
+<br />
+<br />
 
 <div class="row">
     <h4>Processing History</h4>

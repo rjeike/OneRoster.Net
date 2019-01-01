@@ -17,15 +17,18 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Started)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Completed)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.Started)</th>
+            <!--
+    <th>@Html.DisplayNameFor(model => model.LoadStarted)</th>
+    <th>@Html.DisplayNameFor(model => model.LoadCompleted)</th>
+    <th>@Html.DisplayNameFor(model => model.AnalyzeStarted)</th>
+    <th>@Html.DisplayNameFor(model => model.AnalyzeCompleted)</th>
+    <th>@Html.DisplayNameFor(model => model.ApplyStarted)</th>
+    <th>@Html.DisplayNameFor(model => model.ApplyCompleted)</th>
             <th>
                 Elapsed Time
             </th>
+        -->
             <th>
                 @Html.DisplayNameFor(model => model.NumRows)
             </th>
@@ -45,13 +48,7 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Started)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Completed)
-            </td>
-            <td>
-                <span>@FormatTimespan(item.Started, item.Completed)</span>
+                @item.Started.ToLocalTime()
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.NumRows)

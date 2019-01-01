@@ -88,42 +88,6 @@ namespace OneRosterSync.Net.Processing
             }
         }
 
-        /*
-        /// <summary>
-        /// Process a district's OneRoster CSV feed
-        /// </summary>
-        /// <param name="districtId">District Id</param>
-        /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
-        public async Task ProcessDistrict(int districtId, CancellationToken cancellationToken)
-        {
-            using (var scope = Services.CreateScope())
-            {
-                using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
-                {
-                    DistrictRepo repo = new DistrictRepo(Logger, db, districtId);
-                    District district = repo.District;
-                    district.Touch();
-                    await repo.Committer.Invoke();
-
-                    switch (district.ProcessingStatus)
-                    {
-                        case ProcessingStatus.Scheduled:
-                            await Load(repo);
-                            await Analyze(repo); // must pass start time before Load!!!
-                            break;
-
-                        case ProcessingStatus.Approved:
-                            await Apply(repo);
-                            break;
-
-                        default:
-                            Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
-                            break;
-                    }
-                }
-            }
-        }
-        */
 
         /// <summary>
         /// Load the District CSV data into the database
@@ -138,7 +102,7 @@ namespace OneRosterSync.Net.Processing
                 repo.District.ProcessingStatus = ProcessingStatus.Loading;
                 await repo.Committer.Invoke();
 
-                var loader = new Loader(Logger, repo, @"CSVSample\", history);
+                var loader = new Loader(Logger, repo, repo.District.BasePath, history);
 
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
                 await loader.LoadFile<CsvCourse>(@"courses.csv");
@@ -199,7 +163,7 @@ namespace OneRosterSync.Net.Processing
                 repo.District.Touch();
                 await repo.Committer.Invoke();
 
-                using (var api = new ApiManager(Logger))
+                using (var api = new ApiManager(Logger, repo.District.LmsApiEndpoint))
                 {
                     var applier = new Applier(Logger, repo, api);
 

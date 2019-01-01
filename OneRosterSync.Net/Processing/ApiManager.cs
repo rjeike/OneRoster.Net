@@ -14,14 +14,13 @@ namespace OneRosterSync.Net.Processing
         HttpClient client;
         ILogger Logger;
 
-        public ApiManager(ILogger logger)
+        public ApiManager(ILogger logger, string endpoint)
         {
-            // "https://localhost:44312/api/MockApi/update";
             Logger = logger;
 
             client = new HttpClient
             {
-                BaseAddress = new Uri("https://localhost:44312/api/mockapi/")
+                BaseAddress = new Uri(endpoint)
             };
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
