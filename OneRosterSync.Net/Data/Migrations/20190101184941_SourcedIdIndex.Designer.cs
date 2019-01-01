@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20190101184941_SourcedIdIndex")]
+    partial class SourcedIdIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -288,7 +290,7 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<string>("RawData");
 
-                    b.Property<string>("SourcedId");
+                    b.Property<string>("SourceId");
 
                     b.Property<int>("SyncStatus");
 
@@ -300,9 +302,9 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.HasKey("DataSyncLineId");
 
-                    b.HasIndex("DistrictId", "Table", "SourcedId")
+                    b.HasIndex("DistrictId", "Table", "SourceId")
                         .IsUnique()
-                        .HasFilter("[Table] IS NOT NULL AND [SourcedId] IS NOT NULL");
+                        .HasFilter("[Table] IS NOT NULL AND [SourceId] IS NOT NULL");
 
                     b.ToTable("DataSyncLines");
                 });

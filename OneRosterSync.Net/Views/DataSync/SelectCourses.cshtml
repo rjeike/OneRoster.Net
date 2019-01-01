@@ -7,10 +7,10 @@
     string CourseDescription(DataSyncLine line)
     {
         var cvsCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(line.RawData);
-        return $"{line.SourceId} - {cvsCourse.title}";
+        return $"{line.SourcedId} - {cvsCourse.title}";
     }
 
-    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourceId, selected: l.IncludeInSync));
+    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourcedId, selected: l.IncludeInSync));
 }
 
 <h2>Select Courses</h2>

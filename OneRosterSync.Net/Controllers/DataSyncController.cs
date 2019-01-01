@@ -182,7 +182,7 @@ namespace OneRosterSync.Net.Controllers
                 query = query.Where(l => l.Table == table);
 
             if (!string.IsNullOrEmpty(filter))
-                query = query.Where(l => l.SourceId.Contains(filter) || l.TargetId.Contains(filter));
+                query = query.Where(l => l.SourcedId.Contains(filter) || l.TargetId.Contains(filter));
 
             if (loadStatus.HasValue)
                 query = query.Where(l => l.LoadStatus == loadStatus.Value);
@@ -246,7 +246,7 @@ namespace OneRosterSync.Net.Controllers
 
             foreach (var course in model)
             {
-                bool include = SelectedCourses.Contains(course.SourceId);
+                bool include = SelectedCourses.Contains(course.SourcedId);
                 if (course.IncludeInSync == include)
                     continue;
                 course.IncludeInSync = include;

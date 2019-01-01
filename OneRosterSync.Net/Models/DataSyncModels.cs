@@ -142,7 +142,7 @@ namespace OneRosterSync.Net.Models
         public int DistrictId { get; set; }
 
         public string Table { get; set; }
-        public string SourceId { get; set; }
+        public string SourcedId { get; set; }
         public string TargetId { get; set; }
         public string Data { get; set; }
 

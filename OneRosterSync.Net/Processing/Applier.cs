@@ -55,8 +55,8 @@ namespace OneRosterSync.Net.Processing
                 var enrollment = new ApiEnrollmentPost(line.RawData);
                
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
-                DataSyncLine cls = Repo.Lines<CsvClass>().SingleOrDefault(l => l.SourceId == csvEnrollment.classSourcedId);
-                DataSyncLine usr = Repo.Lines<CsvUser>().SingleOrDefault(l => l.SourceId == csvEnrollment.userSourcedId);
+                DataSyncLine cls = Repo.Lines<CsvClass>().SingleOrDefault(l => l.SourcedId == csvEnrollment.classSourcedId);
+                DataSyncLine usr = Repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
 
                 var map = new EnrollmentMap
                 {
@@ -77,7 +77,7 @@ namespace OneRosterSync.Net.Processing
             data.DistrictId = Repo.DistrictId.ToString();
             data.DistrictName = Repo.District.Name;
             data.LastSeen = line.LastSeen;
-            data.SourceId = line.SourceId;
+            data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
 

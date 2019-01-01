@@ -111,6 +111,11 @@ namespace OneRosterSync.Net.Data
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Enforce that sourcedId is unique within a given District/Table
+            builder.Entity<DataSyncLine>()
+                .HasIndex(l => new { l.DistrictId, l.Table, l.SourcedId })
+                .IsUnique();
+
             base.OnModelCreating(builder);
         }
     }

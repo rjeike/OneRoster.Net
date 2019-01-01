@@ -28,7 +28,7 @@ namespace OneRosterSync.Net.Models
         /// <summary>
         /// Unique identifier for record in Source system
         /// </summary>
-        public string SourceId { get; set; }
+        public string SourcedId { get; set; }
 
         /// <summary>
         /// Unique identifier for record in LMS side

@@ -76,7 +76,7 @@ namespace OneRosterSync.Net.Processing
 
             // now walk the classes and include those which map to an included course
             var classMap = cache.GetMap<CsvClass>();
-            var courseIds = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Select(l => l.SourceId).ToHashSet();
+            var courseIds = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Select(l => l.SourcedId).ToHashSet();
             foreach (var _class in classMap.Values.Where(IsUnappliedChange))
             {
                 CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
@@ -98,7 +98,7 @@ namespace OneRosterSync.Net.Processing
                         !IsUnappliedChange(enrollment))                             // only include if unapplied change in enrollment
                         return;
 
-                    var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourceId == csvEnrollment.userSourcedId);
+                    var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
                     if (user == null) // should never happen
                     {
                         enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";

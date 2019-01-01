@@ -81,17 +81,17 @@ namespace OneRosterSync.Net.Processing
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
         {
             if (string.IsNullOrEmpty(record.sourcedId))
-                throw new LoadException(Logger.Here(), $"Record contains no SourceId: {JsonConvert.SerializeObject(record)}");
+                throw new LoadException(Logger.Here(), $"Record contains no SourcedId: {JsonConvert.SerializeObject(record)}");
 
             DataSyncLine line;
 
             try
             {
-                line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourceId == record.sourcedId);
+                line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
             }
             catch (InvalidOperationException ex)
             {
-                throw new LoadException(Logger.Here(), $"Multiple records of type {typeof(T).Name} for sourceId {record.sourcedId} for {JsonConvert.SerializeObject(record)}", ex);
+                throw new LoadException(Logger.Here(), $"Multiple records of type {typeof(T).Name} for sourcedId {record.sourcedId} for {JsonConvert.SerializeObject(record)}", ex);
             }
 
             bool newRecord = line == null;
@@ -111,7 +111,7 @@ namespace OneRosterSync.Net.Processing
                 History.NumAdded++;
                 line = new DataSyncLine
                 {
-                    SourceId = record.sourcedId,
+                    SourcedId = record.sourcedId,
                     DistrictId = Repo.DistrictId,
                     LoadStatus = LoadStatus.Added,
                     LastSeen = now,
@@ -162,7 +162,7 @@ namespace OneRosterSync.Net.Processing
             Repo.PushHistoryDetail(detail);
 
             line.RawData = data;
-            line.SourceId = record.sourcedId;
+            line.SourcedId = record.sourcedId;
             line.SyncStatus = SyncStatus.Loaded;
 
             return newRecord;

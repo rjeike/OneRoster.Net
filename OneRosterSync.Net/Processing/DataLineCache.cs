@@ -35,7 +35,7 @@ namespace OneRosterSync.Net.Processing
             foreach (string table in tables)
                 Cache[table] = await filter
                     .Where(l => l.Table == table)
-                    .ToDictionaryAsync(l => l.SourceId, l => l);
+                    .ToDictionaryAsync(l => l.SourcedId, l => l);
 
             sw.Stop();
             Logger.Here().LogInformation($"Done Loading DataLineCache.  It took {sw.ElapsedMilliseconds} milliseconds.");
