@@ -191,6 +191,10 @@ namespace OneRosterSync.Net.Models
         public DateTime? ApplyStarted { get; set; }
         public DateTime? ApplyCompleted { get; set; }
 
+        public string LoadError { get; set; }
+        public string AnalyzeError { get; set; }
+        public string ApplyError { get; set; }
+
         [DisplayName("Rows")]
         public int NumRows { get; set; }
         [DisplayName("Added")]
