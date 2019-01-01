@@ -9,6 +9,9 @@ using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
+    /// <summary>
+    /// Helper class to cache DataLine records in memory
+    /// </summary>
     public class DataLineCache
     {
         private Dictionary<string, Dictionary<string, DataSyncLine>> Cache = 
@@ -21,6 +24,11 @@ namespace OneRosterSync.Net.Processing
             Logger = logger;
         }
 
+        /// <summary>
+        /// Load specific Csv entities into memory
+        /// </summary>
+        /// <param name="filter">Pass District DataSyncLines</param>
+        /// <param name="tables">List of tables to load</param>
         public async Task Load(IQueryable<DataSyncLine> filter, IEnumerable<string> tables)
         {
             Cache.Clear();
@@ -41,6 +49,10 @@ namespace OneRosterSync.Net.Processing
             Logger.Here().LogInformation($"Done Loading DataLineCache.  It took {sw.ElapsedMilliseconds} milliseconds.");
         }
 
+        /// <summary>
+        /// Get a mapping between sourcedId ==> cached table of DataLines
+        /// </summary>
+        /// <typeparam name="T">Csv entity type</typeparam>
         public Dictionary<string, DataSyncLine> GetMap<T>() where T : CsvBaseObject
         {
             string key = typeof(T).Name;
