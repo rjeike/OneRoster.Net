@@ -14,27 +14,6 @@ using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
 {
-    public class WhatsNewViewComponent : ViewComponent
-    {
-        private readonly ApplicationDbContext db;
-
-        public WhatsNewViewComponent(ApplicationDbContext db)
-        {
-            this.db = db;
-        }
-
-        public IViewComponentResult Invoke(District district)
-        {
-            var model = db.DataSyncHistories
-                .Where(history => history.DistrictId == district.DistrictId)
-                .OrderByDescending(h => h.Modified)
-                .Take(20)
-                .ToList();
-
-            return View(viewName: "Histories", model: model);
-        }
-    }
-
     public class DataSyncController : Controller
     {
         private readonly ApplicationDbContext db;
