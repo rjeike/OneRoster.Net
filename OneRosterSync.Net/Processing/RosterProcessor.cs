@@ -19,6 +19,9 @@ namespace OneRosterSync.Net.Processing
     {
         private readonly IServiceProvider Services;
         private readonly ILogger Logger;
+        private int DistrictId;
+        private ApplicationDbContext Db;
+        private DistrictRepo Repo;
 
         public RosterProcessor(
             IServiceProvider services,
@@ -28,6 +31,27 @@ namespace OneRosterSync.Net.Processing
             Logger = logger;
         }
 
+        private void CreateContext()
+        {
+            DestroyContext();
+            //            using (var scope = Services.CreateScope())
+            var scope = Services.CreateScope();
+            {
+                Db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                Repo = new DistrictRepo(Logger, Db, DistrictId);
+            }
+        }
+
+        private void DestroyContext()
+        {
+            if (Db != null)
+            {
+                Db.Dispose();
+                Db = null;
+                Repo = null;
+            }
+        }
+
         /// <summary>
         /// Process a district's OneRoster CSV feed
         /// </summary>
@@ -35,57 +59,59 @@ namespace OneRosterSync.Net.Processing
         /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
         public async Task Process(int districtId, CancellationToken cancellationToken)
         {
-            using (var scope = Services.CreateScope())
+            try
             {
-                using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
+                DistrictId = districtId;
+                CreateContext();
+                District district = Repo.District;
+                ProcessingAction action = district.ProcessingAction;
+                district.ProcessingAction = ProcessingAction.None; // clear the action out
+                district.Touch();
+                await Repo.Committer.Invoke();
+
+                switch (district.ProcessingStatus)
                 {
-                    DistrictRepo repo = new DistrictRepo(Logger, db, districtId);
-                    District district = repo.District;
-                    ProcessingAction action = district.ProcessingAction;
-                    district.ProcessingAction = ProcessingAction.None; // clear the action out
-                    district.Touch();
-                    await repo.Committer.Invoke();
+                    case ProcessingStatus.Loading:
+                    case ProcessingStatus.Applying:
+                    case ProcessingStatus.Analyzing:
+                        // already in process, bail out?
+                        Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
+                        break;
 
-                    switch (district.ProcessingStatus)
-                    {
-                        case ProcessingStatus.Loading:
-                        case ProcessingStatus.Applying:
-                        case ProcessingStatus.Analyzing:
-                            // already in process, bail out?
-                            Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
-                            break;
-
-                        default:
-                            break;
-                    }
-
-                    switch (action)
-                    {
-                        case ProcessingAction.None:
-                            break;
-
-                        case ProcessingAction.LoadSample:
-                            throw new NotImplementedException();
-
-                        case ProcessingAction.Load:
-                            await Load(repo);
-                            break;
-
-                        case ProcessingAction.Analyze:
-                            await Analyze(repo);
-                            break;
-
-                        case ProcessingAction.Apply:
-                            await Apply(repo);
-                            break;
-
-                        case ProcessingAction.FullProcess:
-                            await Load(repo);
-                            await Analyze(repo);
-                            await Apply(repo);
-                            break;
-                    }
+                    default:
+                        break;
                 }
+
+                switch (action)
+                {
+                    case ProcessingAction.None:
+                        break;
+
+                    case ProcessingAction.LoadSample:
+                        throw new NotImplementedException();
+
+                    case ProcessingAction.Load:
+                        await Load();
+                        break;
+
+                    case ProcessingAction.Analyze:
+                        await Analyze();
+                        break;
+
+                    case ProcessingAction.Apply:
+                        await Apply();
+                        break;
+
+                    case ProcessingAction.FullProcess:
+                        await Load();
+                        await Analyze();
+                        await Apply();
+                        break;
+                }
+            }
+            finally
+            {
+                DestroyContext();
             }
         }
 
@@ -94,16 +120,16 @@ namespace OneRosterSync.Net.Processing
         /// Load the District CSV data into the database
         /// This is the first step of the Processing
         /// </summary>
-        private async Task Load(DistrictRepo repo)
+        private async Task Load()
         {
-            DataSyncHistory history = repo.PushHistory();
-            var loader = new Loader(Logger, repo, repo.District.BasePath, history);
-            await repo.Committer.Invoke();
+            DataSyncHistory history = Repo.PushHistory();
+            var loader = new Loader(Logger, Repo, Repo.District.BasePath, history);
+            await Repo.Committer.Invoke();
 
             try
             {
-                repo.RecordProcessingStart(ProcessingStage.Load);
-                await repo.Committer.Invoke();
+                Repo.RecordProcessingStart(ProcessingStage.Load);
+                await Repo.Committer.Invoke();
 
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
                 await loader.LoadFile<CsvCourse>(@"courses.csv");
@@ -114,22 +140,16 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
+                CreateContext();
                 var pe = (ex as ProcessingException)
-                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Load, $"Unhandled exception Loading data for {loader.LastEntity}.", ex);
-                repo.RecordProcessingError(pe);
+                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Load, 
+                        $"Exception Loading data for {loader.LastEntity}.  Possible duplicate sourcedId. " + ex.Message, ex);
+                Repo.RecordProcessingError(pe);
             }
             finally
             {
-                repo.RecordProcessingStop(ProcessingStage.Load);
-                try
-                {
-                    await repo.Committer.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    int i = 0;
-                    string s = ex.Message;
-                }
+                Repo.RecordProcessingStop(ProcessingStage.Load);
+                await Repo.Committer.Invoke();
             }
         }
 
@@ -138,57 +158,58 @@ namespace OneRosterSync.Net.Processing
         /// Load the District CSV data into the database
         /// This is the first step of the Processing
         /// </summary>
-        private async Task Analyze(DistrictRepo repo)
+        private async Task Analyze()
         {
             try
             {
-                DataSyncHistory history = repo.CurrentHistory;
+                DataSyncHistory history = Repo.CurrentHistory;
                 if (!string.IsNullOrEmpty(history.LoadError))
                 {
                     var pe = new ProcessingException(Logger.Here(), ProcessingStage.Analyze, "Can't Analyze with active LoadError.  Reload first.");
-                    repo.RecordProcessingError(pe);
+                    Repo.RecordProcessingError(pe);
                     return;
                 }
 
-                repo.RecordProcessingStart(ProcessingStage.Analyze);
-                await repo.Committer.Invoke();
+                Repo.RecordProcessingStart(ProcessingStage.Analyze);
+                await Repo.Committer.Invoke();
 
-                var analyzer = new Analyzer(Logger, repo);
+                var analyzer = new Analyzer(Logger, Repo);
                 await analyzer.MarkDeleted(history.Started);
                 await analyzer.Analyze();
             }
             catch (Exception ex)
             {
+                CreateContext();
                 var pe = (ex as ProcessingException)
                     ?? new ProcessingException(Logger.Here(), ProcessingStage.Analyze, $"Unhandled exception Analyzing data.", ex);
-                repo.RecordProcessingError(pe);
+                Repo.RecordProcessingError(pe);
             }
             finally
             {
-                repo.RecordProcessingStop(ProcessingStage.Analyze);
-                await repo.Committer.Invoke();
+                Repo.RecordProcessingStop(ProcessingStage.Analyze);
+                await Repo.Committer.Invoke();
             }
         }
 
 
-        private async Task Apply(DistrictRepo repo)
+        private async Task Apply()
         {
             try
             {
-                if (!string.IsNullOrEmpty(repo.CurrentHistory.LoadError) ||
-                    !string.IsNullOrEmpty(repo.CurrentHistory.AnalyzeError))
+                if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
+                    !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
                 {
                     var pe = new ProcessingException(Logger.Here(), ProcessingStage.Apply, "Can't Apply with active LoadError or AnalyzeError");
-                    repo.RecordProcessingError(pe);
+                    Repo.RecordProcessingError(pe);
                     return;
                 }
 
-                repo.RecordProcessingStart(ProcessingStage.Apply);
-                await repo.Committer.Invoke();
+                Repo.RecordProcessingStart(ProcessingStage.Apply);
+                await Repo.Committer.Invoke();
 
-                using (var api = new ApiManager(Logger, repo.District.LmsApiEndpoint))
+                using (var api = new ApiManager(Logger, Repo.District.LmsApiEndpoint))
                 {
-                    var applier = new Applier(Logger, repo, api);
+                    var applier = new Applier(Logger, Repo, api);
 
                     await applier.ApplyLines<CsvOrg>();
                     await applier.ApplyLines<CsvCourse>();
@@ -200,14 +221,15 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
+                CreateContext();
                 var pe = (ex as ProcessingException) ?? 
                     new ProcessingException(Logger.Here(), ProcessingStage.Apply, $"Unhandled exception Applying data.", ex);
-                repo.RecordProcessingError(pe);
+                Repo.RecordProcessingError(pe);
             }
             finally
             {
-                repo.RecordProcessingStop(ProcessingStage.Apply);
-                await repo.Committer.Invoke();
+                Repo.RecordProcessingStop(ProcessingStage.Apply);
+                await Repo.Committer.Invoke();
             }
         }
     }
