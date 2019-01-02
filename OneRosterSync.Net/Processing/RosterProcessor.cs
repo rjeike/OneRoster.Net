@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -95,18 +96,15 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Load(DistrictRepo repo)
         {
-            DataSyncHistory history = null;
-            history = repo.PushHistory();
-
-            // clear error before starting
-            history.LoadError = null;
-            repo.District.ProcessingStatus = ProcessingStatus.Loading;
-            await repo.Committer.Invoke();
-
+            DataSyncHistory history = repo.PushHistory();
             var loader = new Loader(Logger, repo, repo.District.BasePath, history);
+            await repo.Committer.Invoke();
 
             try
             {
+                repo.RecordProcessingStart(ProcessingStage.Load);
+                await repo.Committer.Invoke();
+
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
                 await loader.LoadFile<CsvCourse>(@"courses.csv");
                 await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
@@ -122,9 +120,16 @@ namespace OneRosterSync.Net.Processing
             }
             finally
             {
-                repo.District.ProcessingStatus = ProcessingStatus.LoadingDone;
-                repo.District.Touch();
-                await repo.Committer.Invoke();
+                repo.RecordProcessingStop(ProcessingStage.Load);
+                try
+                {
+                    await repo.Committer.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    int i = 0;
+                    string s = ex.Message;
+                }
             }
         }
 
@@ -138,7 +143,6 @@ namespace OneRosterSync.Net.Processing
             try
             {
                 DataSyncHistory history = repo.CurrentHistory;
-
                 if (!string.IsNullOrEmpty(history.LoadError))
                 {
                     var pe = new ProcessingException(Logger.Here(), ProcessingStage.Analyze, "Can't Analyze with active LoadError.  Reload first.");
@@ -146,10 +150,7 @@ namespace OneRosterSync.Net.Processing
                     return;
                 }
 
-                // clear error
-                history.AnalyzeError = null;
-
-                repo.District.ProcessingStatus = ProcessingStatus.Analyzing;
+                repo.RecordProcessingStart(ProcessingStage.Analyze);
                 await repo.Committer.Invoke();
 
                 var analyzer = new Analyzer(Logger, repo);
@@ -164,8 +165,7 @@ namespace OneRosterSync.Net.Processing
             }
             finally
             {
-                repo.District.ProcessingStatus = ProcessingStatus.AnalyzingDone;
-                repo.District.Touch();
+                repo.RecordProcessingStop(ProcessingStage.Analyze);
                 await repo.Committer.Invoke();
             }
         }
@@ -176,15 +176,14 @@ namespace OneRosterSync.Net.Processing
             try
             {
                 if (!string.IsNullOrEmpty(repo.CurrentHistory.LoadError) ||
-                !string.IsNullOrEmpty(repo.CurrentHistory.AnalyzeError))
+                    !string.IsNullOrEmpty(repo.CurrentHistory.AnalyzeError))
                 {
                     var pe = new ProcessingException(Logger.Here(), ProcessingStage.Apply, "Can't Apply with active LoadError or AnalyzeError");
                     repo.RecordProcessingError(pe);
                     return;
                 }
 
-                repo.District.ProcessingStatus = ProcessingStatus.Applying;
-                repo.District.Touch();
+                repo.RecordProcessingStart(ProcessingStage.Apply);
                 await repo.Committer.Invoke();
 
                 using (var api = new ApiManager(Logger, repo.District.LmsApiEndpoint))
@@ -207,8 +206,7 @@ namespace OneRosterSync.Net.Processing
             }
             finally
             {
-                repo.District.ProcessingStatus = ProcessingStatus.ApplyingDone;
-                repo.District.Touch();
+                repo.RecordProcessingStop(ProcessingStage.Apply);
                 await repo.Committer.Invoke();
             }
         }

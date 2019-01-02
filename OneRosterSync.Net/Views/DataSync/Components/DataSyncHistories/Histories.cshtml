@@ -1,39 +1,37 @@
 ﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistory>
-@{ 
-    string FormatTimespan(DateTime started, DateTime? completed)
-    {
-        if (!completed.HasValue)
-            return "pending";
-
-        TimeSpan ts = completed.Value - started;
-        if (ts.Minutes < 1)
-            return $"{(ts.Milliseconds / 1000D).ToString("0.###")}";
-
-        return ts.ToString();
-    }
-}
+@using OneRosterSync.Net.Utils
 
 @if (Model.Any())
 {
-@await Html.PartialAsync("HistoryInfo", Model.OrderByDescending(h => h.Created).First())
+    <h4>Current Processing Details</h4>
+    <hr />
+    @await Html.PartialAsync("HistoryInfo", Model.OrderByDescending(h => h.Created).First())
 }
 
+<br />
+<h4>Processing History</h4>
+<hr />
 
 <table class="table">
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.Started)</th>
+
+            <th>Load Time</th>
+            <th>Analyze Time</th>
+            <th>Apply Time</th>
+
             <!--
-    <th>@Html.DisplayNameFor(model => model.LoadStarted)</th>
-    <th>@Html.DisplayNameFor(model => model.LoadCompleted)</th>
-    <th>@Html.DisplayNameFor(model => model.AnalyzeStarted)</th>
-    <th>@Html.DisplayNameFor(model => model.AnalyzeCompleted)</th>
-    <th>@Html.DisplayNameFor(model => model.ApplyStarted)</th>
-    <th>@Html.DisplayNameFor(model => model.ApplyCompleted)</th>
-            <th>
-                Elapsed Time
-            </th>
-        -->
+            <th>@Html.DisplayNameFor(model => model.LoadStarted)</th>
+            <th>@Html.DisplayNameFor(model => model.LoadCompleted)</th>
+            <th>@Html.DisplayNameFor(model => model.AnalyzeStarted)</th>
+            <th>@Html.DisplayNameFor(model => model.AnalyzeCompleted)</th>
+            <th>@Html.DisplayNameFor(model => model.ApplyStarted)</th>
+            <th>@Html.DisplayNameFor(model => model.ApplyCompleted)</th>
+                    <th>
+                        Elapsed Time
+                    </th>
+                -->
             <th>
                 @Html.DisplayNameFor(model => model.NumRows)
             </th>
@@ -50,28 +48,34 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @item.Started.ToLocalTime()
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumRows)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumAdded)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumModified)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumDeleted)
-            </td>
-            <td>
-                <a asp-action="HistoryInfo" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Info</a> |
-                <a asp-action="HistoryDetailsList" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Changes</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @item.Started.ToLocalTime()
+                </td>
+
+                <td>@DateTimeUtilities.FormatTimespan(item.LoadStarted, item.LoadCompleted)</td>
+                <td>@DateTimeUtilities.FormatTimespan(item.AnalyzeStarted, item.AnalyzeCompleted)</td>
+                <td>@DateTimeUtilities.FormatTimespan(item.ApplyStarted, item.ApplyCompleted)</td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumRows)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumAdded)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumModified)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumDeleted)
+                </td>
+                <td>
+                    <a asp-action="HistoryInfo" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Info</a> |
+                    <a asp-action="HistoryDetailsList" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Changes</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

@@ -96,7 +96,7 @@ namespace OneRosterSync.Net.Models
         public string TargetId { get; set; }
 
         // The time of day to process this district's files
-        [DisplayName("Daily Processing Time (time of day)")]
+        [DisplayName("Daily Processing Time)")]
         public TimeSpan? DailyProcessingTime { get; set; }
 
         // The time afterwhich the district should be processed
@@ -117,13 +117,13 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Approval Required?")]
         public bool IsApprovalRequired { get; set; }
 
-        [DisplayName("Email List for processing")]
+        [DisplayName("Emails - Processing ")]
         public string EmailsEachProcess { get; set; }
 
-        [DisplayName("Email List on changes")]
+        [DisplayName("Email - Changes")]
         public string EmailsOnChanges { get; set; }
 
-        [DisplayName("Next Processing Action to take")]
+        [DisplayName("Next Processing")]
         public ProcessingAction ProcessingAction { get; set; }
     }
 

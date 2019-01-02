@@ -141,5 +141,67 @@ namespace OneRosterSync.Net.Processing
                     break;
             }
         }
+
+        public void RecordProcessingStart(ProcessingStage processingStage)
+        {
+            var now = DateTime.UtcNow;
+            var history = CurrentHistory;
+            District.Touch();
+
+            switch (processingStage)
+            {
+                case ProcessingStage.Load:
+                    District.ProcessingStatus = ProcessingStatus.Loading;
+                    history.LoadError = null; // clear error
+                    history.LoadStarted = now;
+                    break;
+
+                case ProcessingStage.Analyze:
+                    District.ProcessingStatus = ProcessingStatus.Analyzing;
+                    history.AnalyzeError = null; // clear error
+                    history.AnalyzeStarted = now;
+                    break;
+
+                case ProcessingStage.Apply:
+                    District.ProcessingStatus = ProcessingStatus.Applying;
+                    history.ApplyError = null; // clear error
+                    history.ApplyStarted = now;
+                    break;
+
+                default:
+                    Logger.Here().LogError($"Unexpected Processing Stage: {processingStage}");
+                    break;
+            }
+        }
+
+        public void RecordProcessingStop(ProcessingStage processingStage)
+        {
+            var now = DateTime.UtcNow;
+            var history = CurrentHistory;
+            District.Touch();
+
+            switch (processingStage)
+            {
+                case ProcessingStage.Load:
+                    District.ProcessingStatus = ProcessingStatus.LoadingDone;
+                    history.LoadCompleted = now;
+                    break;
+
+                case ProcessingStage.Analyze:
+                    District.ProcessingStatus = ProcessingStatus.AnalyzingDone;
+                    history.AnalyzeCompleted = now;
+                    break;
+
+                case ProcessingStage.Apply:
+                    District.ProcessingStatus = ProcessingStatus.ApplyingDone;
+                    history.ApplyCompleted = now;
+                    break;
+
+                default:
+                    Logger.Here().LogError($"Unexpected Processing Stage: {processingStage}");
+                    break;
+            }
+        }
+
     }
 }
