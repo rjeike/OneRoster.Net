@@ -32,13 +32,13 @@ The processing occurs in three stages:
 ## 1. Loading
 CSV files are processed and loaded into the OneRoster.Net database
 
-## 1. Analyzing
+## 2. Analyzing
 After data is loaded, it is analyzed:
 1. Deleted records are identified
 1. Mapping between records is established (e.g. Class ==> Course, Enrollment ==> User and Class)
 1. Determine what records should be included in the Sync with your LMS
 
-## 1. Applying
+## 3. Applying
 The records that need to be Synced are walked and the API on your LMS that you expose are called.
 
 # Getting Started
