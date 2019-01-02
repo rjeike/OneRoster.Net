@@ -148,14 +148,13 @@ namespace OneRosterSync.Net.Controllers
             int page = 1, string table = null, string filter = null, 
             LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
         {
-            District district = await db.Districts.FindAsync(districtId);
-            if (district == null)
+            var repo = new DistrictRepo(Logger, db, districtId);
+            if (repo.District == null)
                 return NotFound($"District {districtId} not found");
 
-            ViewData["DistrictName"] = district.Name;
+            ViewData["DistrictName"] = repo.District.Name;
 
-            var query = db.DataSyncLines
-                .Where(l => l.DistrictId == districtId);
+            var query = repo.Lines().AsNoTracking();
 
             if (!string.IsNullOrEmpty(table))
                 query = query.Where(l => l.Table == table);
@@ -174,10 +173,30 @@ namespace OneRosterSync.Net.Controllers
             var model = await PagingList.CreateAsync(orderedQuery, 10, page);
 
             model.Action = nameof(DataSyncLines);
-            model.RouteValue = new RouteValueDictionary { { "districtId", districtId } };
+            model.RouteValue = new RouteValueDictionary
+            {
+                { "districtId", districtId },
+                { "table", table },
+                { "filter", filter },
+            };
+
+            if (loadStatus.HasValue) model.RouteValue["loadStatus"] = (int)loadStatus.Value;
+            if (syncStatus.HasValue) model.RouteValue["syncStatus"] = (int)syncStatus.Value;
+
+            // kludge to remove empty values
+            foreach (var kvp in model.RouteValue.Where(kvp => kvp.Value == null).ToList())
+                model.RouteValue.Remove(kvp.Key);
 
             return View(model);
         }
+
+
+        [HttpGet]
+        public IActionResult ClearDataSyncLines(int districtId)
+        {
+            return RedirectToAction(nameof(DataSyncLines), new { districtId });
+        }
+
 
         [HttpGet]
         public IActionResult HistoryInfo(int dataSyncHistoryId)

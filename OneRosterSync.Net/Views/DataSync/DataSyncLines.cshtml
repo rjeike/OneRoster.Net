@@ -46,7 +46,7 @@
             <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Filter Records
         </button>
 
-        <a class="btn btn-primary" asp-action="DataSyncLines"
+        <a class="btn btn-primary" asp-action="ClearDataSyncLines"
            asp-all-route-data="@allRouteData" role="button">Clear Filters</a>
     </form>
 </div>
@@ -144,7 +144,7 @@
                 }
             </td>
             <td>
-                @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" });
+                @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" })
             </td>
         </tr>
         }
