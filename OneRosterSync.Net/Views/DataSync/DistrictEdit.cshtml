@@ -3,10 +3,10 @@
     ViewData["Title"] = "Edit District";
 }
 
-<h2>Edit District</h2>
+<h2>Edit District: <small>@Model.Name</small></h2>
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="DistrictEdit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="DistrictId" />
@@ -14,31 +14,44 @@
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
+                <small id="nameHelpBlock" class="form-text text-muted">
+                    A descriptive name for the District.  It is identification and debugging as the District details won't be sync'ed.
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="TargetId" class="control-label"></label>
                 <input asp-for="TargetId" class="form-control" />
                 <span asp-validation-for="TargetId" class="text-danger"></span>
+                <small id="targetIdHelpBlock" class="form-text text-muted">
+                    The unique identifier for the District in the LMS system, needed to maintain mapping between this District and your LMS.
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="DailyProcessingTime" class="control-label"></label>
                 <input asp-for="DailyProcessingTime" class="form-control" />
                 <span asp-validation-for="DailyProcessingTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="NextProcessingTime" class="control-label"></label>
-                <input asp-for="NextProcessingTime" class="form-control" />
-                <span asp-validation-for="NextProcessingTime" class="text-danger"></span>
+                <small id="HelpBlock" class="form-text text-muted">
+                    The time of day (military time) to kick of the full automated processing of the entire flow.
+                    Leave blank if no automated processing is desired (recommended until the processing has been proven stable).
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="BasePath" class="control-label"></label>
                 <input asp-for="BasePath" class="form-control" />
                 <span asp-validation-for="BasePath" class="text-danger"></span>
+                <small id="HelpBlock" class="form-text text-muted">
+                    Local file path to the directory that contains the CSV Files to process.
+                    An SFTP server can be combined with OneRoster.Net to support processing of District uploaded files.
+                    OneRoster.Net comes with a set of sample files in "CSVSample"
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="LmsApiEndpoint" class="control-label"></label>
                 <input asp-for="LmsApiEndpoint" class="form-control" />
                 <span asp-validation-for="LmsApiEndpoint" class="text-danger"></span>
+                <small id="HelpBlock" class="form-text text-muted">
+                    The LMS API endpoint to recieve sync'ed data during the Apply process.
+                </small>
             </div>
             <div class="form-group">
                 <div class="checkbox">
@@ -46,19 +59,31 @@
                         <input asp-for="IsApprovalRequired" /> @Html.DisplayNameFor(model => model.IsApprovalRequired)
                     </label>
                 </div>
+                <small id="HelpBlock" class="form-text text-muted">
+                    Is (manual) approval required to Apply changes to the LMS?<br />
+                    <em>Note: not implemented yet</em>
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="EmailsEachProcess" class="control-label"></label>
                 <input asp-for="EmailsEachProcess" class="form-control" />
                 <span asp-validation-for="EmailsEachProcess" class="text-danger"></span>
+                <small id="HelpBlock" class="form-text text-muted">
+                    List of comma separated email address to send on every automated full process.<br />
+                    <em>Note: not implemented yet</em>
+                </small>
             </div>
             <div class="form-group">
                 <label asp-for="EmailsOnChanges" class="control-label"></label>
                 <input asp-for="EmailsOnChanges" class="form-control" />
                 <span asp-validation-for="EmailsOnChanges" class="text-danger"></span>
+                <small id="HelpBlock" class="form-text text-muted">
+                    List of comma separated email address to send when an error occurs with automated full process.<br />
+                    <em>Note: not implemented yet</em>
+                </small>
             </div>
             <div class="form-group">
-                <input type="submit" value="Save Change" class="btn btn-primary" />
+                <input type="submit" value="Save Changes" class="btn btn-primary" />
             </div>
         </form>
     </div>
