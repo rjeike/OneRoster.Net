@@ -64,18 +64,7 @@ namespace OneRosterSync.Net.Processing
                                 Logger.Here().LogInformation($"Done processing District {district.DistrictId}.");
                             });
 
-                            // update the next processing to be the time of day called for either today or tomorrow if already passed
-                            DateTime? next = null;
-                            if (district.DailyProcessingTime.HasValue)
-                            {
-                                // today at the processing time
-                                next = now.Date.Add(district.DailyProcessingTime.Value);
-
-                                // if the time to process has already passed, then tomorrow
-                                if (next <= now)
-                                    next = next.Value.AddDays(1);
-                            }
-                            district.NextProcessingTime = next;
+                            DistrictRepo.UpdateNextProcessingTime(district);
                             district.Touch();
                             await db.SaveChangesAsync();
                         }

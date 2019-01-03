@@ -384,8 +384,9 @@ namespace OneRosterSync.Net.Controllers
             district.LmsApiEndpoint = postedDistrict.LmsApiEndpoint;
             district.Name = postedDistrict.Name;
             district.TargetId = postedDistrict.TargetId;
-            district.NextProcessingTime = postedDistrict.NextProcessingTime;
 
+            DistrictRepo.UpdateNextProcessingTime(district);
+            
             district.Touch();
 
             await db.SaveChangesAsync();

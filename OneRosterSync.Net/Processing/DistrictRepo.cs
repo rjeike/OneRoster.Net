@@ -203,5 +203,29 @@ namespace OneRosterSync.Net.Processing
             }
         }
 
+        /// <summary>
+        /// Computes the NextProcessingTime after NOW based on DailyProcessingTime
+        /// Assigns to NextProcessingTime
+        /// </summary>
+        public static void UpdateNextProcessingTime(District district)
+        {
+            if (!district.DailyProcessingTime.HasValue)
+            {
+                district.NextProcessingTime = null;
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+
+            // update the next processing to be the time of day called for either today or tomorrow if already passed
+            DateTime next = now.Date.Add(district.DailyProcessingTime.Value);
+
+            // if the time to process has already passed, then tomorrow
+            if (next <= now)
+                next = next.AddDays(1);
+
+            district.NextProcessingTime = next;
+        }
+
     }
 }

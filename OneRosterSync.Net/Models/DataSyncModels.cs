@@ -96,7 +96,7 @@ namespace OneRosterSync.Net.Models
         public string TargetId { get; set; }
 
         // The time of day to process this district's files
-        [DisplayName("Daily Processing Time)")]
+        [DisplayName("Daily Processing Time")]
         public TimeSpan? DailyProcessingTime { get; set; }
 
         // The time afterwhich the district should be processed
@@ -146,7 +146,7 @@ namespace OneRosterSync.Net.Models
         public string TargetId { get; set; }
         public string Data { get; set; }
 
-        [DisplayName("Data from CSV (as JSON)")]
+        [DisplayName("CSV data as JSON")]
         [DataType(DataType.MultilineText)]
         public string RawData { get; set; }
 
