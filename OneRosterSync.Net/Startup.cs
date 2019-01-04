@@ -1,23 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
+using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Processing;
 using ReflectionIT.Mvc.Paging;
 using Swashbuckle.AspNetCore.Swagger;
-using System.Reflection;
-using System.IO;
 
 namespace OneRosterSync.Net
 {
@@ -75,8 +71,10 @@ namespace OneRosterSync.Net
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            ApplicationLogging.Factory = loggerFactory;
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
