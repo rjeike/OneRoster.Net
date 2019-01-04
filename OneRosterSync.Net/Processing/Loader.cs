@@ -14,20 +14,16 @@ namespace OneRosterSync.Net.Processing
 {
     public class Loader
     {
-        private readonly ILogger Logger;
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Loader>();
         private readonly DistrictRepo Repo;
-
         private readonly string BasePath;
-        private readonly DataSyncHistory History;
 
         public string LastEntity { get; private set; }
 
-        public Loader(ILogger logger, DistrictRepo repo, string basePath, DataSyncHistory history)
+        public Loader(DistrictRepo repo, string basePath)
         {
-            Logger = logger;
             Repo = repo;
             BasePath = basePath;
-            History = history;
         }
 
         public async Task LoadFile<T>(string filename) where T : CsvBaseObject
@@ -84,7 +80,7 @@ namespace OneRosterSync.Net.Processing
 
             bool newRecord = line == null;
 
-            History.NumRows++;
+            Repo.CurrentHistory.NumRows++;
             string data = JsonConvert.SerializeObject(record);
 
             if (newRecord)
@@ -92,11 +88,11 @@ namespace OneRosterSync.Net.Processing
                 // already deleted
                 if (record.isDeleted)
                 {
-                    History.NumDeleted++;
+                    Repo.CurrentHistory.NumDeleted++;
                     return false;
                 }
 
-                History.NumAdded++;
+                Repo.CurrentHistory.NumAdded++;
                 line = new DataSyncLine
                 {
                     SourcedId = record.sourcedId,
@@ -123,17 +119,17 @@ namespace OneRosterSync.Net.Processing
                 // status should be deleted
                 if (record.isDeleted)
                 {
-                    History.NumDeleted++;
+                    Repo.CurrentHistory.NumDeleted++;
                     line.LoadStatus = LoadStatus.Deleted;
                 }
                 else if (line.SyncStatus == SyncStatus.Loaded && line.LoadStatus == LoadStatus.Added)
                 {
-                    History.NumAdded++;
+                    Repo.CurrentHistory.NumAdded++;
                     line.LoadStatus = LoadStatus.Added; // if added, leave added
                 }
                 else
                 {
-                    History.NumModified++;
+                    Repo.CurrentHistory.NumModified++;
                     line.LoadStatus = LoadStatus.Modified;
                 }
             }
@@ -143,7 +139,7 @@ namespace OneRosterSync.Net.Processing
                 DataOrig = line.RawData,
                 DataNew = data,
                 DataSyncLine = line,
-                DataSyncHistory = History,
+                DataSyncHistory = Repo.CurrentHistory,
                 LoadStatus = line.LoadStatus,
                 Table = table,
             };

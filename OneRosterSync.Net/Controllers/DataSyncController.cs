@@ -67,7 +67,7 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DistrictDelete(int districtId)
         {
-            var repo = new DistrictRepo(Logger, db, districtId);
+            var repo = new DistrictRepo(db, districtId);
 
             await repo.DeleteDistrict();
 
@@ -102,37 +102,6 @@ namespace OneRosterSync.Net.Controllers
             return View(district);
         }
 
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DistrictEditXXX(District district)
-        {
-            if (!ModelState.IsValid)
-                return View(district);
-
-            if (district.DailyProcessingTime.HasValue)
-            {
-                TimeSpan t = district.DailyProcessingTime.Value;
-                TimeSpan min = new TimeSpan(0);
-                TimeSpan max = new TimeSpan(hours: 24, minutes: 0, seconds: 0);
-                if (t < min || t > max)
-                {
-                    ModelState.AddModelError(
-                        key: nameof(district.DailyProcessingTime), 
-                        errorMessage: "Invalid Daily Processing Time.  Please enter a time between 0:0:0 and 23:59:59.  Or clear to disable daily processing.");
-                    return View(district);
-                }
-            }
-
-            District d = await db.Districts.FindAsync(district.DistrictId);
-
-            d.Name = district.Name;
-            d.DailyProcessingTime = district.DailyProcessingTime;
-            d.Touch();
-
-            await db.SaveChangesAsync();
-
-            return RedirectToDistrict(district.DistrictId);
-        }
-
 
         /// <summary>
         /// Display all matching records for the District (DataSyncLines)
@@ -148,7 +117,7 @@ namespace OneRosterSync.Net.Controllers
             int page = 1, string table = null, string filter = null, 
             LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
         {
-            var repo = new DistrictRepo(Logger, db, districtId);
+            var repo = new DistrictRepo(db, districtId);
             if (repo.District == null)
                 return NotFound($"District {districtId} not found");
 
@@ -228,19 +197,16 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> SelectCourses(int districtId)
         {
-            var model = await db.DataSyncLines
-                .Where(l => l.DistrictId == districtId && l.Table == "CsvCourse")
-                .ToListAsync();
-
+            var repo = new DistrictRepo(db, districtId);
+            var model = await repo.Lines<CsvCourse>().ToListAsync();
             return View(model);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SelectCourses(int districtId, IEnumerable<string> SelectedCourses)
         {
-            var model = await db.DataSyncLines
-                .Where(l => l.DistrictId == districtId && l.Table == "CsvCourse")
-                .ToListAsync();
+            var repo = new DistrictRepo(db, districtId);
+            var model = await repo.Lines<CsvCourse>().ToListAsync();
 
             foreach (var course in model)
             {
@@ -251,7 +217,7 @@ namespace OneRosterSync.Net.Controllers
                 course.Touch();
             }
 
-            await db.SaveChangesAsync();
+            await repo.Committer.Invoke();
 
             return RedirectToDistrict(districtId);
         }
@@ -302,7 +268,7 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> DistrictReport(int districtId)
         {
-            var repo = new DistrictRepo(Logger, db, districtId);
+            var repo = new DistrictRepo(db, districtId);
 
             var model = new DataSyncLineReportLine[]
             {

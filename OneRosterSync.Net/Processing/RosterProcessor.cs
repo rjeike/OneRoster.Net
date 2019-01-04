@@ -1,117 +1,94 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
-using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
-    public class RosterProcessor
+    public class RosterProcessor : IDisposable
     {
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<RosterProcessor>();
+
         private readonly IServiceProvider Services;
-        private readonly ILogger Logger;
-        private int DistrictId;
+        private readonly int DistrictId;
+        private readonly CancellationToken CancellationToken;
+
+        private IServiceScope ServiceScope;
         private ApplicationDbContext Db;
         private DistrictRepo Repo;
 
         public RosterProcessor(
             IServiceProvider services,
-            ILogger logger)
+            int districtId,
+            CancellationToken cancellationToken)
         {
             Services = services;
-            Logger = logger;
+            DistrictId = districtId;
+            CancellationToken = cancellationToken;
+
+            CreateContext();
+        }
+
+        public void Dispose()
+        {
+            DestroyContext();
         }
 
         private void CreateContext()
         {
-            DestroyContext();
-            //            using (var scope = Services.CreateScope())
-            var scope = Services.CreateScope();
-            {
-                Db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                Repo = new DistrictRepo(Logger, Db, DistrictId);
-            }
+            ServiceScope = Services.CreateScope();
+            Db = ServiceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Repo = new DistrictRepo(Db, DistrictId);
         }
 
         private void DestroyContext()
         {
-            if (Db != null)
-            {
-                Db.Dispose();
-                Db = null;
-                Repo = null;
-            }
+            Repo = null;
+            Db.Dispose();
+            Db = null;
+            ServiceScope.Dispose();
+            ServiceScope = null;
+        }
+
+        private void RefreshContext()
+        {
+            DestroyContext();
+            CreateContext();
         }
 
         /// <summary>
         /// Process a district's OneRoster CSV feed
         /// </summary>
-        /// <param name="districtId">District Id</param>
-        /// <param name="cancellationToken">Token to cancel operation (not currently used)</param>
-        public async Task Process(int districtId, CancellationToken cancellationToken)
+        public async Task Process(ProcessingAction action)
         {
-            try
+            switch (action)
             {
-                DistrictId = districtId;
-                CreateContext();
-                District district = Repo.District;
-                ProcessingAction action = district.ProcessingAction;
-                district.ProcessingAction = ProcessingAction.None; // clear the action out
-                district.Touch();
-                await Repo.Committer.Invoke();
+                default:
+                case ProcessingAction.None:
+                case ProcessingAction.LoadSample:
+                    throw new NotImplementedException();
 
-                switch (district.ProcessingStatus)
-                {
-                    case ProcessingStatus.Loading:
-                    case ProcessingStatus.Applying:
-                    case ProcessingStatus.Analyzing:
-                        // already in process, bail out?
-                        Logger.Here().LogError($"Unexpected Processing status {district.ProcessingStatus} for District {district.Name} ({district.DistrictId})");
-                        break;
+                case ProcessingAction.Load:
+                    await Load();
+                    break;
 
-                    default:
-                        break;
-                }
+                case ProcessingAction.Analyze:
+                    await Analyze();
+                    break;
 
-                switch (action)
-                {
-                    case ProcessingAction.None:
-                        break;
+                case ProcessingAction.Apply:
+                    await Apply();
+                    break;
 
-                    case ProcessingAction.LoadSample:
-                        throw new NotImplementedException();
-
-                    case ProcessingAction.Load:
-                        await Load();
-                        break;
-
-                    case ProcessingAction.Analyze:
-                        await Analyze();
-                        break;
-
-                    case ProcessingAction.Apply:
-                        await Apply();
-                        break;
-
-                    case ProcessingAction.FullProcess:
-                        await Load();
-                        await Analyze();
-                        await Apply();
-                        break;
-                }
-            }
-            finally
-            {
-                DestroyContext();
+                case ProcessingAction.FullProcess:
+                    await Load();
+                    await Analyze();
+                    await Apply();
+                    break;
             }
         }
 
@@ -122,8 +99,8 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Load()
         {
-            DataSyncHistory history = Repo.PushHistory();
-            var loader = new Loader(Logger, Repo, Repo.District.BasePath, history);
+            Repo.PushHistory();
+            var loader = new Loader(Repo, Repo.District.BasePath);
             await Repo.Committer.Invoke();
 
             try
@@ -140,14 +117,16 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                CreateContext();
+                RefreshContext();
                 var pe = (ex as ProcessingException)
                     ?? new ProcessingException(Logger.Here(), ProcessingStage.Load, 
                         $"Exception Loading data for {loader.LastEntity}.  Possible duplicate sourcedId. " + ex.Message, ex);
                 Repo.RecordProcessingError(pe);
+                await Repo.Committer.Invoke();
             }
             finally
             {
+                RefreshContext();
                 Repo.RecordProcessingStop(ProcessingStage.Load);
                 await Repo.Committer.Invoke();
             }
@@ -179,13 +158,15 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                CreateContext();
+                RefreshContext();
                 var pe = (ex as ProcessingException)
                     ?? new ProcessingException(Logger.Here(), ProcessingStage.Analyze, $"Unhandled exception Analyzing data.", ex);
                 Repo.RecordProcessingError(pe);
+                await Repo.Committer.Invoke();
             }
             finally
             {
+                RefreshContext();
                 Repo.RecordProcessingStop(ProcessingStage.Analyze);
                 await Repo.Committer.Invoke();
             }
@@ -207,9 +188,9 @@ namespace OneRosterSync.Net.Processing
                 Repo.RecordProcessingStart(ProcessingStage.Apply);
                 await Repo.Committer.Invoke();
 
-                using (var api = new ApiManager(Logger, Repo.District.LmsApiEndpoint))
+                using (var api = new ApiManager(Repo.District.LmsApiEndpoint))
                 {
-                    var applier = new Applier(Logger, Repo, api);
+                    var applier = new Applier(Services, Repo.DistrictId, api);
 
                     await applier.ApplyLines<CsvOrg>();
                     await applier.ApplyLines<CsvCourse>();
@@ -221,13 +202,15 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                CreateContext();
+                RefreshContext();
                 var pe = (ex as ProcessingException) ?? 
                     new ProcessingException(Logger.Here(), ProcessingStage.Apply, $"Unhandled exception Applying data.", ex);
                 Repo.RecordProcessingError(pe);
+                await Repo.Committer.Invoke();
             }
             finally
             {
+                RefreshContext();
                 Repo.RecordProcessingStop(ProcessingStage.Apply);
                 await Repo.Committer.Invoke();
             }

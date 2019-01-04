@@ -3,60 +3,107 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
-using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
     public class Applier
     {
-        private readonly ILogger Logger;
-        private readonly DistrictRepo Repo;
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Analyzer>();
+
+        private readonly IServiceProvider Services;
+        private readonly int DistrictId;
         private readonly ApiManager Api;
 
-        public Applier(ILogger logger, DistrictRepo repo, ApiManager api)
+        /// <summary>
+        /// How many APIs should we call in parallel?
+        /// TODO: make a property of the District
+        /// </summary>
+        public int ParallelChunkSize { get; set; } = 10;
+
+        public Applier(IServiceProvider services, int districtId, ApiManager api)
         {
-            Logger = logger;
-            Repo = repo;
+            Services = services;
+            DistrictId = districtId;
             Api = api;
         }
 
         /// <summary>
-        /// Apply all records of a given Csv type the LMS
+        /// Apply all records of a given entity type to the LMS
         /// </summary>
         public async Task ApplyLines<T>() where T : CsvBaseObject
         {
-            var lines = Repo.Lines<T>().Where(l => l.IncludeInSync && l.SyncStatus == SyncStatus.ReadyToApply);
-
-            foreach (DataSyncLine line in await lines.ToListAsync())
+            for (int last = 0; ; )
             {
-                switch (line.LoadStatus)
+                using (var scope = Services.CreateScope())
+                using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
                 {
-                    default:
-                        await ApplyLine<T>(line);
+                    var repo = new DistrictRepo(db, DistrictId);
+
+                    // filter on all lines that are included and ready to be applied
+                    var lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.SyncStatus == SyncStatus.ReadyToApply);
+
+                    // how many records are remaining to process?
+                    int curr = await lines.CountAsync();
+                    if (curr == 0)
                         break;
 
-                    case LoadStatus.None:
-                        Logger.Here().LogWarning($"None should not be flagged for Sync: {line.RawData}");
-                        break;
+                    // after each process, the remaining record count should go down
+                    // this avoids and infinite loop in case there is an problem processing
+                    // basically, we bail if no progress is made at all
+                    if (last > 0 && last <= curr)
+                        throw new ProcessingException(Logger, ProcessingStage.Apply, "Apply failed to update SyncStatus of applied record.");
+                    last = curr;
+
+                    // process chunks of lines in parallel
+                    IEnumerable<Task> tasks = await lines
+                        .AsNoTracking()
+                        .Take(ParallelChunkSize)
+                        .Select(line => ApplyLineParallel<T>(line))
+                        .ToListAsync();
+
+                    await Task.WhenAll(tasks);
                 }
             }
         }
 
-        private async Task ApplyLine<T>(DataSyncLine line) where T : CsvBaseObject
+        private async Task ApplyLineParallel<T>(DataSyncLine line) where T : CsvBaseObject
         {
+            // we need a new DataContext to avoid concurrency issues
+            using (var scope = Services.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
+            {
+                // re-create the Repo and Data pulled from it
+                var repo = new DistrictRepo(db, DistrictId);
+                var newLine = await repo.Lines<T>().SingleAsync(l => l.DataSyncLineId == line.DataSyncLineId);
+                await ApplyLine<T>(repo, newLine);
+                await repo.Committer.Invoke();
+            }
+        }
+
+        private async Task ApplyLine<T>(DistrictRepo repo, DataSyncLine line) where T : CsvBaseObject
+        {
+            switch (line.LoadStatus)
+            {
+                case LoadStatus.None:
+                    Logger.Here().LogWarning($"None should not be flagged for Sync: {line.RawData}");
+                    return;
+            }
+
             ApiPostBase data;
-            
+
             if (line.Table == nameof(CsvEnrollment))
             {
                 var enrollment = new ApiEnrollmentPost(line.RawData);
                
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
-                DataSyncLine cls = Repo.Lines<CsvClass>().SingleOrDefault(l => l.SourcedId == csvEnrollment.classSourcedId);
-                DataSyncLine usr = Repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
+                DataSyncLine cls = repo.Lines<CsvClass>().SingleOrDefault(l => l.SourcedId == csvEnrollment.classSourcedId);
+                DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
 
                 var map = new EnrollmentMap
                 {
@@ -64,8 +111,11 @@ namespace OneRosterSync.Net.Processing
                     userTargetId = usr?.TargetId,
                 };
 
-                enrollment.EnrollmentMap = map; // API data - give LMS IDs in it's own system
-                line.EnrollmentMap = JsonConvert.SerializeObject(map); // cache it in the database - for display only
+                // this provides a mapping of LMS TargetIds (rather than sourcedId's)
+                enrollment.EnrollmentMap = map;
+
+                // cache map in the database (for display/troubleshooting only)
+                line.EnrollmentMap = JsonConvert.SerializeObject(map); 
 
                 data = enrollment;
             }
@@ -74,8 +124,8 @@ namespace OneRosterSync.Net.Processing
                 data = new ApiPost<T>(line.RawData);
             }
                 
-            data.DistrictId = Repo.DistrictId.ToString();
-            data.DistrictName = Repo.District.Name;
+            data.DistrictId = repo.DistrictId.ToString();
+            data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
@@ -96,7 +146,6 @@ namespace OneRosterSync.Net.Processing
             }
 
             line.Touch();
-            await Repo.Committer.Invoke();
         }
     }
 }

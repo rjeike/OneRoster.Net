@@ -15,64 +15,96 @@ namespace OneRosterSync.Net.Processing
 {
     public class RosterScheduler : BackgroundService
     {
+        /// <summary>
+        /// How long to sleep between scanning for Districts to process
+        /// </summary>
         private const int DelayBetweenProcessingMS = 3 * 1000;
-        private readonly ILogger Logger;
+
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<RosterScheduler>();
         private readonly IServiceProvider Services;
         private readonly IBackgroundTaskQueue TaskQueue;
 
-        public RosterScheduler(
-            IBackgroundTaskQueue taskQueue,
-            IServiceProvider services, 
-            ILogger<RosterScheduler> logger)
+        public RosterScheduler(IBackgroundTaskQueue taskQueue, IServiceProvider services)
         {
             TaskQueue = taskQueue;
             Services = services;
-            Logger = logger;
         }
+
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Logger.Here().LogInformation("Starting RosterScheduler");
-
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
-                await Task.Delay(DelayBetweenProcessingMS, cancellationToken);
+                Logger.Here().LogInformation("Starting RosterScheduler");
 
-                using (var scope = Services.CreateScope())
+                while (!cancellationToken.IsCancellationRequested)
                 {
+                    await Task.Delay(DelayBetweenProcessingMS, cancellationToken);
+                    using (var scope = Services.CreateScope())
                     using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
-                    {
-                        var now = DateTime.UtcNow;
-
-                        // First find districts scheduled and mark them "FullProcess"
-                        var districts = await db.Districts.Where(d => d.NextProcessingTime.HasValue && d.NextProcessingTime <= now).ToListAsync();
-                        foreach (var d in districts)
-                            d.ProcessingAction = ProcessingAction.FullProcess;
-                        await db.SaveChangesAsync();
-
-                        // Now find any district that has any ProcessingAction
-                        districts = await db.Districts.Where(d => d.ProcessingAction != ProcessingAction.None).ToListAsync();
-
-                        // walk the districts ready to be processed
-                        foreach (var district in districts)
-                        {
-                            TaskQueue.QueueBackgroundWorkItem(async token =>
-                            {
-                                Logger.Here().LogInformation($"Begin processing District {district.DistrictId}.");
-                                var rosterProcessor = new RosterProcessor(Services, Logger);
-                                await rosterProcessor.Process(district.DistrictId, cancellationToken);
-                                Logger.Here().LogInformation($"Done processing District {district.DistrictId}.");
-                            });
-
-                            DistrictRepo.UpdateNextProcessingTime(district);
-                            district.Touch();
-                            await db.SaveChangesAsync();
-                        }
-                    }
+                        await ScanForDistrictsToProcess(db);
                 }
             }
+            finally
+            {
+                Logger.Here().LogInformation("Stopping RosterScheduler");
+            }
+        }
 
-            Logger.Here().LogInformation("Stopping RosterScheduler");
+
+        private async Task ScanForDistrictsToProcess(ApplicationDbContext db)
+        {
+            var now = DateTime.UtcNow;
+
+            // First find districts scheduled and mark them "FullProcess"
+            var districts = await db.Districts.Where(d => d.NextProcessingTime.HasValue && d.NextProcessingTime <= now).ToListAsync();
+            if (districts.Any())
+            {
+                foreach (var d in districts)
+                    d.ProcessingAction = ProcessingAction.FullProcess;
+                await db.SaveChangesAsync();
+            }
+
+            // Now find any district that has any ProcessingAction
+            districts = await db.Districts.Where(d => d.ProcessingAction != ProcessingAction.None).ToListAsync();
+
+            // walk the districts ready to be processed
+            foreach (var district in districts)
+            {
+                var worker = new DistrictProcessWorker(district.DistrictId, Services, Logger, district.ProcessingAction);
+                TaskQueue.QueueBackgroundWorkItem(async token => await worker.Invoke(token));
+
+                // clear the action out and reset the next processing time so it won't get picked up again
+                district.ProcessingAction = ProcessingAction.None;
+                DistrictRepo.UpdateNextProcessingTime(district);
+                district.Touch();
+                await db.SaveChangesAsync();
+            }
+        }
+
+
+        class DistrictProcessWorker
+        {
+            readonly int DistrictId;
+            readonly IServiceProvider Services;
+            readonly ILogger Logger;
+            readonly ProcessingAction ProcessingAction;
+
+            public DistrictProcessWorker(int districtId, IServiceProvider services, ILogger logger, ProcessingAction processingAction)
+            {
+                DistrictId = districtId;
+                Services = services;
+                Logger = logger;
+                ProcessingAction = processingAction;
+            }
+
+            public async Task Invoke(CancellationToken cancellationToken)
+            {
+                Logger.Here().LogInformation($"Begin processing District {DistrictId}.");
+                using (var processor = new RosterProcessor(Services, DistrictId, cancellationToken))
+                    await processor.Process(ProcessingAction);
+                Logger.Here().LogInformation($"Done processing District {DistrictId}.");
+            }
         }
     }
 }

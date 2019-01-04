@@ -11,13 +11,12 @@ namespace OneRosterSync.Net.Processing
 {
     public class ApiManager : IDisposable
     {
-        HttpClient client;
-        ILogger Logger;
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<ApiManager>();
 
-        public ApiManager(ILogger logger, string endpoint)
+        private readonly HttpClient client;
+
+        public ApiManager(string endpoint)
         {
-            Logger = logger;
-
             client = new HttpClient
             {
                 BaseAddress = new Uri(endpoint)
@@ -42,13 +41,13 @@ namespace OneRosterSync.Net.Processing
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 // submit request
-                Logger.Here().LogInformation($"Posting\n {json}");
+                //Logger.Here().LogInformation($"Posting\n {json}");
                 HttpResponseMessage response = await client.PostAsync(entity, content);
 
                 // retrieve response
                 response.EnsureSuccessStatusCode();
                 string responseBody = await response.Content.ReadAsStringAsync();
-                Logger.Here().LogInformation($"Response: {response.StatusCode}\n {responseBody}");
+                //Logger.Here().LogInformation($"Response: {response.StatusCode}\n {responseBody}");
 
                 // parse response
                 ApiResponse result = JsonConvert.DeserializeObject<ApiResponse>(responseBody);

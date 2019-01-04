@@ -21,7 +21,12 @@ namespace OneRosterSync.Net.Models
         public string DistrictName { get; set; }
 
         /// <summary>
-        /// Status of record: "Added", "Modified", or "Deleted"
+        /// Status of record: "Added", "Modified", "Deleted", "NoChange", or "None"
+        /// This field should be used only as a Hint.  An Added record may already exist in the LMS,
+        /// likewise a Modified record may not yet have been created.
+        /// The LMS should rely on the presence of the TargetId field to determine if the user is "new"
+        /// to the LMS or not.
+        /// Finally, a Deleted record should be "deactivated", not physically deleted from the LMS
         /// </summary>
         public string Status { get; set; }
 

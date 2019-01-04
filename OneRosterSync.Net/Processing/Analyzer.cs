@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -7,18 +6,16 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
-using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
     public class Analyzer
     {
-        private readonly ILogger Logger;
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Analyzer>();
         private readonly DistrictRepo Repo;
 
         public Analyzer(ILogger logger, DistrictRepo repo)
         {
-            Logger = logger;
             Repo = repo;
         }
 
@@ -61,7 +58,7 @@ namespace OneRosterSync.Net.Processing
         public async Task Analyze()
         {
             // load some small tables into memory for performance
-            var cache = new DataLineCache(Logger);
+            var cache = new DataLineCache();
             await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
             // include all Orgs in sync by default

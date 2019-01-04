@@ -13,15 +13,14 @@ namespace OneRosterSync.Net.Processing
 {
     public class DistrictRepo
     {
-        private readonly ILogger Logger;
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<DistrictRepo>();
         private readonly ApplicationDbContext Db;
         private District district;
 
-        private readonly int ChunkSize;
+        public int ChunkSize { get; }
 
-        public DistrictRepo(ILogger logger, ApplicationDbContext db, int districtId, int chunkSize = 50)
+        public DistrictRepo(ApplicationDbContext db, int districtId, int chunkSize = 50)
         {
-            Logger = logger;
             Db = db;
             DistrictId = districtId;
             ChunkSize = chunkSize;

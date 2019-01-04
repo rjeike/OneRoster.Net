@@ -17,12 +17,7 @@ namespace OneRosterSync.Net.Processing
         private Dictionary<string, Dictionary<string, DataSyncLine>> Cache = 
             new Dictionary<string, Dictionary<string, DataSyncLine>>();
 
-        ILogger Logger;
-
-        public DataLineCache(ILogger logger)
-        {
-            Logger = logger;
-        }
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<ApiManager>();
 
         /// <summary>
         /// Load specific Csv entities into memory
