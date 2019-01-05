@@ -226,13 +226,17 @@ namespace OneRosterSync.Net.Models
         public virtual DataSyncLine DataSyncLine { get; set; }
         public int DataSyncLineId { get; set; }
 
-        [DisplayName("Original Data")]
-        public string DataOrig { get; set; }
-        [DisplayName("New Data")]
+        [DisplayName("Data")]
         public string DataNew { get; set; }
+
+        [DisplayName("Include in Sync")]
+        public bool IncludeInSync { get; set; }
 
         [DisplayName("Load Status")]
         public LoadStatus LoadStatus { get; set; }
+
+        [DisplayName("Sync Status")]
+        public SyncStatus SyncStatus { get; set; }
 
         public string Table { get; set; }
     }

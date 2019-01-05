@@ -13,6 +13,8 @@
   <ItemGroup>
     <Compile Remove="Data\Migrations\20181117224240_DataSyncTables.cs" />
     <Compile Remove="Data\Migrations\20181117224240_DataSyncTables.Designer.cs" />
+    <Compile Remove="Data\Migrations\20190105021442_HistoryDetailTweak.cs" />
+    <Compile Remove="Data\Migrations\20190105021442_HistoryDetailTweak.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
