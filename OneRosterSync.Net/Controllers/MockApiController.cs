@@ -65,7 +65,7 @@ namespace OneRosterSync.Net.Controllers
         /// </summary>
         private async Task<ApiResponse> ProcessEntity<T>(ApiPost<T> entity) where T : CsvBaseObject
         {
-            Logger.Here().LogInformation($"Recieved {entity.EntityType}: {JsonConvert.SerializeObject(entity)}");
+            Logger.Here().LogInformation($"Recieved {entity.Status} for {entity.EntityType}: {JsonConvert.SerializeObject(entity)}");
 
             // simulate time to respond
             await Task.Delay(100);
@@ -76,7 +76,7 @@ namespace OneRosterSync.Net.Controllers
                 TargetId = entity.TargetId ?? System.Guid.NewGuid().ToString(),
             };
 
-            Logger.Here().LogInformation($"Responding {entity.EntityType}: {JsonConvert.SerializeObject(response)}");
+            Logger.Here().LogInformation($"Response to {entity.EntityType}: {JsonConvert.SerializeObject(response)}");
 
             return response;
         }
