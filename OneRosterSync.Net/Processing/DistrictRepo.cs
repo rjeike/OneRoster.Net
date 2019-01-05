@@ -58,7 +58,10 @@ namespace OneRosterSync.Net.Processing
                 .OrderByDescending(h => h.Created)
                 .FirstOrDefault());
 
-        public DataSyncHistory PushHistory()
+        public IQueryable<DataSyncHistory> DataSyncHistories =>
+            Db.DataSyncHistories.Where(history => history.DistrictId == District.DistrictId);
+
+        private DataSyncHistory PushHistory()
         {
             var currentHistory = new DataSyncHistory
             {
@@ -144,26 +147,28 @@ namespace OneRosterSync.Net.Processing
         public void RecordProcessingStart(ProcessingStage processingStage)
         {
             var now = DateTime.UtcNow;
-            var history = CurrentHistory;
-            District.Touch();
+
+            var history = CurrentHistory ?? PushHistory();
 
             switch (processingStage)
             {
                 case ProcessingStage.Load:
+                    history = PushHistory();
                     District.ProcessingStatus = ProcessingStatus.Loading;
-                    history.LoadError = null; // clear error
                     history.LoadStarted = now;
                     break;
 
                 case ProcessingStage.Analyze:
                     District.ProcessingStatus = ProcessingStatus.Analyzing;
-                    history.AnalyzeError = null; // clear error
+                    if (history.AnalyzeStarted.HasValue)
+                        history = PushHistory();
                     history.AnalyzeStarted = now;
                     break;
 
                 case ProcessingStage.Apply:
                     District.ProcessingStatus = ProcessingStatus.Applying;
-                    history.ApplyError = null; // clear error
+                    if (history.ApplyStarted.HasValue)
+                        history = PushHistory();
                     history.ApplyStarted = now;
                     break;
 
@@ -171,6 +176,8 @@ namespace OneRosterSync.Net.Processing
                     Logger.Here().LogError($"Unexpected Processing Stage: {processingStage}");
                     break;
             }
+
+            District.Touch();
         }
 
         public void RecordProcessingStop(ProcessingStage processingStage)
@@ -225,6 +232,5 @@ namespace OneRosterSync.Net.Processing
 
             district.NextProcessingTime = next;
         }
-
     }
 }
