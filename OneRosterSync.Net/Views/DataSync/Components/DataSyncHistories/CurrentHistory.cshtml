@@ -1,0 +1,14 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistory>
+@using OneRosterSync.Net.Utils
+
+<h4>Current Processing Details</h4>
+<hr />
+@if (Model.Any())
+{
+    @await Html.PartialAsync("HistoryInfo", Model.OrderByDescending(h => h.Created).First())
+}
+else
+{
+    <div>No Processing Yet...</div>
+}
+

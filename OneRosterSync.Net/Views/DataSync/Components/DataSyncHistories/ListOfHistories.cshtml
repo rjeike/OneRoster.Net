@@ -1,14 +1,6 @@
 ﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncHistory>
 @using OneRosterSync.Net.Utils
 
-@if (Model.Any())
-{
-    <h4>Current Processing Details</h4>
-    <hr />
-    @await Html.PartialAsync("HistoryInfo", Model.OrderByDescending(h => h.Created).First())
-}
-
-<br />
 <h4>Processing History</h4>
 <hr />
 
@@ -50,32 +42,32 @@
     <tbody>
         @foreach (var item in Model)
         {
-            <tr>
-                <td>
-                    @item.Started.ToLocalTime()
-                </td>
+        <tr>
+            <td>
+                @item.Started.ToLocalTime()
+            </td>
 
-                <td>@DateTimeUtilities.FormatTimespan(item.LoadStarted, item.LoadCompleted)</td>
-                <td>@DateTimeUtilities.FormatTimespan(item.AnalyzeStarted, item.AnalyzeCompleted)</td>
-                <td>@DateTimeUtilities.FormatTimespan(item.ApplyStarted, item.ApplyCompleted)</td>
+            <td>@DateTimeUtilities.FormatTimespan(item.LoadStarted, item.LoadCompleted)</td>
+            <td>@DateTimeUtilities.FormatTimespan(item.AnalyzeStarted, item.AnalyzeCompleted)</td>
+            <td>@DateTimeUtilities.FormatTimespan(item.ApplyStarted, item.ApplyCompleted)</td>
 
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumRows)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumAdded)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumModified)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumDeleted)
-                </td>
-                <td>
-                    <a asp-action="HistoryInfo" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Info</a> |
-                    <a asp-action="HistoryDetailsList" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Changes</a>
-                </td>
-            </tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumRows)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumAdded)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumModified)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumDeleted)
+            </td>
+            <td>
+                <a asp-action="HistoryInfo" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Info</a> |
+                <a asp-action="HistoryDetailsList" asp-route-dataSyncHistoryId="@item.DataSyncHistoryId" target="_blank">Changes</a>
+            </td>
+        </tr>
         }
     </tbody>
 </table>

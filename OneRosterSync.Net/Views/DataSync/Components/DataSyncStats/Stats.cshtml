@@ -1,0 +1,89 @@
+﻿@model OneRosterSync.Net.Models.DataSyncLineReportLine
+
+<div>
+    <h4>DataSync Report</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        @if (!string.IsNullOrEmpty(Model.Entity))
+        {
+            <dt>
+                @Html.DisplayNameFor(model => model.Entity)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.Entity)
+            </dd>
+        }
+        <dt>
+            @Html.DisplayNameFor(model => model.TotalRecords)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.TotalRecords)
+        </dd>
+
+        <dt></dt>
+        <dd>&nbsp;</dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IncludeInSync)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IncludeInSync)
+        </dd>
+
+        <dt></dt>
+        <dd>&nbsp;</dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Added)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Added)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Modified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Modified)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.NoChange)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NoChange)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Deleted)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Deleted)
+        </dd>
+
+        <dt></dt>
+        <dd>&nbsp;</dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Loaded)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Loaded)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.ReadyToApply)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ReadyToApply)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Applied)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Applied)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.AppliedFailed)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.AppliedFailed)
+        </dd>
+    </dl>
+</div>

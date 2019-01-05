@@ -58,4 +58,13 @@
     <Folder Include="Logs\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Views\DataSync\Components\DataSyncHistories\CurrentHistory.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
+    <Content Update="Views\DataSync\Components\DataSyncHistories\ListOfHistories.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
+  </ItemGroup>
+
 </Project>
