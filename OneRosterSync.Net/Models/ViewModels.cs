@@ -25,15 +25,23 @@ namespace OneRosterSync.Net.Models
         public int IncludeInSync { get; set; }
 
         // LoadStatus
+        [DisplayName("Load: Added")]
         public int Added { get; set; }
+        [DisplayName("Load: Modified")]
         public int Modified { get; set; }
+        [DisplayName("Load: No Change")]
         public int NoChange { get; set; }
+        [DisplayName("Load: Deleted")]
         public int Deleted { get; set; }
 
         // SyncStatus
+        [DisplayName("Apply: Loaded")]
         public int Loaded { get; set; }
+        [DisplayName("Apply: Ready")]
         public int ReadyToApply { get; set; }
+        [DisplayName("Apply: Applied")]
         public int Applied { get; set; }
+        [DisplayName("Apply: Failed")]
         public int AppliedFailed { get; set; }
 
         public int TotalRecords { get; set; }
