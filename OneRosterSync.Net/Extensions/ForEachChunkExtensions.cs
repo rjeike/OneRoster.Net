@@ -85,5 +85,35 @@ namespace OneRosterSync.Net.Extensions
                 await onChunkComplete();
             });
         }
+
+        /// <summary>
+        /// This allows you to loop over a list of items that shrinks the original query as you process it
+        /// It will terminate in one of two cases:
+        /// 1. The query returns zero results
+        /// 2. The query returns the same or more results than the previous time through the loop
+        /// </summary>
+        public static async Task ForEachInChunksForShrinkingList<T>(this IQueryable<T> collection, int chunkSize, Func<T, Task> action, Func<Task> onChunkComplete)
+        {
+            for (int last = 0; ;)
+            {
+                // how many records are remaining to process?
+                int curr = await collection.CountAsync();
+                if (curr == 0)
+                    break;
+
+                // after each process, the remaining record count should go down
+                // this avoids and infinite loop in case there is an problem processing
+                // basically, we bail if no progress is made at all
+                if (last > 0 && last <= curr)
+                    return;
+
+                last = curr;
+
+                foreach (var item in await collection.Take(chunkSize).ToListAsync())
+                    await action(item);
+
+                await onChunkComplete();
+            }
+        }
     }
 }
