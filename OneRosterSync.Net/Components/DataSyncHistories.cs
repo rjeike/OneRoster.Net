@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
+using OneRosterSync.Net.Processing;
 
 namespace OneRosterSync.Net.Components
 {
@@ -17,15 +19,19 @@ namespace OneRosterSync.Net.Components
             this.db = db;
         }
 
-        public IViewComponentResult Invoke(District district)
+        public async Task<IViewComponentResult> InvokeAsync(int districtId, bool current)
         {
-            var model = db.DataSyncHistories
-                .Where(history => history.DistrictId == district.DistrictId)
+            var repo = new DistrictRepo(db, districtId);
+
+            var model = await repo.DataSyncHistories
+                .AsNoTracking()
                 .OrderByDescending(h => h.Modified)
                 .Take(20)
-                .ToList();
+                .ToListAsync();
 
-            return View(viewName: "Histories", model: model);
+            string view = current ? "CurrentHistory" : "ListOfHistories";
+
+            return View(viewName: view, model: model);
         }
     }
 }

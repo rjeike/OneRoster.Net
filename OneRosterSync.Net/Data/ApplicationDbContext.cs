@@ -118,5 +118,7 @@ namespace OneRosterSync.Net.Data
 
             base.OnModelCreating(builder);
         }
+
+        public DbSet<OneRosterSync.Net.Models.DataSyncLineReportLine> DataSyncLineReportLine { get; set; }
     }
 }

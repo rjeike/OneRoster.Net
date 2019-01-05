@@ -99,9 +99,7 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Load()
         {
-            Repo.PushHistory();
             var loader = new Loader(Repo, Repo.District.BasePath);
-            await Repo.Committer.Invoke();
 
             try
             {
@@ -141,8 +139,7 @@ namespace OneRosterSync.Net.Processing
         {
             try
             {
-                DataSyncHistory history = Repo.CurrentHistory;
-                if (!string.IsNullOrEmpty(history.LoadError))
+                if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError))
                 {
                     var pe = new ProcessingException(Logger.Here(), ProcessingStage.Analyze, "Can't Analyze with active LoadError.  Reload first.");
                     Repo.RecordProcessingError(pe);
@@ -153,7 +150,7 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.Invoke();
 
                 var analyzer = new Analyzer(Logger, Repo);
-                await analyzer.MarkDeleted(history.Started);
+                await analyzer.MarkDeleted(Repo.CurrentHistory.Started);
                 await analyzer.Analyze();
             }
             catch (Exception ex)

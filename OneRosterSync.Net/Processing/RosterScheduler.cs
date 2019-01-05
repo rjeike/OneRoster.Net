@@ -71,7 +71,7 @@ namespace OneRosterSync.Net.Processing
             // walk the districts ready to be processed
             foreach (var district in districts)
             {
-                var worker = new DistrictProcessWorker(district.DistrictId, Services, Logger, district.ProcessingAction);
+                var worker = new RosterProcessorWorker(district.DistrictId, Services, district.ProcessingAction);
                 TaskQueue.QueueBackgroundWorkItem(async token => await worker.Invoke(token));
 
                 // clear the action out and reset the next processing time so it won't get picked up again
@@ -83,26 +83,28 @@ namespace OneRosterSync.Net.Processing
         }
 
 
-        class DistrictProcessWorker
+        class RosterProcessorWorker
         {
+            private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<RosterScheduler>();
+
             readonly int DistrictId;
             readonly IServiceProvider Services;
-            readonly ILogger Logger;
             readonly ProcessingAction ProcessingAction;
 
-            public DistrictProcessWorker(int districtId, IServiceProvider services, ILogger logger, ProcessingAction processingAction)
+            public RosterProcessorWorker(int districtId, IServiceProvider services, ProcessingAction processingAction)
             {
                 DistrictId = districtId;
                 Services = services;
-                Logger = logger;
                 ProcessingAction = processingAction;
             }
 
             public async Task Invoke(CancellationToken cancellationToken)
             {
                 Logger.Here().LogInformation($"Begin processing District {DistrictId}.");
+
                 using (var processor = new RosterProcessor(Services, DistrictId, cancellationToken))
                     await processor.Process(ProcessingAction);
+
                 Logger.Here().LogInformation($"Done processing District {DistrictId}.");
             }
         }
