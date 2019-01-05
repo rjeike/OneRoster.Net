@@ -60,6 +60,7 @@ namespace OneRosterSync.Net.Processing
             CreateContext();
         }
 
+
         /// <summary>
         /// Process a district's OneRoster CSV feed
         /// </summary>
@@ -73,22 +74,62 @@ namespace OneRosterSync.Net.Processing
                     throw new NotImplementedException();
 
                 case ProcessingAction.Load:
-                    await Load();
+                    await ProcessStage(ProcessingStage.Load);
                     break;
 
                 case ProcessingAction.Analyze:
-                    await Analyze();
+                    await ProcessStage(ProcessingStage.Analyze);
                     break;
 
                 case ProcessingAction.Apply:
-                    await Apply();
+                    await ProcessStage(ProcessingStage.Apply);
                     break;
 
                 case ProcessingAction.FullProcess:
-                    await Load();
-                    await Analyze();
-                    await Apply();
+                    bool success = // rely on lazy eval...
+                        await ProcessStage(ProcessingStage.Load) &&
+                        await ProcessStage(ProcessingStage.Analyze) &&
+                        await ProcessStage(ProcessingStage.Apply);
                     break;
+            }
+        }
+
+
+        /// <summary>
+        /// Process the specific stage and handle the errors
+        /// </summary>
+        /// <param name="processingStage">Stage to process</param>
+        /// <returns>true iff successfully processed with error causing process to stop</returns>
+        private async Task<bool> ProcessStage(ProcessingStage processingStage)
+        {
+            try
+            {
+                Repo.RecordProcessingStart(processingStage);
+                await Repo.Committer.Invoke();
+
+                switch (processingStage)
+                {
+                    case ProcessingStage.Load: await Load(); return true;
+                    case ProcessingStage.Analyze: await Analyze(); return true;
+                    case ProcessingStage.Apply: await Apply(); return true;
+                    default:
+                        return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                RefreshContext();
+                var pe = (ex as ProcessingException)
+                    ?? new ProcessingException(Logger.Here(), $"Unhandled processing error.  {ex.Message}", ex);
+                Repo.RecordProcessingError(pe, processingStage);
+                await Repo.Committer.Invoke();
+                return false;
+            }
+            finally
+            {
+                RefreshContext();
+                Repo.RecordProcessingStop(processingStage);
+                await Repo.Committer.Invoke();
             }
         }
 
@@ -103,9 +144,6 @@ namespace OneRosterSync.Net.Processing
 
             try
             {
-                Repo.RecordProcessingStart(ProcessingStage.Load);
-                await Repo.Committer.Invoke();
-
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
                 await loader.LoadFile<CsvCourse>(@"courses.csv");
                 await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
@@ -115,18 +153,12 @@ namespace OneRosterSync.Net.Processing
             }
             catch (Exception ex)
             {
-                RefreshContext();
-                var pe = (ex as ProcessingException)
-                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Load, 
-                        $"Exception Loading data for {loader.LastEntity}.  Possible duplicate sourcedId. " + ex.Message, ex);
-                Repo.RecordProcessingError(pe);
-                await Repo.Committer.Invoke();
-            }
-            finally
-            {
-                RefreshContext();
-                Repo.RecordProcessingStop(ProcessingStage.Load);
-                await Repo.Committer.Invoke();
+                if (ex is ProcessingException)
+                    throw;
+
+                // catch unhandled exception and blame sourceId
+                throw new ProcessingException(Logger.Here(), 
+                    $"Exception Loading data for {loader.LastEntity}.  Possible duplicate sourcedId. Inner Exception: {ex.Message}", ex);
             }
         }
 
@@ -137,79 +169,35 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         private async Task Analyze()
         {
-            try
-            {
-                if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError))
-                {
-                    var pe = new ProcessingException(Logger.Here(), ProcessingStage.Analyze, "Can't Analyze with active LoadError.  Reload first.");
-                    Repo.RecordProcessingError(pe);
-                    return;
-                }
+            if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError))
+                throw new ProcessingException(Logger.Here(), "Can't Analyze with active LoadError.  Reload first.");
 
-                Repo.RecordProcessingStart(ProcessingStage.Analyze);
-                await Repo.Committer.Invoke();
+            DateTime? lastLoaded = await Repo.GetLastLoadTime();
+            if (!lastLoaded.HasValue)
+                throw new ProcessingException(Logger.Here(), "Data has never been loaded.");
 
-                var analyzer = new Analyzer(Logger, Repo);
-                await analyzer.MarkDeleted(Repo.CurrentHistory.Started);
-                await analyzer.Analyze();
-            }
-            catch (Exception ex)
-            {
-                RefreshContext();
-                var pe = (ex as ProcessingException)
-                    ?? new ProcessingException(Logger.Here(), ProcessingStage.Analyze, $"Unhandled exception Analyzing data.", ex);
-                Repo.RecordProcessingError(pe);
-                await Repo.Committer.Invoke();
-            }
-            finally
-            {
-                RefreshContext();
-                Repo.RecordProcessingStop(ProcessingStage.Analyze);
-                await Repo.Committer.Invoke();
-            }
+            var analyzer = new Analyzer(Logger, Repo);
+            await analyzer.MarkDeleted(lastLoaded.Value);
+            await analyzer.Analyze();
         }
 
 
         private async Task Apply()
         {
-            try
-            {
-                if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
-                    !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
-                {
-                    var pe = new ProcessingException(Logger.Here(), ProcessingStage.Apply, "Can't Apply with active LoadError or AnalyzeError");
-                    Repo.RecordProcessingError(pe);
-                    return;
-                }
+            if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
+                !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
+                throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
 
-                Repo.RecordProcessingStart(ProcessingStage.Apply);
-                await Repo.Committer.Invoke();
-
-                using (var api = new ApiManager(Repo.District.LmsApiEndpoint))
-                {
-                    var applier = new Applier(Services, Repo.DistrictId, api);
-
-                    await applier.ApplyLines<CsvOrg>();
-                    await applier.ApplyLines<CsvCourse>();
-                    await applier.ApplyLines<CsvAcademicSession>();
-                    await applier.ApplyLines<CsvClass>();
-                    await applier.ApplyLines<CsvUser>();
-                    await applier.ApplyLines<CsvEnrollment>();
-                }
-            }
-            catch (Exception ex)
+            using (var api = new ApiManager(Repo.District.LmsApiEndpoint))
             {
-                RefreshContext();
-                var pe = (ex as ProcessingException) ?? 
-                    new ProcessingException(Logger.Here(), ProcessingStage.Apply, $"Unhandled exception Applying data.", ex);
-                Repo.RecordProcessingError(pe);
-                await Repo.Committer.Invoke();
-            }
-            finally
-            {
-                RefreshContext();
-                Repo.RecordProcessingStop(ProcessingStage.Apply);
-                await Repo.Committer.Invoke();
+                var applier = new Applier(Services, Repo.DistrictId, api);
+
+                await applier.ApplyLines<CsvOrg>();
+                await applier.ApplyLines<CsvCourse>();
+                await applier.ApplyLines<CsvAcademicSession>();
+                await applier.ApplyLines<CsvClass>();
+                await applier.ApplyLines<CsvUser>();
+                await applier.ApplyLines<CsvEnrollment>();
             }
         }
     }

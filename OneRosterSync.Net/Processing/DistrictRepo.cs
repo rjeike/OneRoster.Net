@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +24,15 @@ namespace OneRosterSync.Net.Processing
             DistrictId = districtId;
             ChunkSize = chunkSize;
 
-            Committer = new ActionCounter(async () => await db.SaveChangesAsync(), chunkSize: ChunkSize);
+            Committer = new ActionCounter(async () =>
+            {
+                await db.SaveChangesAsync();
+
+                // clear local cache of objects
+                district = null;
+                currentHistory = null;
+
+            }, chunkSize: ChunkSize);
         }
 
         public ActionCounter Committer { get; private set; }
@@ -52,14 +59,22 @@ namespace OneRosterSync.Net.Processing
 
         private DataSyncHistory currentHistory;
 
-        public DataSyncHistory CurrentHistory => currentHistory ?? (currentHistory =
+        public IQueryable<DataSyncHistory> DataSyncHistories =>
             Db.DataSyncHistories
-                .Where(h => h.DistrictId == DistrictId)
+                .Where(history => history.DistrictId == District.DistrictId);
+
+        public DataSyncHistory CurrentHistory => currentHistory ?? (currentHistory =
+            this.DataSyncHistories
                 .OrderByDescending(h => h.Created)
                 .FirstOrDefault());
 
-        public IQueryable<DataSyncHistory> DataSyncHistories =>
-            Db.DataSyncHistories.Where(history => history.DistrictId == District.DistrictId);
+        public async Task<DateTime?> GetLastLoadTime() => 
+            await this.DataSyncHistories
+                .AsNoTracking()
+                .OrderByDescending(h => h.Created)
+                .Where(h => h.LoadStarted.HasValue)
+                .Select(h => h.LoadStarted)
+                .FirstOrDefaultAsync();
 
         private DataSyncHistory PushHistory()
         {
@@ -124,7 +139,7 @@ namespace OneRosterSync.Net.Processing
             await Committer.Invoke();
         }
 
-        public void RecordProcessingError(ProcessingException pe)
+        public void RecordProcessingError(ProcessingException pe, ProcessingStage processingStage)
         {
             DataSyncHistory history = CurrentHistory;
             if (history == null)
@@ -133,13 +148,13 @@ namespace OneRosterSync.Net.Processing
                 return;
             }
            
-            switch (pe.ProcessingStage)
+            switch (processingStage)
             {
                 case ProcessingStage.Load: CurrentHistory.LoadError = pe.Message; break;
                 case ProcessingStage.Analyze: CurrentHistory.AnalyzeError = pe.Message; break;
                 case ProcessingStage.Apply: CurrentHistory.ApplyError = pe.Message; break;
                 default:
-                    Logger.Here().LogError($"Unexpected Processing Stage in exception: {pe.ProcessingStage}");
+                    Logger.Here().LogError($"Unexpected Processing Stage in exception: {processingStage}");
                     break;
             }
         }
@@ -147,13 +162,16 @@ namespace OneRosterSync.Net.Processing
         public void RecordProcessingStart(ProcessingStage processingStage)
         {
             var now = DateTime.UtcNow;
-
             var history = CurrentHistory ?? PushHistory();
+            District.Touch();
 
             switch (processingStage)
             {
                 case ProcessingStage.Load:
-                    history = PushHistory();
+                    if (history.LoadStarted.HasValue ||
+                        history.AnalyzeStarted.HasValue ||
+                        history.ApplyStarted.HasValue)
+                        history = PushHistory();
                     District.ProcessingStatus = ProcessingStatus.Loading;
                     history.LoadStarted = now;
                     break;
@@ -176,8 +194,6 @@ namespace OneRosterSync.Net.Processing
                     Logger.Here().LogError($"Unexpected Processing Stage: {processingStage}");
                     break;
             }
-
-            District.Touch();
         }
 
         public void RecordProcessingStop(ProcessingStage processingStage)

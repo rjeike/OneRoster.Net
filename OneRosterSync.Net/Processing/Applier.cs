@@ -57,7 +57,7 @@ namespace OneRosterSync.Net.Processing
                     // this avoids and infinite loop in case there is an problem processing
                     // basically, we bail if no progress is made at all
                     if (last > 0 && last <= curr)
-                        throw new ProcessingException(Logger, ProcessingStage.Apply, "Apply failed to update SyncStatus of applied record.");
+                        throw new ProcessingException(Logger, "Apply failed to update SyncStatus of applied record.");
                     last = curr;
 
                     // process chunks of lines in parallel

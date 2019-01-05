@@ -29,6 +29,7 @@ namespace OneRosterSync.Net.Models
 
     public enum ProcessingStage
     {
+        None = 0,
         Load = 1,
         Analyze = 2,
         Apply = 3,

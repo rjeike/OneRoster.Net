@@ -56,8 +56,7 @@ namespace OneRosterSync.Net.Processing
                                 throw;
 
                             string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
-                            throw new ProcessingException(Logger.Here(), ProcessingStage.Load, 
-                                $"Unhandled error processing {typeof(T).Name}: {o}", innerException: ex);
+                            throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
                         }
 
                         await Repo.Committer.InvokeIfChunk();
@@ -73,7 +72,7 @@ namespace OneRosterSync.Net.Processing
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
         {
             if (string.IsNullOrEmpty(record.sourcedId))
-                throw new ProcessingException(Logger.Here(), ProcessingStage.Load, 
+                throw new ProcessingException(Logger.Here(), 
                     $"Record of type {typeof(T).Name} contains no SourcedId: {JsonConvert.SerializeObject(record)}");
 
             DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
