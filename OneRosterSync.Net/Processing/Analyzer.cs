@@ -44,11 +44,13 @@ namespace OneRosterSync.Net.Processing
         /// <summary>
         /// Helper to mark a record to be included in the next push to LMS
         /// </summary>
-        private static void IncludeReadyTouch(DataSyncLine line)
+        private void IncludeReadyTouch(DataSyncLine line)
         {
             line.IncludeInSync = true;
             line.SyncStatus = SyncStatus.ReadyToApply;
             line.Touch();
+
+            Repo.PushLineHistory(line, isNewData: false);
         }
 
         /// <summary>
@@ -112,6 +114,17 @@ namespace OneRosterSync.Net.Processing
                         IncludeReadyTouch(user);
                 }, 
                 onChunkComplete: async () => await Repo.Committer.Invoke());
+
+            // now process any user changes we may have missed
+            await Repo.Lines<CsvUser>().Where(u => u.IncludeInSync 
+                && u.LoadStatus != LoadStatus.NoChange 
+                && u.SyncStatus != SyncStatus.ReadyToApply)
+                .ForEachInChunksForShrinkingList(chunkSize: 200,
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+                    action: async (user) => IncludeReadyTouch(user),
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+                    onChunkComplete: async () => await Repo.Committer.Invoke());
+
 
             await Repo.Committer.Invoke();
         }

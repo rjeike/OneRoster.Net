@@ -88,12 +88,6 @@ namespace OneRosterSync.Net.Processing
             return currentHistory;
         }
 
-        public void PushHistoryDetail(DataSyncHistoryDetail detail)
-        {
-            // must apply to current history
-            detail.DataSyncHistoryId = CurrentHistory.DataSyncHistoryId;
-            Db.DataSyncHistoryDetails.Add(detail);
-        }
 
         public async Task DeleteDistrict()
         {
@@ -247,6 +241,20 @@ namespace OneRosterSync.Net.Processing
                 next = next.AddDays(1);
 
             district.NextProcessingTime = next;
+        }
+
+        public void PushLineHistory(DataSyncLine line, bool isNewData)
+        {
+            Db.DataSyncHistoryDetails.Add(new DataSyncHistoryDetail
+            {
+                DataSyncLineId = line.DataSyncLineId,
+                DataSyncHistoryId = CurrentHistory.DataSyncHistoryId,
+                DataNew = isNewData ? line.RawData : (string)null,
+                IncludeInSync = line.IncludeInSync,
+                LoadStatus = line.LoadStatus,
+                SyncStatus = line.SyncStatus,
+                Table = line.Table,
+            });
         }
     }
 }

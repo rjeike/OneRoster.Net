@@ -77,12 +77,12 @@ namespace OneRosterSync.Net.Processing
 
             DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
 
-            bool newRecord = line == null;
+            bool isNewRecord = line == null;
 
             Repo.CurrentHistory.NumRows++;
             string data = JsonConvert.SerializeObject(record);
 
-            if (newRecord)
+            if (isNewRecord)
             {
                 // already deleted
                 if (record.isDeleted)
@@ -133,22 +133,13 @@ namespace OneRosterSync.Net.Processing
                 }
             }
 
-            DataSyncHistoryDetail detail = new DataSyncHistoryDetail
-            {
-                DataOrig = line.RawData,
-                DataNew = data,
-                DataSyncLine = line,
-                DataSyncHistory = Repo.CurrentHistory,
-                LoadStatus = line.LoadStatus,
-                Table = table,
-            };
-            Repo.PushHistoryDetail(detail);
-
             line.RawData = data;
             line.SourcedId = record.sourcedId;
             line.SyncStatus = SyncStatus.Loaded;
 
-            return newRecord;
+            Repo.PushLineHistory(line, isNewData: true);
+
+            return isNewRecord;
         }
     }
 }

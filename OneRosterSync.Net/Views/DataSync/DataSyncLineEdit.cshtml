@@ -61,11 +61,7 @@
 <div class="row">
     <div class="col-md-12">
         <h4>Data Line Updates</h4>
-        @await Html.PartialAsync("DataSyncLineHistoryDetailsList", Model.DataSyncHistoryDetails)
+        @await Html.PartialAsync("DataSyncLineHistoryDetailsList", Model.DataSyncHistoryDetails.OrderByDescending(h => h.Created))
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 

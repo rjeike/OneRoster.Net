@@ -146,6 +146,8 @@ namespace OneRosterSync.Net.Processing
             }
 
             line.Touch();
+
+            repo.PushLineHistory(line, isNewData: false);
         }
     }
 }
