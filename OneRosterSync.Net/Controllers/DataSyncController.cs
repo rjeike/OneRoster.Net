@@ -239,27 +239,41 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> FullProcess(int districtId) => await Process(districtId, ProcessingAction.FullProcess);
 
 
-        /// <summary>
-        /// Probably a better way to do this.  Group query?
-        /// </summary>
-        private async Task<DataSyncLineReportLine> ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
+
+
+        private static async Task<DataSyncLineReportLine> ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
         {
-            var lines = repo.Lines<T>();
+            var lines = repo.Lines<T>().AsNoTracking();
+            return await ReportLine(lines, typeof(T).Name);
+        }
+
+        public static async Task<DataSyncLineReportLine> ReportLine(IQueryable<DataSyncLine> lines, string entity)
+        {
+            Dictionary<LoadStatus, int> loadStatusStats = await lines
+                .GroupBy(l => l.LoadStatus)
+                .Select(g => new { LoadStatus = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.LoadStatus, x => x.Count);
+
+            Dictionary<SyncStatus, int> syncStatusStats = await lines
+                .GroupBy(l => l.SyncStatus)
+                .Select(g => new { SyncStatus = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.SyncStatus, x => x.Count);
+
             return new DataSyncLineReportLine
             {
-                Entity = typeof(T).Name,
+                Entity = entity,
 
                 IncludeInSync = await lines.CountAsync(l => l.IncludeInSync),
 
-                Added = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Added),
-                Modified = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Modified),
-                NoChange = await lines.CountAsync(l => l.LoadStatus == LoadStatus.NoChange),
-                Deleted = await lines.CountAsync(l => l.LoadStatus == LoadStatus.Deleted),
+                Added = loadStatusStats.GetValueOrDefault(LoadStatus.Added),
+                Modified = loadStatusStats.GetValueOrDefault(LoadStatus.Modified),
+                NoChange = loadStatusStats.GetValueOrDefault(LoadStatus.NoChange),
+                Deleted = loadStatusStats.GetValueOrDefault(LoadStatus.Deleted),
 
-                Loaded = await lines.CountAsync(l => l.SyncStatus == SyncStatus.Loaded),
-                ReadyToApply = await lines.CountAsync(l => l.SyncStatus == SyncStatus.ReadyToApply),
-                Applied = await lines.CountAsync(l => l.SyncStatus == SyncStatus.Applied),
-                AppliedFailed = await lines.CountAsync(l => l.SyncStatus == SyncStatus.ApplyFailed),
+                Loaded = syncStatusStats.GetValueOrDefault(SyncStatus.Loaded),
+                ReadyToApply = syncStatusStats.GetValueOrDefault(SyncStatus.ReadyToApply),
+                Applied = syncStatusStats.GetValueOrDefault(SyncStatus.Applied),
+                AppliedFailed = syncStatusStats.GetValueOrDefault(SyncStatus.ApplyFailed),
 
                 TotalRecords = await lines.CountAsync(),
             };
@@ -278,6 +292,7 @@ namespace OneRosterSync.Net.Controllers
                 await ReportLine<CsvClass>(repo),
                 await ReportLine<CsvUser>(repo),
                 await ReportLine<CsvEnrollment>(repo),
+                await ReportLine(repo.Lines().AsNoTracking(), "Totals"),
             };
 
             return View(model);
