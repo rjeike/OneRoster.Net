@@ -1,30 +1,41 @@
-﻿Updated: 12/24/18
+﻿Updated: 1/5/19
 by Randall Eike
 
 High
 ====
-* Create Fake APIs
-* Figure out authentication and authorization for API access
-* Add to district
-    - Base Path for Zip
-    - Approval Required?
-    - Email lists for each time and errors
-* Put list of Classes on Dashboard
-* Create more sample files
-* Add warning / success message system to Controller and Views
+* Samples: Create sample files that exercise functionality - add, delete, etc.
+* Auth: Figure out authentication and authorization for API access
+* Add District TargetId to API
 
 Medium
 ======
-* Clean up UI
-* UnZip file and move to processing folder
-* Figure out tho exclude empty strings fields in CSV load
-* Add File Logging. log4net?  Other library?
-* Make sure we can support empty fields in CSV (Json parsing)
-* Put exception handling around file processing
-* Delete District, and sub items (to clean up testing DB)
+* UI: Add a warning / success message system to Controller and Views
+* Required Fields: Add logic to enforce required fields in CSV models and mark required fields
+
+Medium-Low
+==========
+* UnZip: unzip file and move to processing folder
+* Archiving: Design and implement Archive mechanism for processed files
+* Unit Tests
+* Make the ChunkSize in Apply configurable in the District (i.e. the number to process in parallel)
+* Getting Started: create getting started guide to Readme
 * Integration Testing
 https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-2.2
+* Paginate History Page
+* Included AcademicSessions in Sync
+
 
 Low
 ====
-
+* Scheduled Processing: Test scheduled processing
+* Email: Implement Ability to plug in Email sending (i.e. don't integrate specific email provider)
+* Approval: Implement approval processing (needs email in place first)
+* Progress Bar: Add progress bar to dashboard for background processing.  Use SignalR for Asp.Net Core.
+* UI: Beautify front end (integrate free Bootstrap template?)
+* Sample: Add ability to process a subset of records (e.g. sample 50 records).  
+The challenge is the dependencies - there will be errors such as missing user for enrollment
+* Button to ability to Apply individual Line records - this is easier
+* Add ability to upload CSV file zip to the portal manually
+* Add option to identify Deleted dependent records.  For example, if we stop syncing a class, we mark enrollments deleted and sync those.  
+Need to think this through a bit.  May not be necessary.
+* Add other entities from OneRoster spec
