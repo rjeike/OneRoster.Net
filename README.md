@@ -1,5 +1,5 @@
-# OneRoster.Net
-This is an ASP.Net Core application that:
+# OneRosterSync.Net
+OneRosterSync.Net is an ASP.Net Core application that:
 1. Processes OneRoster CSV files 
 1. Loads the CSV files and keeps track of Add / Update / Delete status of each record
 1. Applies the changes to your system via a Web Service
