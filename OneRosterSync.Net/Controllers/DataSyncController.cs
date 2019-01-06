@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
-using OneRosterSync.Net.Processing;
+using OneRosterSync.Net.DAL;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
@@ -17,15 +17,10 @@ namespace OneRosterSync.Net.Controllers
     public class DataSyncController : Controller
     {
         private readonly ApplicationDbContext db;
-        private readonly IBackgroundTaskQueue TaskQueue;
         private readonly ILogger Logger;
 
-        public DataSyncController(
-            IBackgroundTaskQueue taskQueue,
-            ApplicationDbContext db,
-            ILogger<DataSyncController> logger)
+        public DataSyncController(ApplicationDbContext db, ILogger<DataSyncController> logger)
         {
-            TaskQueue = taskQueue;
             this.db = db;
             Logger = logger;
         }
@@ -215,6 +210,7 @@ namespace OneRosterSync.Net.Controllers
                     continue;
                 course.IncludeInSync = include;
                 course.Touch();
+                repo.PushLineHistory(course, isNewData: false);
             }
 
             await repo.Committer.Invoke();
@@ -312,7 +308,11 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DataSyncLineEdit(DataSyncLine postedLine)
         {
-            var line = await db.DataSyncLines.SingleOrDefaultAsync(l => l.DataSyncLineId == postedLine.DataSyncLineId);
+            var repo = new DistrictRepo(db, postedLine.DistrictId);
+            var line = await repo.Lines().SingleOrDefaultAsync(l => l.DataSyncLineId == postedLine.DataSyncLineId);
+
+            // not currently editable
+            //bool isNewData = line.RawData != postedLine.RawData;
 
             line.TargetId = postedLine.TargetId;
             line.IncludeInSync = postedLine.IncludeInSync;
@@ -320,7 +320,9 @@ namespace OneRosterSync.Net.Controllers
             line.SyncStatus = postedLine.SyncStatus;
             line.Touch();
 
-            await db.SaveChangesAsync();
+            repo.PushLineHistory(line, isNewData: false);
+
+            await repo.Committer.Invoke();
 
             //return RedirectToDistrict(line.DistrictId);
             return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId);

@@ -13,6 +13,7 @@
         <h4>Edit</h4>
         <form asp-action="DataSyncLineEdit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="DistrictId" />
             <input type="hidden" asp-for="DataSyncLineId" />
             <div class="form-group">
                 <label asp-for="TargetId" class="control-label"></label>
