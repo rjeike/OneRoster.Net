@@ -94,7 +94,7 @@ namespace OneRosterSync.Net.Extensions
         /// </summary>
         public static async Task ForEachInChunksForShrinkingList<T>(this IQueryable<T> collection, int chunkSize, Func<T, Task> action, Func<Task> onChunkComplete)
         {
-            for (int last = 0; ;)
+            for (int last = int.MaxValue; ;)
             {
                 // how many records are remaining to process?
                 int curr = await collection.CountAsync();
@@ -104,7 +104,7 @@ namespace OneRosterSync.Net.Extensions
                 // after each process, the remaining record count should go down
                 // this avoids and infinite loop in case there is an problem processing
                 // basically, we bail if no progress is made at all
-                if (last > 0 && last <= curr)
+                if (last <= curr)
                     return;
 
                 last = curr;
