@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
@@ -121,7 +122,7 @@ namespace OneRosterSync.Net.Processing
                 RefreshContext();
                 var pe = (ex as ProcessingException)
                     ?? new ProcessingException(Logger.Here(), $"Unhandled processing error.  {ex.Message}", ex);
-                Repo.RecordProcessingError(pe, processingStage);
+                Repo.RecordProcessingError(pe.Message, processingStage);
                 await Repo.Committer.Invoke();
                 return false;
             }

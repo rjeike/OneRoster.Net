@@ -8,15 +8,14 @@ using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Utils;
 
-namespace OneRosterSync.Net.Processing
+namespace OneRosterSync.Net.DAL
 {
     public class DistrictRepo
     {
         private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<DistrictRepo>();
         private readonly ApplicationDbContext Db;
         private District district;
-
-        public int ChunkSize { get; }
+        private DataSyncHistory currentHistory;
 
         public DistrictRepo(ApplicationDbContext db, int districtId, int chunkSize = 50)
         {
@@ -35,10 +34,19 @@ namespace OneRosterSync.Net.Processing
             }, chunkSize: ChunkSize);
         }
 
-        public ActionCounter Committer { get; private set; }
+        public int ChunkSize { get; }
 
-        public int DistrictId { get; private set; }
+        public int DistrictId { get; }
 
+        /// <summary>
+        /// Use this to save changes in chunks
+        /// </summary>
+        public ActionCounter Committer { get; }
+
+        /// <summary>
+        /// District Loaded into memory, or null if not found
+        /// Is cached until the next commit
+        /// </summary>
         public District District => district ?? (district = Db.Districts.Find(DistrictId));
 
         /// <summary>
@@ -51,13 +59,14 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public IQueryable<DataSyncLine> Lines<T>() where T : CsvBaseObject => Lines().Where(l => l.Table == typeof(T).Name); 
 
+        /// <summary>
+        /// Add a DataSyncLine to the db and associated with this District
+        /// </summary>
         public void AddLine(DataSyncLine line)
         {
             line.DistrictId = DistrictId;
             Db.DataSyncLines.Add(line);
         }
-
-        private DataSyncHistory currentHistory;
 
         public IQueryable<DataSyncHistory> DataSyncHistories =>
             Db.DataSyncHistories
@@ -133,7 +142,7 @@ namespace OneRosterSync.Net.Processing
             await Committer.Invoke();
         }
 
-        public void RecordProcessingError(ProcessingException pe, ProcessingStage processingStage)
+        public void RecordProcessingError(string message, ProcessingStage processingStage)
         {
             DataSyncHistory history = CurrentHistory;
             if (history == null)
@@ -144,9 +153,9 @@ namespace OneRosterSync.Net.Processing
            
             switch (processingStage)
             {
-                case ProcessingStage.Load: CurrentHistory.LoadError = pe.Message; break;
-                case ProcessingStage.Analyze: CurrentHistory.AnalyzeError = pe.Message; break;
-                case ProcessingStage.Apply: CurrentHistory.ApplyError = pe.Message; break;
+                case ProcessingStage.Load: CurrentHistory.LoadError = message; break;
+                case ProcessingStage.Analyze: CurrentHistory.AnalyzeError = message; break;
+                case ProcessingStage.Apply: CurrentHistory.ApplyError = message; break;
                 default:
                     Logger.Here().LogError($"Unexpected Processing Stage in exception: {processingStage}");
                     break;
