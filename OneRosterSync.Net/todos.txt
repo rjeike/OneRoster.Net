@@ -14,6 +14,11 @@ Medium
 
 Medium-Low
 ==========
+* Account Management:
+    * Establish relationship between User and District 
+    * List Districts owned by user on main DataSync Index page
+    * Restrict access to Districts to User who owns it
+    * Hook up password recovery?
 * UnZip: unzip file and move to processing folder
 * Archiving: Design and implement Archive mechanism for processed files
 * Unit Tests
