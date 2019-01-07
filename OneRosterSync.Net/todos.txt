@@ -22,7 +22,7 @@ Medium-Low
 * Integration Testing
 https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-2.2
 * Paginate History Page
-* Included AcademicSessions in Sync
+* Include AcademicSessions in Sync
 
 
 Low
@@ -39,3 +39,7 @@ The challenge is the dependencies - there will be errors such as missing user fo
 * Add option to identify Deleted dependent records.  For example, if we stop syncing a class, we mark enrollments deleted and sync those.  
 Need to think this through a bit.  May not be necessary.
 * Add other entities from OneRoster spec
+* Dates
+    * Review dates to make sure timezone is displayed properly (i.e. ToLocalTime in UI)
+    * Add friendly dates (e.g. "an hour ago")
+* Format numbers (e.g. "N0" to make 1234 ==> 1,234)
