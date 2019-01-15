@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OneRosterSync.Net.Authentication;
 
 namespace OneRosterSync.Net.Models
 {
@@ -121,6 +122,12 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("Endpoint for LMS API")]
         public string LmsApiEndpoint { get; set; }
+
+	    [DisplayName("Authenticator for LMS API")]
+		public ApiAuthenticatorType LmsApiAuthenticatorType { get; set; }
+
+	    [DisplayName("Authentication Data for LMS API")]
+		public string LmsApiAuthenticationJsonData { get; set; }
 
         [DisplayName("Approval Required?")]
         public bool IsApprovalRequired { get; set; }
