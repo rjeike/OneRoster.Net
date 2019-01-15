@@ -1,4 +1,5 @@
-﻿@model OneRosterSync.Net.Models.District
+﻿@using OneRosterSync.Net.Authentication
+@model OneRosterSync.Net.Models.District
 @{
     ViewData["Title"] = "Edit District";
 }
@@ -45,14 +46,36 @@
                     OneRoster.Net comes with a set of sample files in "CSVSample"
                 </small>
             </div>
-            <div class="form-group">
-                <label asp-for="LmsApiEndpoint" class="control-label"></label>
-                <input asp-for="LmsApiEndpoint" class="form-control" />
-                <span asp-validation-for="LmsApiEndpoint" class="text-danger"></span>
-                <small id="HelpBlock" class="form-text text-muted">
-                    The LMS API endpoint to recieve sync'ed data during the Apply process.
-                </small>
-            </div>
+	        <div class="form-group">
+		        <label asp-for="LmsApiEndpoint" class="control-label"></label>
+		        <input asp-for="LmsApiEndpoint" class="form-control" />
+		        <span asp-validation-for="LmsApiEndpoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS API endpoint to recieve sync'ed data during the Apply process.
+		        </small>
+	        </div>
+	        <div class="form-group">
+		        <label asp-for="LmsApiAuthenticatorType" class="control-label"></label>
+		        @*<input asp-for="LmsApiAuthenticatorType" class="form-control" />*@
+		        <select asp-for="LmsApiAuthenticatorType" asp-items="Html.GetEnumSelectList<ApiAuthenticatorType>()" class="form-control"></select>
+		        <span asp-validation-for="LmsApiAuthenticatorType" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS API authentication mode. Currently only ApiKey Authentication is supported.
+		        </small>
+	        </div>
+			<div class="form-group">
+				<label asp-for="LmsApiAuthenticationJsonData" class="control-label"></label>
+				<textarea asp-for="LmsApiAuthenticationJsonData" class="form-control"></textarea>
+				<span asp-validation-for="LmsApiAuthenticationJsonData" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					Authentication Details for the LMS Endpoint. For ApiKey type use the following JSON format:
+					<pre>
+{
+	"apiKey" = "56vfybu5ye4fv7dbtyj6",
+	"apiKeyParameterName" = "apiKey",
+}</pre>
+				</small>
+			</div>
             <div class="form-group">
                 <div class="checkbox">
                     <label>
