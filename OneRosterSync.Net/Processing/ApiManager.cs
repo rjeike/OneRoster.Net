@@ -6,6 +6,7 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using OneRosterSync.Net.Authentication;
 
 namespace OneRosterSync.Net.Processing
@@ -39,7 +40,7 @@ namespace OneRosterSync.Net.Processing
             client.Dispose();
         }
 
-        public async Task<ApiResponse> Post(string entity, object data) 
+        public async Task<ApiResponse> Post(string entityEndpoint, object data) 
         {
             try
             {
@@ -54,9 +55,9 @@ namespace OneRosterSync.Net.Processing
                 //Logger.Here().LogInformation($"Posting\n {json}");
 
 				// PostAsync ignores any query string present in the baseAddress hence we need to add it back.
-				// Not sure if there is more elegant way to do this. I might later switch some other http library.
+				// Not sure if there is more elegant way to do this. I might later switch to some other http library.
 
-	            var response = await client.PostAsync($"{entity}{client.BaseAddress.Query}", content);
+	            var response = await client.PostAsync(BuildEndpoint(client.BaseAddress, entityEndpoint) , content);
 
                 // retrieve response
                 response.EnsureSuccessStatusCode();
@@ -74,5 +75,34 @@ namespace OneRosterSync.Net.Processing
                 return new ApiResponse { Success = false, ErrorMessage = message };
             }
         }
+
+	    private static string BuildEndpoint(Uri baseUrl, string entityEndpoint)
+	    {
+			// TODO: Replace this junk by https://flurl.io/
+
+			var uriBuilder = new UriBuilder(baseUrl);
+
+			// If the entity end point is just a query string
+		    if (entityEndpoint.Trim().StartsWith('?'))
+		    {
+			    var query = HttpUtility.ParseQueryString(uriBuilder.Query);
+				foreach (var kvp in entityEndpoint.Replace("?", "").Split("&"))
+				{
+					var splits = kvp.Split("=");
+
+					if (splits.Length >= 1)
+						query.Add(splits[0], splits[1]);
+				}
+
+			    uriBuilder.Query = query.ToString();
+		    }
+		    else
+		    {
+			    uriBuilder.Path += entityEndpoint;
+		    }
+
+		    return uriBuilder.ToString();
+
+	    }
     }
 }
