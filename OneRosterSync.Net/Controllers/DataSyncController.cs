@@ -80,7 +80,7 @@ namespace OneRosterSync.Net.Controllers
 
             // create default values
             district.BasePath = @"CSVSample";
-            district.LmsApiEndpoint = @"https://localhost:44312/api/mockapi/";
+            district.LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/";
 
             db.Add(district);
             await db.SaveChangesAsync();
@@ -364,7 +364,7 @@ namespace OneRosterSync.Net.Controllers
             district.EmailsEachProcess = postedDistrict.EmailsEachProcess;
             district.EmailsOnChanges = postedDistrict.EmailsOnChanges;
             district.IsApprovalRequired = postedDistrict.IsApprovalRequired;
-            district.LmsApiEndpoint = postedDistrict.LmsApiEndpoint;
+            district.LmsApiBaseUrl = postedDistrict.LmsApiBaseUrl;
             district.Name = postedDistrict.Name;
             district.TargetId = postedDistrict.TargetId;
 	        district.LmsApiAuthenticatorType = postedDistrict.LmsApiAuthenticatorType;

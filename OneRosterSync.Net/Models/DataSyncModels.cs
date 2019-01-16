@@ -121,7 +121,7 @@ namespace OneRosterSync.Net.Models
         public string BasePath { get; set; }
 
         [DisplayName("Endpoint for LMS API")]
-        public string LmsApiEndpoint { get; set; }
+        public string LmsApiBaseUrl { get; set; }
 
 	    [DisplayName("Authenticator for LMS API")]
 		public ApiAuthenticatorType LmsApiAuthenticatorType { get; set; }

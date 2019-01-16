@@ -190,7 +190,7 @@ namespace OneRosterSync.Net.Processing
                 !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
                 throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
 
-            using (var api = new ApiManager(Repo.District.LmsApiEndpoint))
+            using (var api = new ApiManager(Repo.District.LmsApiBaseUrl))
             {
 				api.ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(Repo.District.LmsApiAuthenticatorType, Repo.District.LmsApiAuthenticationJsonData);
                 var applier = new Applier(Services, Repo.DistrictId, api);
