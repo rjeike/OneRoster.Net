@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20190116114001_LmsEndpoints")]
+    partial class LmsEndpoints
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -315,7 +317,16 @@ namespace OneRosterSync.Net.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<string>("AcademicSessionEndPoint")
+                        .IsRequired();
+
                     b.Property<string>("BasePath");
+
+                    b.Property<string>("ClassEndPoint")
+                        .IsRequired();
+
+                    b.Property<string>("CourseEndPoint")
+                        .IsRequired();
 
                     b.Property<DateTime>("Created");
 
@@ -325,31 +336,16 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<string>("EmailsOnChanges");
 
-                    b.Property<bool>("IsApprovalRequired");
-
-                    b.Property<string>("LmsAcademicSessionEndPoint")
+                    b.Property<string>("EnrollmentEndPoint")
                         .IsRequired();
+
+                    b.Property<bool>("IsApprovalRequired");
 
                     b.Property<string>("LmsApiAuthenticationJsonData");
 
                     b.Property<int>("LmsApiAuthenticatorType");
 
                     b.Property<string>("LmsApiBaseUrl");
-
-                    b.Property<string>("LmsClassEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsCourseEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsEnrollmentEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsOrgEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsUserEndPoint")
-                        .IsRequired();
 
                     b.Property<DateTime>("Modified");
 
@@ -358,11 +354,17 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<DateTime?>("NextProcessingTime");
 
+                    b.Property<string>("OrgEndPoint")
+                        .IsRequired();
+
                     b.Property<int>("ProcessingAction");
 
                     b.Property<int>("ProcessingStatus");
 
                     b.Property<string>("TargetId");
+
+                    b.Property<string>("UserEndPoint")
+                        .IsRequired();
 
                     b.Property<int>("Version");
 

@@ -370,7 +370,14 @@ namespace OneRosterSync.Net.Controllers
 	        district.LmsApiAuthenticatorType = postedDistrict.LmsApiAuthenticatorType;
 	        district.LmsApiAuthenticationJsonData = postedDistrict.LmsApiAuthenticationJsonData;
 
-            DistrictRepo.UpdateNextProcessingTime(district);
+	        district.LmsOrgEndPoint = postedDistrict.LmsOrgEndPoint;
+	        district.LmsCourseEndPoint = postedDistrict.LmsCourseEndPoint;
+	        district.LmsClassEndPoint = postedDistrict.LmsClassEndPoint;
+	        district.LmsUserEndPoint = postedDistrict.LmsUserEndPoint;
+	        district.LmsEnrollmentEndPoint = postedDistrict.LmsEnrollmentEndPoint;
+	        district.LmsAcademicSessionEndPoint = postedDistrict.LmsAcademicSessionEndPoint;
+
+			DistrictRepo.UpdateNextProcessingTime(district);
             
             district.Touch();
 

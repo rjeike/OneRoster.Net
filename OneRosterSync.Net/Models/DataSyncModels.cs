@@ -120,7 +120,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Base Path of CSV File")]
         public string BasePath { get; set; }
 
-        [DisplayName("Endpoint for LMS API")]
+        [DisplayName("LMS API BaseUrl")]
         public string LmsApiBaseUrl { get; set; }
 
 	    [DisplayName("Authenticator for LMS API")]
@@ -140,7 +140,37 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("Next Processing")]
         public ProcessingAction ProcessingAction { get; set; }
-    }
+
+		[DefaultValue("org")]
+		[Required]
+		[DisplayName("LMS Org Endpoint")]
+		public string LmsOrgEndPoint { get; set; }
+
+	    [DefaultValue("course")]
+	    [Required]
+	    [DisplayName("LMS Course Endpoint")]
+		public string LmsCourseEndPoint { get; set; }
+
+	    [DefaultValue("class")]
+	    [Required]
+	    [DisplayName("LMS Class Endpoint")]
+		public string LmsClassEndPoint { get; set; }
+
+	    [DefaultValue("user")]
+	    [Required]
+	    [DisplayName("LMS User Endpoint")]
+		public string LmsUserEndPoint { get; set; }
+
+	    [DefaultValue("enrollment")]
+	    [Required]
+	    [DisplayName("LMS Enrollment Endpoint")]
+		public string LmsEnrollmentEndPoint { get; set; }
+
+	    [DefaultValue("academicSession")]
+	    [Required]
+	    [DisplayName("LMS Academic Session Endpoint")]
+		public string LmsAcademicSessionEndPoint { get; set; }
+	}
 
     public class DataSyncLine : DataObject
     {
