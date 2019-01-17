@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OneRosterSync.Net.Authentication;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
@@ -191,6 +192,7 @@ namespace OneRosterSync.Net.Processing
 
             using (var api = new ApiManager(Repo.District.LmsApiEndpoint))
             {
+				api.ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(Repo.District.LmsApiAuthenticatorType, Repo.District.LmsApiAuthenticationJsonData);
                 var applier = new Applier(Services, Repo.DistrictId, api);
 
                 await applier.ApplyLines<CsvOrg>();

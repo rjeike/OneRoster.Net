@@ -367,6 +367,8 @@ namespace OneRosterSync.Net.Controllers
             district.LmsApiEndpoint = postedDistrict.LmsApiEndpoint;
             district.Name = postedDistrict.Name;
             district.TargetId = postedDistrict.TargetId;
+	        district.LmsApiAuthenticatorType = postedDistrict.LmsApiAuthenticatorType;
+	        district.LmsApiAuthenticationJsonData = postedDistrict.LmsApiAuthenticationJsonData;
 
             DistrictRepo.UpdateNextProcessingTime(district);
             

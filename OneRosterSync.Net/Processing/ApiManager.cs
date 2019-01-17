@@ -6,17 +6,24 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using OneRosterSync.Net.Authentication;
 
 namespace OneRosterSync.Net.Processing
 {
     public class ApiManager : IDisposable
     {
+
+		public IApiAuthenticator ApiAuthenticator { get; set; }
+
         private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<ApiManager>();
 
         private readonly HttpClient client;
 
-        public ApiManager(string endpoint)
+
+        public ApiManager(string endpoint, IApiAuthenticator apiAuthenticator = null)
         {
+	        ApiAuthenticator = apiAuthenticator;
+
             client = new HttpClient
             {
                 BaseAddress = new Uri(endpoint)
@@ -40,9 +47,16 @@ namespace OneRosterSync.Net.Processing
                 string json = JsonConvert.SerializeObject(data);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                // submit request
+				// add authentication
+	            ApiAuthenticator?.AddAuthentication(client);
+
+	            // submit request
                 //Logger.Here().LogInformation($"Posting\n {json}");
-                HttpResponseMessage response = await client.PostAsync(entity, content);
+
+				// PostAsync ignores any query string present in the baseAddress hence we need to add it back.
+				// Not sure if there is more elegant way to do this. I might later switch some other http library.
+
+	            var response = await client.PostAsync($"{entity}{client.BaseAddress.Query}", content);
 
                 // retrieve response
                 response.EnsureSuccessStatusCode();
