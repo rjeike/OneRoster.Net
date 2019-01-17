@@ -15,6 +15,8 @@
     <Compile Remove="Data\Migrations\20181117224240_DataSyncTables.Designer.cs" />
     <Compile Remove="Data\Migrations\20190105021442_HistoryDetailTweak.cs" />
     <Compile Remove="Data\Migrations\20190105021442_HistoryDetailTweak.Designer.cs" />
+    <Compile Remove="Data\Migrations\20190116113827_LmsEndpoints.cs" />
+    <Compile Remove="Data\Migrations\20190116113827_LmsEndpoints.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

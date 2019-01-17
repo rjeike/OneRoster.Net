@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,7 @@ namespace OneRosterSync.Net.Processing
 
         private readonly IServiceProvider Services;
         private readonly int DistrictId;
-        private readonly ApiManager Api;
+        private readonly ApiManager _apiManager;
 
         /// <summary>
         /// How many APIs should we call in parallel?
@@ -27,11 +28,11 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public int ParallelChunkSize { get; set; } = 10;
 
-        public Applier(IServiceProvider services, int districtId, ApiManager api)
+        public Applier(IServiceProvider services, int districtId, ApiManager apiManager)
         {
             Services = services;
             DistrictId = districtId;
-            Api = api;
+            _apiManager = apiManager;
         }
 
         /// <summary>
@@ -131,8 +132,9 @@ namespace OneRosterSync.Net.Processing
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
+			
+            var response = await _apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
 
-            ApiResponse response = await Api.Post(data.EntityType.ToLower(), data);
             if (response.Success)
             {
                 line.SyncStatus = SyncStatus.Applied;
@@ -150,5 +152,26 @@ namespace OneRosterSync.Net.Processing
 
             repo.PushLineHistory(line, isNewData: false);
         }
-    }
+
+	    private string GetEntityEndpoint(string entityType, DistrictRepo repo)
+	    {
+			switch (entityType)
+			{
+				case "org":
+					return repo.District.LmsOrgEndPoint;
+				case "course":
+					return repo.District.LmsCourseEndPoint;
+				case "class":
+					return repo.District.LmsClassEndPoint;
+				case "user":
+					return repo.District.LmsUserEndPoint;
+				case "enrollment":
+					return repo.District.LmsEnrollmentEndPoint;
+				case "academicsession":
+					return repo.District.LmsAcademicSessionEndPoint;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(entityType), entityType, null);
+			}
+		}
+	}
 }

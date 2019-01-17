@@ -47,13 +47,77 @@
                 </small>
             </div>
 	        <div class="form-group">
-		        <label asp-for="LmsApiEndpoint" class="control-label"></label>
-		        <input asp-for="LmsApiEndpoint" class="form-control" />
-		        <span asp-validation-for="LmsApiEndpoint" class="text-danger"></span>
+		        <label asp-for="LmsApiBaseUrl" class="control-label"></label>
+		        <input asp-for="LmsApiBaseUrl" class="form-control" />
+		        <span asp-validation-for="LmsApiBaseUrl" class="text-danger"></span>
 		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS API endpoint to recieve sync'ed data during the Apply process.
+			        The LMS API baseUrl to recieve sync'ed data during the Apply process.
 		        </small>
 	        </div>
+			
+			<hr/>
+			
+	        <div class="form-group">
+		        <label asp-for="LmsOrgEndPoint" class="control-label"></label>
+		        <input asp-for="LmsOrgEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsOrgEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS Org endpoint. This can be a path like "api/org" or just Query string like "?action=createOrg". Please note that 
+					query string must begin with ? symbol.
+		        </small>
+	        </div>
+			
+	        <div class="form-group">
+		        <label asp-for="LmsClassEndPoint" class="control-label"></label>
+		        <input asp-for="LmsClassEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsClassEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS API class endpoint
+		        </small>
+	        </div>
+			
+	        <div class="form-group">
+		        <label asp-for="LmsCourseEndPoint" class="control-label"></label>
+		        <input asp-for="LmsCourseEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsCourseEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS Course class endpoint
+		        </small>
+	        </div>
+			
+	        <div class="form-group">
+		        <label asp-for="LmsAcademicSessionEndPoint" class="control-label"></label>
+		        <input asp-for="LmsAcademicSessionEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsAcademicSessionEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS Academic Session endpoint
+		        </small>
+	        </div>
+			
+			
+	        <div class="form-group">
+		        <label asp-for="LmsUserEndPoint" class="control-label"></label>
+		        <input asp-for="LmsUserEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsUserEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS User class endpoint
+		        </small>
+	        </div>
+			
+			
+	        <div class="form-group">
+		        <label asp-for="LmsEnrollmentEndPoint" class="control-label"></label>
+		        <input asp-for="LmsEnrollmentEndPoint" class="form-control" />
+		        <span asp-validation-for="LmsEnrollmentEndPoint" class="text-danger"></span>
+		        <small id="HelpBlock" class="form-text text-muted">
+			        The LMS Enrollment class endpoint
+		        </small>
+	        </div>
+			
+			
+	        <hr/>
+			
+
 	        <div class="form-group">
 		        <label asp-for="LmsApiAuthenticatorType" class="control-label"></label>
 		        @*<input asp-for="LmsApiAuthenticatorType" class="form-control" />*@

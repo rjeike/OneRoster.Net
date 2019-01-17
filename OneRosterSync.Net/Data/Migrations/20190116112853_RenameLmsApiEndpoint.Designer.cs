@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20190116112853_RenameLmsApiEndpoint")]
+    partial class RenameLmsApiEndpoint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -327,29 +329,11 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<bool>("IsApprovalRequired");
 
-                    b.Property<string>("LmsAcademicSessionEndPoint")
-                        .IsRequired();
-
                     b.Property<string>("LmsApiAuthenticationJsonData");
 
                     b.Property<int>("LmsApiAuthenticatorType");
 
                     b.Property<string>("LmsApiBaseUrl");
-
-                    b.Property<string>("LmsClassEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsCourseEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsEnrollmentEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsOrgEndPoint")
-                        .IsRequired();
-
-                    b.Property<string>("LmsUserEndPoint")
-                        .IsRequired();
 
                     b.Property<DateTime>("Modified");
 
