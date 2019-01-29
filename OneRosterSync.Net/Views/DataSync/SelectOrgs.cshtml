@@ -1,0 +1,61 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLine>
+
+@{
+    ViewData["Title"] = "Select Organizations";
+    int districtId = ViewBag.districtId;
+
+    string CourseDescription(DataSyncLine line)
+    {
+        var cvsOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(line.RawData);
+        return $"{line.SourcedId} - {cvsOrg.name}";
+    }
+
+    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourcedId, selected: l.IncludeInSync));
+}
+
+<h2>Select Orgs</h2>
+
+<h4>DataSyncLine</h4>
+<hr />
+<div class="row">
+	<div class="col-md-4">
+		<h4>Avaliable Orgs</h4>
+		<form asp-action="SelectOrgs">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			@Html.Hidden("districtId", districtId)
+			<select name="SelectedOrgs" asp-items="list" multiple size="20" class="form-control"></select>
+			<br/><br/>
+			<div class="form-group">
+				<input type="submit" value="Save" class="btn btn-primary" />
+				<a asp-action="DistrictDashboard" asp-route-districtId="@districtId" class="btn btn-default">Back to Dashboard</a>
+			</div>
+		</form>
+	</div>
+    <div class="col-md-6">
+	    <h4>Currently selected Orgs</h4>
+		
+	    <table class="table table-hover">
+		    <thead>
+		    <tr>
+			    <th scope="col">SourceId</th>
+			    <th scope="col">Name</th>
+			    <th scope="col">Course</th>
+		    </tr>
+		    </thead>
+		    <tbody>
+		    @foreach (var org in Model.Where(l => l.IncludeInSync))
+		    {
+			    var csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+			    <tr>
+				    <td>@csvOrg.sourcedId</td>
+					<td>@csvOrg.name</td>
+				    <td><a asp-action="SelectCourses" asp-route-districtId="@districtId" asp-route-orgSourceId="@org.SourcedId">Select Courses</a></td>
+			    </tr>
+		    }
+		    
+		    </tbody>
+	    </table>
+    </div>
+</div>
+
+

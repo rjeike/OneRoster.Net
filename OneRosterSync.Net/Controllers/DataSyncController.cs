@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
@@ -199,10 +200,14 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> SelectCourses(int districtId)
+        public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId)
         {
             var repo = new DistrictRepo(db, districtId);
-            var model = await repo.Lines<CsvCourse>().ToListAsync();
+			
+	        // Get all courses that belong to this school
+	        var model= repo.Lines<CsvCourse>().Where(c =>
+		        JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
+            //var model = await repo.Lines<CsvCourse>().ToListAsync();
             return View(model);
         }
 
@@ -224,10 +229,40 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-            return RedirectToDistrict(districtId);
+	        return RedirectToAction(nameof(SelectOrgs), new {districtId});
         }
 
-        private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
+	    [HttpGet]
+	    public async Task<IActionResult> SelectOrgs(int districtId)
+	    {
+		    var repo = new DistrictRepo(db, districtId);
+		    var model = await repo.Lines<CsvOrg>().ToListAsync();
+		    ViewBag.districtId = districtId;
+		    return View(model);
+	    }
+
+	    [HttpPost, ValidateAntiForgeryToken]
+	    public async Task<IActionResult> SelectOrgs(int districtId, IEnumerable<string> SelectedOrgs)
+	    {
+		    var repo = new DistrictRepo(db, districtId);
+		    var model = await repo.Lines<CsvOrg>().ToListAsync();
+
+		    foreach (var org in model)
+		    {
+			    bool include = SelectedOrgs.Contains(org.SourcedId);
+			    if (org.IncludeInSync == include)
+				    continue;
+			    org.IncludeInSync = include;
+			    org.Touch();
+			    repo.PushLineHistory(org, isNewData: false);
+		    }
+
+		    await repo.Committer.Invoke();
+
+		    return RedirectToDistrict(districtId);
+	    }
+
+		private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = await db.Districts.FindAsync(districtId);
 

@@ -1,16 +1,16 @@
 ﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLine>
 
 @{
-    ViewData["Title"] = "Select Courses";
-    int districtId = 1;
+	ViewData["Title"] = "Select Courses";
+	int districtId = 1;
 
-    string CourseDescription(DataSyncLine line)
-    {
-        var cvsCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(line.RawData);
-        return $"{line.SourcedId} - {cvsCourse.title}";
-    }
+	string CourseDescription(DataSyncLine line)
+	{
+		var cvsCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(line.RawData);
+		return $"{line.SourcedId} - {cvsCourse.title}";
+	}
 
-    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourcedId, selected: l.IncludeInSync));
+	var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourcedId, selected: l.IncludeInSync));
 }
 
 <h2>Select Courses</h2>
@@ -18,27 +18,54 @@
 <h4>DataSyncLine</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="SelectCourses">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            @Html.Hidden("districtId", districtId)
+	<div class="col-md-4">
+		<h4>Available courses</h4>
+		<form asp-action="SelectCourses">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			@Html.Hidden("districtId", districtId)
 
-            <select name="SelectedCourses" asp-items="list" multiple size="20"></select>
+			<select class="form-control" name="SelectedCourses" asp-items="list" multiple size="20"></select>
+			<br /><br />
+				  <div class="form-group">
+				  	<input type="submit" value="Save" class="btn btn-primary" />
+				  	<a asp-action="SelectOrgs" asp-route-districtId="@districtId" class="btn btn-default">Back to Orgs</a>
+				  </div>
+		</form>
+	</div>
+	<div class="col-md-6">
+		<h4>Currently selected courses</h4>
 
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-default" />
-            </div>
-        </form>
-    </div>
-    <div class="col-md-4">
-        <h4>Currently selected courses</h4>
-        <ul>
-            @foreach (var course in Model.Where(l => l.IncludeInSync))
-            {
-                <li>@CourseDescription(course)</li>
-            }
-        </ul>
-    </div>
+		<table class="table table-hover">
+			<thead>
+				<tr>
+					<th scope="col">SourceId</th>
+					<th scope="col">OrgSourceId</th>
+					<th scope="col">Title</th>
+					<th scope="col">Course Code</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var course in Model.Where(l => l.IncludeInSync))
+				{
+					var csvCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
+				<tr>
+					<td>@course.SourcedId</td>
+					<td>@csvCourse.orgSourcedId</td>
+					<td>@csvCourse.title</td>
+					<td>@csvCourse.courseCode</td>
+				</tr>
+				}
+			</tbody>
+		</table>
+
+
+		@*<ul>
+				@foreach (var course in Model.Where(l => l.IncludeInSync))
+				{
+					<li>@CourseDescription(course)</li>
+				}
+			</ul>*@
+	</div>
 </div>
 
 
