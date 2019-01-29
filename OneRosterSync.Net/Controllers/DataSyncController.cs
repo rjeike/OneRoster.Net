@@ -52,7 +52,20 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public IActionResult DistrictCreate()
         {
-            return View();
+	        // create default values
+			var district = new District
+	        {
+		        BasePath = @"CSVSample",
+		        LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
+		        LmsOrgEndPoint = @"org",
+		        LmsCourseEndPoint = @"course",
+		        LmsClassEndPoint = @"class",
+		        LmsUserEndPoint = @"user",
+		        LmsEnrollmentEndPoint = @"enrollment",
+		        LmsAcademicSessionEndPoint = @"academicSession"
+	        };
+
+	        return View(district);
         }
 
         /// <summary>
@@ -73,16 +86,12 @@ namespace OneRosterSync.Net.Controllers
             RedirectToAction(nameof(DistrictDashboard), new { districtId });
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> DistrictCreate([Bind("Name")] District district)
+        public async Task<IActionResult> DistrictCreate(District district)
         {
-            if (!ModelState.IsValid)
-                return View(district);
+	        if (!ModelState.IsValid)
+		        return View(district);
 
-            // create default values
-            district.BasePath = @"CSVSample";
-            district.LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/";
-
-            db.Add(district);
+			db.Add(district);
             await db.SaveChangesAsync();
             return RedirectToDistrict(district.DistrictId);
         }
