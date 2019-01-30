@@ -1,0 +1,6 @@
+sourcedId,status,dateLastModified,title,grades,courseSourcedId,classCode,classType,location,schoolSourcedId,termSourcedIds
+3221301,active,2012-04-23T18:25:43.511Z,Mathematics 5,5,10007,Math5,scheduled,Room M1,Sch_000002,267_FYT_2019
+3221314,active,2012-04-23T18:25:43.511Z,Science 3,3,10008,Science3,scheduled,Room M2,Sch_000002,267_FYT_2019
+3221342,active,2012-04-23T18:25:43.511Z,Reading,"01,05",10005,Reading1,scheduled,Room T1,Sch_000001,267_FYT_2019
+3221347,toBeDeleted,2012-04-23T18:25:43.511Z,Language Arts,PK,10006,LangArts1,scheduled,Room T2,Sch_000001,267_FYT_2019
+3221847,active,2012-04-23T18:25:43.511Z,Language Arts,PK,10006,LangArts1,scheduled,Room T8,Summit,267_FYT_2019

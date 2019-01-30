@@ -1,0 +1,5 @@
+sourcedId,status,dateLastModified,enabledUser,orgSourcedIds,role,username,givenName,familyName,middleName,password,email
+14043,active,2012-04-23T18:25:43.511Z,TRUE,Sch_000002,student,S56789@summit.org,Joe,Smith,,secret1,S56789@summit.org
+14058,active,2012-04-23T18:25:43.511Z,FALSE,Sch_000002,student,S56790@summit.org,Randall,Jones,Jon,secret1,S56790@summit.org
+15474,active,2012-04-23T18:25:43.511Z,TRUE,Sch_000002,student,S56791@summit.org,John,Williams,Joseph,secret1,S56791@summit.org
+15514,active,2012-04-23T18:25:43.511Z,TRUE,Sch_000001,student,S56792@summit.org,Sally,Wiggins,,secret1,S56792@summit.org
