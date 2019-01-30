@@ -35,12 +35,13 @@ namespace OneRosterSync.Net.Processing
 
         /// <summary>
         /// This is used to determine if any change needs to be pushed to the LMS
-        /// Basically if a record has changed OR has never been Applied
+        /// Basically if a record has changed OR has never been Applied or if it is included in sync
         /// which can happen if a record is loaded and later caused to be included in the Sync
         /// </summary>
         private static bool IsUnappliedChange(DataSyncLine line) =>
-            line.LoadStatus != LoadStatus.NoChange || 
-            line.SyncStatus != SyncStatus.Applied;
+			line.IncludeInSync &&
+            (line.LoadStatus != LoadStatus.NoChange || 
+            line.SyncStatus != SyncStatus.Applied);
 
         /// <summary>
         /// Helper to mark a record to be included in the next push to LMS
@@ -64,7 +65,7 @@ namespace OneRosterSync.Net.Processing
             var cache = new DataLineCache();
             await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
-            // include all Orgs in sync by default
+            // include Orgs that have been selected for sync
             foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
                 IncludeReadyTouch(org);
             await Repo.Committer.Invoke();
