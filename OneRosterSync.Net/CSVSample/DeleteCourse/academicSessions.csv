@@ -1,0 +1,4 @@
+sourcedId,status,dateLastModified,title,type,startDate,endDate,parentSourcedId,schoolYear
+001_FYT_2019,active,2012-04-23T18:25:43.511Z,FYT,term,8/27/2018,5/31/2019,2019,2019
+001_S1_2019,active,2012-04-23T18:25:43.511Z,S1,term,8/27/2018,12/20/2018,2019,2019
+001_S2_2019,active,2012-04-23T18:25:43.511Z,S2,term,1/7/2019,5/31/2019,2019,2019
