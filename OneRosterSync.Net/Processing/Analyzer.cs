@@ -34,14 +34,18 @@ namespace OneRosterSync.Net.Processing
 		}
 
 		/// <summary>
-		/// This is used to determine if any change needs to be pushed to the LMS
-		/// Basically if a record has changed OR has never been Applied or if it is included in sync
+		/// This is used to determine if any change needs to be pushed to the LMS and is included in sync.
+		/// Basically if a record has changed OR has never been Applied
 		/// which can happen if a record is loaded and later caused to be included in the Sync
 		/// </summary>
 		private static bool IsUnappliedChange(DataSyncLine line) =>
 			line.IncludeInSync &&
 			(line.LoadStatus != LoadStatus.NoChange ||
 			line.SyncStatus != SyncStatus.Applied);
+
+		private static bool IsUnappliedChangeWithoutIncludedInSync(DataSyncLine line) =>
+			(line.LoadStatus != LoadStatus.NoChange ||
+			 line.SyncStatus != SyncStatus.Applied);
 
 		/// <summary>
 		/// Helper to mark a record to be included in the next push to LMS
@@ -78,7 +82,7 @@ namespace OneRosterSync.Net.Processing
 			// now walk the classes and include those which map to an included course
 			var classMap = cache.GetMap<CsvClass>();
 			var courseIds = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Select(l => l.SourcedId).ToHashSet();
-			foreach (var _class in classMap.Values.Where(IsUnappliedChange))
+			foreach (var _class in classMap.Values.Where(IsUnappliedChangeWithoutIncludedInSync))
 			{
 				CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
 				if (courseIds.Contains(csvClass.courseSourcedId))
