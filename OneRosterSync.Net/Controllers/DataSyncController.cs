@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
-using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.DAL;
 using ReflectionIT.Mvc.Paging;
@@ -20,11 +22,15 @@ namespace OneRosterSync.Net.Controllers
         private readonly ApplicationDbContext db;
         private readonly ILogger Logger;
 
-        public DataSyncController(ApplicationDbContext db, ILogger<DataSyncController> logger)
+	    private readonly IHostingEnvironment _hostingEnvironment;
+
+
+		public DataSyncController(ApplicationDbContext db, ILogger<DataSyncController> logger, IHostingEnvironment hostingEnvironment)
         {
             this.db = db;
             Logger = logger;
-        }
+	        _hostingEnvironment = hostingEnvironment;
+		}
 
         [HttpGet]
         public IActionResult Index()
@@ -56,7 +62,7 @@ namespace OneRosterSync.Net.Controllers
 	        // create default values
 			var district = new District
 	        {
-		        BasePath = @"CSVSample",
+		        BasePath = @"CSVFiles",
 		        LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
 		        LmsOrgEndPoint = @"org",
 		        LmsCourseEndPoint = @"course",
@@ -94,7 +100,12 @@ namespace OneRosterSync.Net.Controllers
 
 			db.Add(district);
             await db.SaveChangesAsync();
-            return RedirectToDistrict(district.DistrictId);
+
+			// Set the CSV Folder path
+	        district.BasePath = $"CSVFiles/{district.DistrictId}";
+	        await db.SaveChangesAsync();
+
+			return RedirectToDistrict(district.DistrictId);
         }
 
         [HttpGet]
@@ -432,5 +443,23 @@ namespace OneRosterSync.Net.Controllers
 
             return RedirectToDistrict(district.DistrictId);
         }
-    }
+
+	    [HttpPost]
+	    public async Task<IActionResult> UploadFiles(List<IFormFile> files, int districtId)
+	    {
+		    var path = Path.Combine(_hostingEnvironment.ContentRootPath, "CSVFiles", districtId.ToString());
+		    Directory.CreateDirectory(path);
+
+			foreach (var formFile in files)
+		    {
+			    if (formFile.Length <= 0) continue;
+			    using (var stream = new FileStream(Path.Combine(path, formFile.FileName), FileMode.Create))
+			    {
+				    await formFile.CopyToAsync(stream);
+			    }
+		    }
+
+			return RedirectToDistrict(districtId);
+		}
+	}
 }

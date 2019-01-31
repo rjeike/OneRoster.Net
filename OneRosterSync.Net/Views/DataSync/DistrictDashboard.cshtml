@@ -2,83 +2,112 @@
 @model OneRosterSync.Net.Models.District
 @addTagHelper *, OneRosterSync.Net
 @{
-    ViewData["Title"] = "Edit District";
+	ViewData["Title"] = "Edit District";
 }
 
 <div class="row">
-    <div class="col-md-10">
-        <h2>District Dashboard: <small>@Model.Name</small></h2>
-    </div>
-    <div class="col-md-2 pull-right" style="padding-top:10px;">
-        <form asp-action="DistrictDelete">
-            <input type="hidden" asp-for="DistrictId" />
-            <div class="form-group">
-                <input type="submit" value="Delete District" class="btn btn-sm btn-danger" />
-            </div>
-        </form>
-    </div>
+	<div class="col-md-10">
+		<h2>District Dashboard: <small>@Model.Name</small></h2>
+	</div>
+	<div class="col-md-2 pull-right" style="padding-top:10px;">
+		<form asp-action="DistrictDelete">
+			<input type="hidden" asp-for="DistrictId" />
+			<div class="form-group">
+				<input type="submit" value="Delete District" class="btn btn-sm btn-danger" />
+			</div>
+		</form>
+	</div>
 </div>
 <div class="row">
-    <div class="col-md-6">
-        @await Html.PartialAsync("DistrictDetails", Model)
-        <div class="row">
-            <div class="col-md-offset-4">
-                <a asp-action="DistrictEdit" asp-route-id="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Edit District</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
+	<div class="col-md-6">
+		@await Html.PartialAsync("DistrictDetails", Model)
+		<div class="row">
+			<div class="col-md-offset-4">
+				<a asp-action="DistrictEdit" asp-route-id="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Edit District</a>
+				<br />
+				<br />
+				<form method="post" enctype="multipart/form-data" asp-action="UploadFiles">
+					<input type="hidden" asp-for="DistrictId" />
+					<div class="form-group">
 
-        <h4>Manage Automation</h4>
-        <hr />
-        <div class="col-md-9">
-            <div class="row">
-	            <div class=" col-lg-12">
-		            <div>Entities to Sync</div>
-		            <a asp-action="SelectOrgs" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Select Orgs</a>
-		            <br/><br/>
+						<p>Upload CSV Files below. <strong>Important: </strong> Please note these will replace old files.</p>
 
-		            <div>Useful Links</div>
-		            <a asp-action="DataSyncLines" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Records</a>
-		            <a asp-action="DistrictReport" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Report</a>
-		            <br/><br/>
-		            <div>Manually Process step by step:</div>
-		            <table>
-			            <tbody>
-			            <tr>
-				            <td style="padding-right: 5px;">
-					            <form asp-action="Load"><input type="hidden" asp-for="DistrictId"/>
-						            <div class="form-group"><input type="submit" value="Load" class="btn btn-primary"/></div></form></td>
-				            <td style="padding-right: 5px;">
-					            <form asp-action="Analyze"><input type="hidden" asp-for="DistrictId"/>
-						            <div class="form-group"><input type="submit" value="Analyze" class="btn btn-primary"/></div></form></td>
-				            <td style="padding-right: 5px;">
-					            <form asp-action="Apply"><input type="hidden" asp-for="DistrictId"/>
-						            <div class="form-group"><input type="submit" value="Apply" class="btn btn-primary"/></div></form></td>
-			            </tr>
-			            </tbody>
-		            </table>
-		            <div>Manually invoke full process in one shot:</div>
-		            <form asp-action="FullProcess"><input type="hidden" asp-for="DistrictId"/>
-			            <div class="form-group"><input type="submit" value="Full Process" class="btn btn-primary"/></div></form>
-	            </div>
-            </div>
-        </div>
-    </div>
+						<label class="btn btn-primary" for="my-file-selector">
+							<input accept=".csv" id="my-file-selector" name="files" type="file" style="display: none;" multiple>
+							Browse Files
+						</label>
+
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Upload" class="btn btn-success" />
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-6">
+
+		<h4>Manage Automation</h4>
+		<hr />
+		<div class="col-md-9">
+			<div class="row">
+				<div class=" col-lg-12">
+					<div>Entities to Sync</div>
+					<a asp-action="SelectOrgs" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Select Orgs</a>
+					<br /><br />
+
+					<div>Useful Links</div>
+					<a asp-action="DataSyncLines" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Records</a>
+					<a asp-action="DistrictReport" asp-route-districtId="@Model.DistrictId" class="btn btn-primary" role="button" aria-pressed="true">Report</a>
+					<br /><br />
+					<div>Manually Process step by step:</div>
+					<table>
+						<tbody>
+							<tr>
+								<td style="padding-right: 5px;">
+									<form asp-action="Load">
+										<input type="hidden" asp-for="DistrictId" />
+										<div class="form-group"><input type="submit" value="Load" class="btn btn-primary" /></div>
+									</form>
+								</td>
+								<td style="padding-right: 5px;">
+									<form asp-action="Analyze">
+										<input type="hidden" asp-for="DistrictId" />
+										<div class="form-group"><input type="submit" value="Analyze" class="btn btn-primary" /></div>
+									</form>
+								</td>
+								<td style="padding-right: 5px;">
+									<form asp-action="Apply">
+										<input type="hidden" asp-for="DistrictId" />
+										<div class="form-group"><input type="submit" value="Apply" class="btn btn-primary" /></div>
+									</form>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div>Manually invoke full process in one shot:</div>
+					<form asp-action="FullProcess">
+						<input type="hidden" asp-for="DistrictId" />
+						<div class="form-group"><input type="submit" value="Full Process" class="btn btn-primary" /></div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <br />
 <br />
 
 <div class="row">
-    <div class="col-md-6">
-        <vc:data-sync-stats district-id="@Model.DistrictId" />
-    </div>
-    <div class="col-md-6">
-        <vc:data-sync-histories district-id="@Model.DistrictId" current="true" />
-    </div>
-    <div class="col-md-12">
-        <br />
-        <vc:data-sync-histories district-id="@Model.DistrictId" current="false" />
-    </div>
+	<div class="col-md-6">
+		<vc:data-sync-stats district-id="@Model.DistrictId" />
+	</div>
+	<div class="col-md-6">
+		<vc:data-sync-histories district-id="@Model.DistrictId" current="true" />
+	</div>
+	<div class="col-md-12">
+		<br />
+		<vc:data-sync-histories district-id="@Model.DistrictId" current="false" />
+	</div>
 </div>
