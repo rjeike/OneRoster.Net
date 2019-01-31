@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  onerostersync.net:
+    image: ${DOCKER_REGISTRY}onerostersyncnet
+    build:
+      context: .
+      dockerfile: OneRosterSync.Net/Dockerfile
+  db:
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+        SA_PASSWORD: "oscar2340gmvf09"
+        ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
