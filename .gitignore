@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 
 /OneRosterSync.Net/OneRosterSync.Net.xml
+*.csv
