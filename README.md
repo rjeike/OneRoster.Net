@@ -43,3 +43,12 @@ The records that need to be Synced are walked and the API on your LMS that you e
 
 # Getting Started
 ...Section TBD...
+
+# Deployment (Temporary)
+Temporary instructions till this is dockerized.
+
+```
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=1Roster.Net" -p 1433:1433 microsoft/mssql-server-linux
+dotnet ef database update
+dotnet run --environment="Development"
+```
