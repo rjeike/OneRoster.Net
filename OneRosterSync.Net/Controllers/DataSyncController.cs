@@ -203,9 +203,10 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId)
         {
             var repo = new DistrictRepo(db, districtId);
-			
-	        // Get all courses that belong to this school
-	        var model= repo.Lines<CsvCourse>().Where(c =>
+	        ViewBag.districtId = districtId;
+
+			// Get all courses that belong to this school
+			var model= repo.Lines<CsvCourse>().Where(c =>
 		        JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
             //var model = await repo.Lines<CsvCourse>().ToListAsync();
             return View(model);
@@ -216,8 +217,9 @@ namespace OneRosterSync.Net.Controllers
         {
             var repo = new DistrictRepo(db, districtId);
             var model = await repo.Lines<CsvCourse>().ToListAsync();
+	        ViewBag.districtId = districtId;
 
-            foreach (var course in model)
+			foreach (var course in model)
             {
                 bool include = SelectedCourses.Contains(course.SourcedId);
                 if (course.IncludeInSync == include)
@@ -247,7 +249,7 @@ namespace OneRosterSync.Net.Controllers
 		    var repo = new DistrictRepo(db, districtId);
 		    var model = await repo.Lines<CsvOrg>().ToListAsync();
 
-		    foreach (var org in model)
+			foreach (var org in model)
 		    {
 			    bool include = SelectedOrgs.Contains(org.SourcedId);
 			    if (org.IncludeInSync == include)
@@ -259,7 +261,8 @@ namespace OneRosterSync.Net.Controllers
 
 		    await repo.Committer.Invoke();
 
-		    return RedirectToDistrict(districtId);
+		    return RedirectToAction(nameof(SelectOrgs), new { districtId });
+		    //return RedirectToDistrict(districtId);
 	    }
 
 		private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
