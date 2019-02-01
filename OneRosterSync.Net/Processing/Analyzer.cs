@@ -100,7 +100,7 @@ namespace OneRosterSync.Net.Processing
 					// figure out if we need to process this enrollment
 					if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
 						!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-						!IsUnappliedChange(enrollment))                             // only include if unapplied change in enrollment
+						!IsUnappliedChangeWithoutIncludedInSync(enrollment))                             // only include if unapplied change in enrollment
 						return;
 
 					var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
