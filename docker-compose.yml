@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: OneRosterSync.Net/Dockerfile
+    depends_on:
+      - db
   db:
     image: "mcr.microsoft.com/mssql/server"
     environment:

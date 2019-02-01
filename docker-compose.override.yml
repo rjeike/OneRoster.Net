@@ -3,11 +3,9 @@ version: '3.4'
 services:
   onerostersync.net:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Staging
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ASPNETCORE_HTTPS_PORT=44312
-      - SQLSERVER_HOST=localhost
-      - SQLSERVER_SA_PASSWORD=oscar2340gmvf09
     ports:
       - "61007:80"
       - "44312:443"
