@@ -22,6 +22,7 @@ namespace OneRosterSync.Net
             {
                 Log.Information("Starting web host");
                 WebHost.CreateDefaultBuilder(args)
+	                .UseIISIntegration()
                     .UseStartup<Startup>()
                     .UseSerilog()
                     .Build()
