@@ -42,6 +42,7 @@
 					<th scope="col">OrgSourceId</th>
 					<th scope="col">Title</th>
 					<th scope="col">Course Code</th>
+					<th scope="col"></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -53,18 +54,11 @@
 					<td>@csvCourse.orgSourcedId</td>
 					<td>@csvCourse.title</td>
 					<td>@csvCourse.courseCode</td>
+					<td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@course.DataSyncLineId">Details</a></td>
 				</tr>
 				}
 			</tbody>
 		</table>
-
-
-		@*<ul>
-				@foreach (var course in Model.Where(l => l.IncludeInSync))
-				{
-					<li>@CourseDescription(course)</li>
-				}
-			</ul>*@
 	</div>
 </div>
 

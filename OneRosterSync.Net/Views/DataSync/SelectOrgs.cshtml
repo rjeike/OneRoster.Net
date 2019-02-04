@@ -40,6 +40,7 @@
 			    <th scope="col">SourceId</th>
 			    <th scope="col">Name</th>
 			    <th scope="col">Course</th>
+			    <th scope="col"></th>
 		    </tr>
 		    </thead>
 		    <tbody>
@@ -50,6 +51,7 @@
 				    <td>@csvOrg.sourcedId</td>
 					<td>@csvOrg.name</td>
 				    <td><a asp-action="SelectCourses" asp-route-districtId="@districtId" asp-route-orgSourceId="@org.SourcedId">Select Courses</a></td>
+				    <td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@org.DataSyncLineId">Details</a></td>
 			    </tr>
 		    }
 		    
