@@ -1,132 +1,189 @@
 ﻿@using OneRosterSync.Net.Authentication
 @model OneRosterSync.Net.Models.District
 @{
-    ViewData["Title"] = "Edit District";
+	ViewData["Title"] = "Edit District";
 }
 
 <h2>Edit District: <small>@Model.Name</small></h2>
 
 <div class="row">
-    <div class="col-md-6">
-        <form asp-action="DistrictEdit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="DistrictId" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-                <small id="nameHelpBlock" class="form-text text-muted">
-                    A descriptive name for the District.  It is identification and debugging as the District details won't be sync'ed.
-                </small>
-            </div>
-            <div class="form-group">
-                <label asp-for="TargetId" class="control-label"></label>
-                <input asp-for="TargetId" class="form-control" />
-                <span asp-validation-for="TargetId" class="text-danger"></span>
-                <small id="targetIdHelpBlock" class="form-text text-muted">
-                    The unique identifier for the District in the LMS system, needed to maintain mapping between this District and your LMS.
-                </small>
-            </div>
-            <div class="form-group">
-                <label asp-for="DailyProcessingTime" class="control-label"></label>
-                <input asp-for="DailyProcessingTime" class="form-control" />
-                <span asp-validation-for="DailyProcessingTime" class="text-danger"></span>
-                <small id="HelpBlock" class="form-text text-muted">
-                    The time of day (military time) to kick of the full automated processing of the entire flow.
-                    Leave blank if no automated processing is desired (recommended until the processing has been proven stable).
-                </small>
-            </div>
-            <div class="form-group">
-                <label asp-for="BasePath" class="control-label"></label>
-                <input asp-for="BasePath" class="form-control" />
-                <span asp-validation-for="BasePath" class="text-danger"></span>
-                <small id="HelpBlock" class="form-text text-muted">
-                    Local file path to the directory that contains the CSV Files to process.
-                    An SFTP server can be combined with OneRoster.Net to support processing of District uploaded files.
-                    OneRoster.Net comes with a set of sample files in "CSVSample"
-                </small>
-            </div>
-	        <div class="form-group">
-		        <label asp-for="LmsApiBaseUrl" class="control-label"></label>
-		        <input asp-for="LmsApiBaseUrl" class="form-control" />
-		        <span asp-validation-for="LmsApiBaseUrl" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS API baseUrl to recieve sync'ed data during the Apply process.
-		        </small>
-	        </div>
-			
-			<hr/>
-			
-	        <div class="form-group">
-		        <label asp-for="LmsOrgEndPoint" class="control-label"></label>
-		        <input asp-for="LmsOrgEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsOrgEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS Org endpoint. This can be a path like "api/org" or just Query string like "?action=createOrg". Please note that 
-					query string must begin with ? symbol.
-		        </small>
-	        </div>
-			
-	        <div class="form-group">
-		        <label asp-for="LmsClassEndPoint" class="control-label"></label>
-		        <input asp-for="LmsClassEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsClassEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS API class endpoint
-		        </small>
-	        </div>
-			
-	        <div class="form-group">
-		        <label asp-for="LmsCourseEndPoint" class="control-label"></label>
-		        <input asp-for="LmsCourseEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsCourseEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS Course class endpoint
-		        </small>
-	        </div>
-			
-	        <div class="form-group">
-		        <label asp-for="LmsAcademicSessionEndPoint" class="control-label"></label>
-		        <input asp-for="LmsAcademicSessionEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsAcademicSessionEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS Academic Session endpoint
-		        </small>
-	        </div>
-			
-			
-	        <div class="form-group">
-		        <label asp-for="LmsUserEndPoint" class="control-label"></label>
-		        <input asp-for="LmsUserEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsUserEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS User class endpoint
-		        </small>
-	        </div>
-			
-			
-	        <div class="form-group">
-		        <label asp-for="LmsEnrollmentEndPoint" class="control-label"></label>
-		        <input asp-for="LmsEnrollmentEndPoint" class="form-control" />
-		        <span asp-validation-for="LmsEnrollmentEndPoint" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS Enrollment class endpoint
-		        </small>
-	        </div>
-			
-			
-	        <hr/>
-			
+	<div class="col-md-6">
+		<form asp-action="DistrictEdit">
+			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+			<input type="hidden" asp-for="DistrictId" />
+			<div class="form-group">
+				<label asp-for="Name" class="control-label"></label>
+				<input asp-for="Name" class="form-control" />
+				<span asp-validation-for="Name" class="text-danger"></span>
+				<small id="nameHelpBlock" class="form-text text-muted">
+					A descriptive name for the District.  It is identification and debugging as the District details won't be sync'ed.
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="TargetId" class="control-label"></label>
+				<input asp-for="TargetId" class="form-control" />
+				<span asp-validation-for="TargetId" class="text-danger"></span>
+				<small id="targetIdHelpBlock" class="form-text text-muted">
+					The unique identifier for the District in the LMS system, needed to maintain mapping between this District and your LMS.
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="DailyProcessingTime" class="control-label"></label>
+				<input asp-for="DailyProcessingTime" class="form-control" />
+				<span asp-validation-for="DailyProcessingTime" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The time of day (military time) to kick of the full automated processing of the entire flow.
+					Leave blank if no automated processing is desired (recommended until the processing has been proven stable).
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="BasePath" class="control-label"></label>
+				<input asp-for="BasePath" class="form-control" />
+				<span asp-validation-for="BasePath" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					Local file path to the directory that contains the CSV Files to process.
+					An SFTP server can be combined with OneRoster.Net to support processing of District uploaded files.
+					OneRoster.Net comes with a set of sample files in "CSVSample"
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="LmsApiBaseUrl" class="control-label"></label>
+				<input asp-for="LmsApiBaseUrl" class="form-control" />
+				<span asp-validation-for="LmsApiBaseUrl" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS API baseUrl to recieve sync'ed data during the Apply process.
+				</small>
+			</div>
 
-	        <div class="form-group">
-		        <label asp-for="LmsApiAuthenticatorType" class="control-label"></label>
-		        @*<input asp-for="LmsApiAuthenticatorType" class="form-control" />*@
-		        <select asp-for="LmsApiAuthenticatorType" asp-items="Html.GetEnumSelectList<ApiAuthenticatorType>()" class="form-control"></select>
-		        <span asp-validation-for="LmsApiAuthenticatorType" class="text-danger"></span>
-		        <small id="HelpBlock" class="form-text text-muted">
-			        The LMS API authentication mode. Currently only ApiKey Authentication is supported.
-		        </small>
-	        </div>
+			<hr />
+
+			<div class="form-group">
+				<label asp-for="LmsOrgEndPoint" class="control-label"></label>
+				<input asp-for="LmsOrgEndPoint" class="form-control" />
+				<span asp-validation-for="LmsOrgEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS Org endpoint. This can be a path like "api/org" or just Query string like "?action=createOrg". Please note that
+					query string must begin with ? symbol.
+				</small>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="LmsClassEndPoint" class="control-label"></label>
+				<input asp-for="LmsClassEndPoint" class="form-control" />
+				<span asp-validation-for="LmsClassEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS API class endpoint
+				</small>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="LmsCourseEndPoint" class="control-label"></label>
+				<input asp-for="LmsCourseEndPoint" class="form-control" />
+				<span asp-validation-for="LmsCourseEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS Course class endpoint
+				</small>
+			</div>
+
+			<div class="form-group">
+				<label asp-for="LmsAcademicSessionEndPoint" class="control-label"></label>
+				<input asp-for="LmsAcademicSessionEndPoint" class="form-control" />
+				<span asp-validation-for="LmsAcademicSessionEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS Academic Session endpoint
+				</small>
+			</div>
+
+
+			<div class="form-group">
+				<label asp-for="LmsUserEndPoint" class="control-label"></label>
+				<input asp-for="LmsUserEndPoint" class="form-control" />
+				<span asp-validation-for="LmsUserEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS User class endpoint
+				</small>
+			</div>
+
+
+			<div class="form-group">
+				<label asp-for="LmsEnrollmentEndPoint" class="control-label"></label>
+				<input asp-for="LmsEnrollmentEndPoint" class="form-control" />
+				<span asp-validation-for="LmsEnrollmentEndPoint" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS Enrollment class endpoint
+				</small>
+			</div>
+
+		<div class="alert alert-info" role="alert">You can choose flags below to not include an entity in sync if needed. 
+			Please note these are not hierarchical and are different from IncludeInSync Flag per CSV record.   </div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncUsers" /> @Html.DisplayNameFor(model => model.SyncUsers)
+					</label>
+				</div>
+				<span asp-validation-for="SyncUsers" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncAcademicSessions" /> @Html.DisplayNameFor(model => model.SyncAcademicSessions)
+					</label>
+				</div>
+				<span asp-validation-for="SyncAcademicSessions" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncClasses" /> @Html.DisplayNameFor(model => model.SyncClasses)
+					</label>
+				</div>
+				<span asp-validation-for="SyncClasses" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncCourses" /> @Html.DisplayNameFor(model => model.SyncCourses)
+					</label>
+				</div>
+				<span asp-validation-for="SyncCourses" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncEnrollment" /> @Html.DisplayNameFor(model => model.SyncEnrollment)
+					</label>
+				</div>
+				<span asp-validation-for="SyncEnrollment" class="text-danger"></span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="SyncOrgs" /> @Html.DisplayNameFor(model => model.SyncOrgs)
+					</label>
+				</div>
+				<span asp-validation-for="SyncOrgs" class="text-danger"></span>
+			</div>
+
+
+			<hr />
+
+
+			<div class="form-group">
+				<label asp-for="LmsApiAuthenticatorType" class="control-label"></label>
+				@*<input asp-for="LmsApiAuthenticatorType" class="form-control" />*@
+				<select asp-for="LmsApiAuthenticatorType" asp-items="Html.GetEnumSelectList<ApiAuthenticatorType>()" class="form-control"></select>
+				<span asp-validation-for="LmsApiAuthenticatorType" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					The LMS API authentication mode. Currently only ApiKey Authentication is supported.
+				</small>
+			</div>
 			<div class="form-group">
 				<label asp-for="LmsApiAuthenticationJsonData" class="control-label"></label>
 				<textarea asp-for="LmsApiAuthenticationJsonData" class="form-control"></textarea>
@@ -140,39 +197,39 @@
 }</pre>
 				</small>
 			</div>
-            <div class="form-group">
-                <div class="checkbox">
-                    <label>
-                        <input asp-for="IsApprovalRequired" /> @Html.DisplayNameFor(model => model.IsApprovalRequired)
-                    </label>
-                </div>
-                <small id="HelpBlock" class="form-text text-muted">
-                    Is (manual) approval required to Apply changes to the LMS?<br />
-                    <em>Note: not implemented yet</em>
-                </small>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmailsEachProcess" class="control-label"></label>
-                <input asp-for="EmailsEachProcess" class="form-control" />
-                <span asp-validation-for="EmailsEachProcess" class="text-danger"></span>
-                <small id="HelpBlock" class="form-text text-muted">
-                    List of comma separated email address to send on every automated full process.<br />
-                    <em>Note: not implemented yet</em>
-                </small>
-            </div>
-            <div class="form-group">
-                <label asp-for="EmailsOnChanges" class="control-label"></label>
-                <input asp-for="EmailsOnChanges" class="form-control" />
-                <span asp-validation-for="EmailsOnChanges" class="text-danger"></span>
-                <small id="HelpBlock" class="form-text text-muted">
-                    List of comma separated email address to send when an error occurs with automated full process.<br />
-                    <em>Note: not implemented yet</em>
-                </small>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save Changes" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
+			<div class="form-group">
+				<div class="checkbox">
+					<label>
+						<input asp-for="IsApprovalRequired" /> @Html.DisplayNameFor(model => model.IsApprovalRequired)
+					</label>
+				</div>
+				<small id="HelpBlock" class="form-text text-muted">
+					Is (manual) approval required to Apply changes to the LMS?<br />
+					<em>Note: not implemented yet</em>
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="EmailsEachProcess" class="control-label"></label>
+				<input asp-for="EmailsEachProcess" class="form-control" />
+				<span asp-validation-for="EmailsEachProcess" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					List of comma separated email address to send on every automated full process.<br />
+					<em>Note: not implemented yet</em>
+				</small>
+			</div>
+			<div class="form-group">
+				<label asp-for="EmailsOnChanges" class="control-label"></label>
+				<input asp-for="EmailsOnChanges" class="form-control" />
+				<span asp-validation-for="EmailsOnChanges" class="text-danger"></span>
+				<small id="HelpBlock" class="form-text text-muted">
+					List of comma separated email address to send when an error occurs with automated full process.<br />
+					<em>Note: not implemented yet</em>
+				</small>
+			</div>
+			<div class="form-group">
+				<input type="submit" value="Save Changes" class="btn btn-primary" />
+			</div>
+		</form>
+	</div>
 </div>
 

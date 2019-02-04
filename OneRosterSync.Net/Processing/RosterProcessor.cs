@@ -195,12 +195,35 @@ namespace OneRosterSync.Net.Processing
 				api.ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(Repo.District.LmsApiAuthenticatorType, Repo.District.LmsApiAuthenticationJsonData);
                 var applier = new Applier(Services, Repo.DistrictId, api);
 
-                await applier.ApplyLines<CsvOrg>();
-                await applier.ApplyLines<CsvCourse>();
-                await applier.ApplyLines<CsvAcademicSession>();
-                await applier.ApplyLines<CsvClass>();
-                await applier.ApplyLines<CsvUser>();
-                await applier.ApplyLines<CsvEnrollment>();
+	            if (Repo.District.SyncOrgs)
+	            {
+		            await applier.ApplyLines<CsvOrg>();
+	            }
+
+	            if (Repo.District.SyncCourses)
+	            {
+		            await applier.ApplyLines<CsvCourse>();
+	            }
+
+	            if (Repo.District.SyncAcademicSessions)
+	            {
+		            await applier.ApplyLines<CsvAcademicSession>();
+	            }
+
+	            if (Repo.District.SyncClasses)
+	            {
+		            await applier.ApplyLines<CsvClass>();
+	            }
+
+	            if (Repo.District.SyncUsers)
+	            {
+		            await applier.ApplyLines<CsvUser>();
+	            }
+
+	            if (Repo.District.SyncEnrollment)
+	            {
+		            await applier.ApplyLines<CsvEnrollment>();
+	            }
             }
         }
     }

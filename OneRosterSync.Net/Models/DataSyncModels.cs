@@ -108,7 +108,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Daily Processing Time")]
         public TimeSpan? DailyProcessingTime { get; set; }
 
-        // The time afterwhich the district should be processed
+        // The time after which the district should be processed
         // This should be updated to the next day's DailyProcessingTime
         // after each processing
         [DisplayName("Next Processing Time")]
@@ -170,6 +170,24 @@ namespace OneRosterSync.Net.Models
 	    [Required]
 	    [DisplayName("LMS Academic Session Endpoint")]
 		public string LmsAcademicSessionEndPoint { get; set; }
+
+	    [DisplayName("Sync Orgs")]
+		public bool SyncOrgs { get; set; }
+
+	    [DisplayName("Sync Classes")]
+		public bool SyncClasses { get; set; }
+
+	    [DisplayName("Sync Courses")]
+		public bool SyncCourses { get; set; }
+
+	    [DisplayName("Sync Academic Sessions")]
+		public bool SyncAcademicSessions { get; set; }
+
+	    [DisplayName("Sync Users")]
+		public bool SyncUsers { get; set; }
+
+	    [DisplayName("Sync Enrollments")]
+		public bool SyncEnrollment { get; set; }
 	}
 
     public class DataSyncLine : DataObject
