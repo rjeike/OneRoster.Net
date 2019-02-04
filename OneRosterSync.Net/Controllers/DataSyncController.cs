@@ -95,7 +95,31 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(DistrictList));
         }
 
-        private IActionResult RedirectToDistrict(int districtId) =>
+		/// <summary>
+		/// This is fore testing and debugging purposes only
+		/// </summary>
+		/// <param name="districtId"></param>
+		/// <returns></returns>
+	    [HttpPost, ValidateAntiForgeryToken]
+	    public async Task<IActionResult> DistrictClone(int districtId)
+	    {
+		    var repo = new DistrictRepo(db, districtId);
+
+		    var clonedDistrict = repo.District.ShallowCopy();
+		    clonedDistrict.DistrictId = 0;
+		    clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
+		    clonedDistrict.ProcessingStatus = ProcessingStatus.None;
+		    clonedDistrict.ProcessingAction = ProcessingAction.None;
+			clonedDistrict.Created = DateTime.Now;
+		    clonedDistrict.Modified = DateTime.Now;
+
+			db.Add(clonedDistrict);
+		    db.SaveChanges();
+
+		    return RedirectToAction(nameof(DistrictList));
+	    }
+
+		private IActionResult RedirectToDistrict(int districtId) =>
             RedirectToAction(nameof(DistrictDashboard), new { districtId });
 
         [HttpPost, ValidateAntiForgeryToken]

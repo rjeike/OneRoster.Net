@@ -188,6 +188,11 @@ namespace OneRosterSync.Net.Models
 
 	    [DisplayName("Sync Enrollments")]
 		public bool SyncEnrollment { get; set; }
+
+	    public District ShallowCopy()
+	    {
+		    return (District)MemberwiseClone();
+	    }
 	}
 
     public class DataSyncLine : DataObject
