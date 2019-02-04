@@ -69,7 +69,13 @@ namespace OneRosterSync.Net.Controllers
 		        LmsClassEndPoint = @"class",
 		        LmsUserEndPoint = @"user",
 		        LmsEnrollmentEndPoint = @"enrollment",
-		        LmsAcademicSessionEndPoint = @"academicSession"
+		        LmsAcademicSessionEndPoint = @"academicSession",
+				SyncAcademicSessions = true,
+				SyncClasses = true,
+				SyncCourses = true,
+				SyncEnrollment = true,
+				SyncOrgs = true,
+				SyncUsers = true
 	        };
 
 	        return View(district);
