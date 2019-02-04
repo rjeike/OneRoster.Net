@@ -123,16 +123,24 @@ namespace OneRosterSync.Net.Processing
             }
 			else if (line.Table == nameof(CsvClass))
             {
-				// Get course & school of this class
-	            var course = repo.Lines<CsvCourse>().SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvClass>(line.RawData).courseSourcedId);
+	            var classCsv = JsonConvert.DeserializeObject<CsvClass>(line.RawData);
+				
+	            // Get course & school of this class
+				var course = repo.Lines<CsvCourse>().SingleOrDefault(l => l.SourcedId == classCsv.courseSourcedId);
 	            var courseCsv = JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
+
+				// Get Term of this class
+				// TODO: Handle multiple terms, termSourceIds can be a comma separated list of terms.
+	            var term = repo.Lines<CsvAcademicSession>().SingleOrDefault(s => s.SourcedId == classCsv.termSourcedIds);
 
 				var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == courseCsv.orgSourcedId );
 
-				var _class = new ApiClassPost(line.RawData);
-	            _class.CourseTargetId = course.TargetId;
-	            _class.SchoolTargetId = org.TargetId;
-	            _class.TermTargetId = "2018";
+	            var _class = new ApiClassPost(line.RawData)
+	            {
+		            CourseTargetId = course.TargetId,
+		            SchoolTargetId = org.TargetId,
+		            TermTargetId = term.TargetId
+	            };
 
 	            data = _class;
             }
@@ -141,7 +149,6 @@ namespace OneRosterSync.Net.Processing
             {
                 data = new ApiPost<T>(line.RawData);
             }
-
 			
 	        data.DistrictId = repo.District.TargetId;
             data.DistrictName = repo.District.Name;
@@ -149,7 +156,6 @@ namespace OneRosterSync.Net.Processing
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
-			
 			
             var response = await _apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
 
