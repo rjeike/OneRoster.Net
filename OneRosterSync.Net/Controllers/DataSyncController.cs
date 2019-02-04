@@ -116,7 +116,11 @@ namespace OneRosterSync.Net.Controllers
 			db.Add(clonedDistrict);
 		    db.SaveChanges();
 
-		    return RedirectToAction(nameof(DistrictList));
+		    clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
+
+		    db.SaveChanges();
+
+			return RedirectToAction(nameof(DistrictList));
 	    }
 
 		private IActionResult RedirectToDistrict(int districtId) =>
@@ -464,6 +468,13 @@ namespace OneRosterSync.Net.Controllers
 	        district.LmsUserEndPoint = postedDistrict.LmsUserEndPoint;
 	        district.LmsEnrollmentEndPoint = postedDistrict.LmsEnrollmentEndPoint;
 	        district.LmsAcademicSessionEndPoint = postedDistrict.LmsAcademicSessionEndPoint;
+
+	        district.SyncEnrollment = postedDistrict.SyncEnrollment;
+	        district.SyncAcademicSessions = postedDistrict.SyncAcademicSessions;
+	        district.SyncClasses = postedDistrict.SyncClasses;
+	        district.SyncCourses = postedDistrict.SyncCourses;
+	        district.SyncOrgs = postedDistrict.SyncOrgs;
+	        district.SyncUsers = postedDistrict.SyncUsers;
 
 			DistrictRepo.UpdateNextProcessingTime(district);
             
