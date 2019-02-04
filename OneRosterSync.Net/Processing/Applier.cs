@@ -121,17 +121,35 @@ namespace OneRosterSync.Net.Processing
 
                 data = enrollment;
             }
+			else if (line.Table == nameof(CsvClass))
+            {
+				// Get course & school of this class
+	            var course = repo.Lines<CsvCourse>().SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvClass>(line.RawData).courseSourcedId);
+	            var courseCsv = JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
+
+				var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == courseCsv.orgSourcedId );
+
+				var _class = new ApiClassPost(line.RawData);
+	            _class.CourseTargetId = course.TargetId;
+	            _class.SchoolTargetId = org.TargetId;
+	            _class.TermTargetId = "2018";
+
+	            data = _class;
+            }
+
             else
             {
                 data = new ApiPost<T>(line.RawData);
             }
 
+			
 	        data.DistrictId = repo.District.TargetId;
             data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
+			
 			
             var response = await _apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
 
@@ -170,7 +188,7 @@ namespace OneRosterSync.Net.Processing
 				case "academicsession":
 					return repo.District.LmsAcademicSessionEndPoint;
 				default:
-					throw new ArgumentOutOfRangeException(nameof(entityType), entityType, null);
+					throw new ArgumentOutOfRangeException(nameof(entityType), entityType, "An unknown entity was provided for which there is not endpoint.");
 			}
 		}
 	}

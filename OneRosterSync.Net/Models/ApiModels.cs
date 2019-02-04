@@ -90,11 +90,28 @@ namespace OneRosterSync.Net.Models
         public EnrollmentMap EnrollmentMap { get; set; }
     }
 
+	public class ApiClassPost : ApiPost<CsvClass>
+	{
+		public ApiClassPost()
+			: base()
+		{
+		}
 
-    /// <summary>
-    /// Expected response from LMS API call
-    /// </summary>
-    public class ApiResponse
+		public ApiClassPost(string json)
+			: base(json)
+		{
+		}
+
+		public string CourseTargetId { get; set; }
+		public string TermTargetId { get; set; }
+		public string SchoolTargetId { get; set; }
+	}
+
+
+	/// <summary>
+	/// Expected response from LMS API call
+	/// </summary>
+	public class ApiResponse
     {
         /// <summary>
         /// Was the LMS able to successfully process the API request?
