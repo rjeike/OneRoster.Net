@@ -125,8 +125,8 @@ namespace OneRosterSync.Net.Processing
             {
                 data = new ApiPost<T>(line.RawData);
             }
-                
-            data.DistrictId = repo.DistrictId.ToString();
+
+	        data.DistrictId = repo.District.TargetId;
             data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;
             data.SourcedId = line.SourcedId;
