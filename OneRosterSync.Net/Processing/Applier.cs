@@ -170,7 +170,11 @@ namespace OneRosterSync.Net.Processing
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
                 line.Error = response.ErrorMessage;
-            }
+
+	            // The Lms can send false success if the entity already exist. In such a case we read the targetId
+				if (!string.IsNullOrEmpty(response.TargetId))
+		            line.TargetId = response.TargetId;
+			}
 
             line.Touch();
 
