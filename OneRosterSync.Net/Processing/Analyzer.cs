@@ -116,7 +116,7 @@ namespace OneRosterSync.Net.Processing
 
 					// mark user for sync
 					//DataSyncLine user = userMap[csvEnrollment.userSourcedId];
-					if (IsUnappliedChange(user))
+					if (IsUnappliedChangeWithoutIncludedInSync(user))
 						IncludeReadyTouch(user);
 				},
 				onChunkComplete: async () => await Repo.Committer.Invoke());
