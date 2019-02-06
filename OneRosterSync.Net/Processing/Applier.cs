@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OneRosterSync.Net.Authentication;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
@@ -19,7 +20,6 @@ namespace OneRosterSync.Net.Processing
 
         private readonly IServiceProvider Services;
         private readonly int DistrictId;
-        private readonly ApiManager _apiManager;
 
         /// <summary>
         /// How many APIs should we call in parallel?
@@ -27,11 +27,10 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public int ParallelChunkSize { get; set; } = 10;
 
-        public Applier(IServiceProvider services, int districtId, ApiManager apiManager)
+        public Applier(IServiceProvider services, int districtId)
         {
             Services = services;
             DistrictId = districtId;
-            _apiManager = apiManager;
         }
 
         /// <summary>
@@ -97,8 +96,13 @@ namespace OneRosterSync.Net.Processing
             }
 
             ApiPostBase data;
+	        var apiManager = new ApiManager(repo.District.LmsApiBaseUrl)
+	        {
+		        ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(repo.District.LmsApiAuthenticatorType,
+			        repo.District.LmsApiAuthenticationJsonData)
+	        };
 
-            if (line.Table == nameof(CsvEnrollment))
+	        if (line.Table == nameof(CsvEnrollment))
             {
                 var enrollment = new ApiEnrollmentPost(line.RawData);
                
@@ -157,7 +161,7 @@ namespace OneRosterSync.Net.Processing
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
 			
-            var response = await _apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
+            var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
 
             if (response.Success)
             {
