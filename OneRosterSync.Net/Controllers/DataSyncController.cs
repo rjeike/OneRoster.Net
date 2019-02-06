@@ -371,8 +371,9 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> DistrictReport(int districtId)
         {
             var repo = new DistrictRepo(db, districtId);
+	        ViewBag.districtId = districtId;
 
-            var model = new DataSyncLineReportLine[]
+			var model = new DataSyncLineReportLine[]
             {
                 await ReportLine<CsvOrg>(repo),
                 await ReportLine<CsvCourse>(repo),
