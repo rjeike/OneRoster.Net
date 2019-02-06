@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -115,6 +114,8 @@ namespace OneRosterSync.Net.Processing
 
                 // this provides a mapping of LMS TargetIds (rather than sourcedId's)
                 enrollment.EnrollmentMap = map;
+	            enrollment.ClassTargetId = cls?.TargetId;
+	            enrollment.UserTargetId = usr?.TargetId;
 
                 // cache map in the database (for display/troubleshooting only)
                 line.EnrollmentMap = JsonConvert.SerializeObject(map); 
@@ -144,7 +145,6 @@ namespace OneRosterSync.Net.Processing
 
 	            data = _class;
             }
-
             else
             {
                 data = new ApiPost<T>(line.RawData);
