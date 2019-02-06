@@ -184,43 +184,43 @@ namespace OneRosterSync.Net.Processing
         }
 
 
-        private async Task Apply()
-        {
-            if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
-                !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
-                throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
+	    private async Task Apply()
+	    {
+		    if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
+		        !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
+			    throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
 
-                var applier = new Applier(Services, Repo.DistrictId);
+		    var applier = new Applier(Services, Repo.DistrictId);
 
-	            if (Repo.District.SyncOrgs)
-	            {
-		            await applier.ApplyLines<CsvOrg>();
-	            }
+		    if (Repo.District.SyncOrgs)
+		    {
+			    await applier.ApplyLines<CsvOrg>();
+		    }
 
-	            if (Repo.District.SyncCourses)
-	            {
-		            await applier.ApplyLines<CsvCourse>();
-	            }
+		    if (Repo.District.SyncCourses)
+		    {
+			    await applier.ApplyLines<CsvCourse>();
+		    }
 
-	            if (Repo.District.SyncAcademicSessions)
-	            {
-		            await applier.ApplyLines<CsvAcademicSession>();
-	            }
+		    if (Repo.District.SyncAcademicSessions)
+		    {
+			    await applier.ApplyLines<CsvAcademicSession>();
+		    }
 
-	            if (Repo.District.SyncClasses)
-	            {
-		            await applier.ApplyLines<CsvClass>();
-	            }
+		    if (Repo.District.SyncClasses)
+		    {
+			    await applier.ApplyLines<CsvClass>();
+		    }
 
-	            if (Repo.District.SyncUsers)
-	            {
-		            await applier.ApplyLines<CsvUser>();
-	            }
+		    if (Repo.District.SyncUsers)
+		    {
+			    await applier.ApplyLines<CsvUser>();
+		    }
 
-	            if (Repo.District.SyncEnrollment)
-	            {
-		            await applier.ApplyLines<CsvEnrollment>();
-	            }
-        }
+		    if (Repo.District.SyncEnrollment)
+		    {
+			    await applier.ApplyLines<CsvEnrollment>();
+		    }
+	    }
     }
 }
