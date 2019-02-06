@@ -57,8 +57,16 @@ namespace OneRosterSync.Net
                         outputTemplate: processingOutputTemplate,
                         rollingInterval: RollingInterval.Day))
 
-                // MockAPI Logger
-                .WriteTo.Logger(l => l
+	            // Applier Logger
+	            .WriteTo.Logger(l => l
+		            .Filter.ByIncludingOnly("SourceContext like 'OneRosterSync.Net.Processing.ApiManager%'")
+		            .WriteTo.File(
+			            path: basePath + @"LMSApiCalls.log",
+			            outputTemplate: processingOutputTemplate,
+			            rollingInterval: RollingInterval.Day))
+
+				// MockAPI Logger
+				.WriteTo.Logger(l => l
                     .Filter.ByIncludingOnly("SourceContext = 'OneRosterSync.Net.Controllers.MockApiController'")
                     .WriteTo.File(
                         path: basePath + @"MockApi.log",

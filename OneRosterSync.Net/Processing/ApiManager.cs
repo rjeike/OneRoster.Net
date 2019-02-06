@@ -77,6 +77,8 @@ namespace OneRosterSync.Net.Processing
                 string responseBody = await response.Content.ReadAsStringAsync();
                 //Logger.Here().LogInformation($"Response: {response.StatusCode}\n {responseBody}");
 
+				Logger.Here().LogInformation($"SEND >> {json} {System.Environment.NewLine}RECEIVED << {responseBody}{System.Environment.NewLine}");
+
                 // parse response
                 ApiResponse result = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
                 return result;

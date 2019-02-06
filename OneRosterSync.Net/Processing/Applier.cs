@@ -46,7 +46,8 @@ namespace OneRosterSync.Net.Processing
                     var repo = new DistrictRepo(db, DistrictId);
 
                     // filter on all lines that are included and ready to be applied or apply was failed
-                    var lines = repo.Lines<T>().Where(l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
+                    var lines = repo.Lines<T>().Where(
+	                    l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
