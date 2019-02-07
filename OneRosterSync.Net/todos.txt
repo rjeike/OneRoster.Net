@@ -4,12 +4,12 @@ by Randall Eike
 High
 ====
 * Samples: Create sample files that exercise functionality - add, delete, etc.
-* Auth: Figure out authentication and authorization for API access
-* Add District TargetId to API
+* Auth: Figure out authentication and authorization for API access [Done]
+* Add District TargetId to API [Done]
 
 Medium
 ======
-* UI: Add a warning / success message system to Controller and Views
+* UI: Add a warning / success message system to Controller and Views [Done]
 * Required Fields: Add logic to enforce required fields in CSV models and mark required fields
 
 Medium-Low
@@ -40,7 +40,7 @@ Low
 * Sample: Add ability to process a subset of records (e.g. sample 50 records).  
 The challenge is the dependencies - there will be errors such as missing user for enrollment
 * Button to ability to Apply individual Line records - this is easier
-* Add ability to upload CSV file zip to the portal manually
+* Add ability to upload CSV file zip to the portal manually [Done]
 * Add option to identify Deleted dependent records.  For example, if we stop syncing a class, we mark enrollments deleted and sync those.  
 Need to think this through a bit.  May not be necessary.
 * Add other entities from OneRoster spec
