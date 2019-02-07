@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.DAL;
+using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
@@ -92,7 +93,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.DeleteDistrict();
 
-            return RedirectToAction(nameof(DistrictList));
+            return RedirectToAction(nameof(DistrictList)).WithSuccess("District deleted successfully");
         }
 
 		/// <summary>
@@ -120,7 +121,7 @@ namespace OneRosterSync.Net.Controllers
 
 		    db.SaveChanges();
 
-			return RedirectToAction(nameof(DistrictList));
+			return RedirectToAction(nameof(DistrictList)).WithSuccess($"District cloned as {clonedDistrict.Name}");
 	    }
 
 		private IActionResult RedirectToDistrict(int districtId) =>
@@ -139,7 +140,7 @@ namespace OneRosterSync.Net.Controllers
 	        district.BasePath = $"CSVFiles/{district.DistrictId}";
 	        await db.SaveChangesAsync();
 
-			return RedirectToDistrict(district.DistrictId);
+			return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
         }
 
         [HttpGet]
@@ -276,7 +277,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-	        return RedirectToAction(nameof(SelectOrgs), new {districtId});
+	        return RedirectToAction(nameof(SelectOrgs), new {districtId}).WithSuccess("Courses saved successfully");
         }
 
 	    [HttpGet]
@@ -306,8 +307,7 @@ namespace OneRosterSync.Net.Controllers
 
 		    await repo.Committer.Invoke();
 
-		    return RedirectToAction(nameof(SelectOrgs), new { districtId });
-		    //return RedirectToDistrict(districtId);
+		    return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
 	    }
 
 		private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
@@ -317,7 +317,7 @@ namespace OneRosterSync.Net.Controllers
             district.ProcessingAction = processingAction;
             await db.SaveChangesAsync();
 
-            return RedirectToDistrict(districtId);
+            return RedirectToDistrict(districtId).WithSuccess($"{processingAction} has been queued");
         }
 
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Load(int districtId) => await Process(districtId, ProcessingAction.Load);
@@ -417,8 +417,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-            //return RedirectToDistrict(line.DistrictId);
-            return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId);
+            return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId).WithSuccess("Dataline updated successfully");
         }
 
 
@@ -501,7 +500,7 @@ namespace OneRosterSync.Net.Controllers
 			    }
 		    }
 
-			return RedirectToDistrict(districtId);
+			return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
 		}
 	}
 }
