@@ -250,19 +250,22 @@ namespace OneRosterSync.Net.Controllers
         {
             var repo = new DistrictRepo(db, districtId);
 	        ViewBag.districtId = districtId;
+	        ViewBag.orgSourceId = orgSourceId;
 
 			// Get all courses that belong to this school
 			var model= repo.Lines<CsvCourse>().Where(c =>
 		        JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
-            //var model = await repo.Lines<CsvCourse>().ToListAsync();
             return View(model);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SelectCourses(int districtId, IEnumerable<string> SelectedCourses)
+        public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId, IEnumerable<string> SelectedCourses)
         {
             var repo = new DistrictRepo(db, districtId);
-            var model = await repo.Lines<CsvCourse>().ToListAsync();
+            var model = await repo.Lines<CsvCourse>()
+	            .Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
+	            .ToListAsync();
+
 	        ViewBag.districtId = districtId;
 
 			foreach (var course in model)
@@ -277,7 +280,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-	        return RedirectToAction(nameof(SelectOrgs), new {districtId}).WithSuccess("Courses saved successfully");
+	        return RedirectToAction(nameof(SelectCourses), new {districtId, orgSourceId}).WithSuccess("Courses saved successfully");
         }
 
 	    [HttpGet]

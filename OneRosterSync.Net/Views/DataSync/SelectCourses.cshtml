@@ -3,6 +3,7 @@
 @{
 	ViewData["Title"] = "Select Courses";
 	int districtId = ViewBag.districtId;
+	string orgSourceId = ViewBag.orgSourceId;
 
 	string CourseDescription(DataSyncLine line)
 	{
@@ -23,13 +24,14 @@
 		<form asp-action="SelectCourses">
 			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 			@Html.Hidden("districtId", districtId)
+			@Html.Hidden("orgSourceId", orgSourceId)
 
 			<select class="form-control" name="SelectedCourses" asp-items="list" multiple size="20"></select>
 			<br /><br />
-				  <div class="form-group">
-				  	<input type="submit" value="Save" class="btn btn-primary" />
-				  	<a asp-action="SelectOrgs" asp-route-districtId="@districtId" class="btn btn-default">Back to Orgs</a>
-				  </div>
+			<div class="form-group">
+				<input type="submit" value="Save" class="btn btn-primary" />
+				<a asp-action="SelectOrgs" asp-route-districtId="@districtId" class="btn btn-default">Back to Orgs</a>
+			</div>
 		</form>
 	</div>
 	<div class="col-md-6">
@@ -49,13 +51,13 @@
 				@foreach (var course in Model.Where(l => l.IncludeInSync))
 				{
 					var csvCourse = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
-				<tr>
-					<td>@course.SourcedId</td>
-					<td>@csvCourse.orgSourcedId</td>
-					<td>@csvCourse.title</td>
-					<td>@csvCourse.courseCode</td>
-					<td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@course.DataSyncLineId">Details</a></td>
-				</tr>
+					<tr>
+						<td>@course.SourcedId</td>
+						<td>@csvCourse.orgSourcedId</td>
+						<td>@csvCourse.title</td>
+						<td>@csvCourse.courseCode</td>
+						<td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@course.DataSyncLineId">Details</a></td>
+					</tr>
 				}
 			</tbody>
 		</table>
