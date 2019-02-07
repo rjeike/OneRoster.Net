@@ -376,15 +376,36 @@ namespace OneRosterSync.Net.Controllers
             var repo = new DistrictRepo(db, districtId);
 	        ViewBag.districtId = districtId;
 
-			var model = new DataSyncLineReportLine[]
+	        var org = await ReportLine<CsvOrg>(repo);
+	        org.SyncEnabled = repo.District.SyncOrgs;
+
+	        var course = await ReportLine<CsvCourse>(repo);
+	        course.SyncEnabled = repo.District.SyncCourses;
+
+			var academicSession = await ReportLine<CsvAcademicSession>(repo);
+	        academicSession.SyncEnabled = repo.District.SyncAcademicSessions;
+
+			var _class = await ReportLine<CsvClass>(repo);
+	        _class.SyncEnabled = repo.District.SyncClasses;
+
+			var user = await ReportLine<CsvUser>(repo);
+	        user.SyncEnabled = repo.District.SyncUsers;
+
+			var enrollment = await ReportLine<CsvEnrollment>(repo);
+	        enrollment.SyncEnabled = repo.District.SyncEnrollment;
+
+			var total = await ReportLine(repo.Lines().AsNoTracking(), "Totals");
+	        total.SyncEnabled = true;
+
+			var model = new[]
             {
-                await ReportLine<CsvOrg>(repo),
-                await ReportLine<CsvCourse>(repo),
-                await ReportLine<CsvAcademicSession>(repo),
-                await ReportLine<CsvClass>(repo),
-                await ReportLine<CsvUser>(repo),
-                await ReportLine<CsvEnrollment>(repo),
-                await ReportLine(repo.Lines().AsNoTracking(), "Totals"),
+                org,
+				course,
+				academicSession,
+				_class,
+				user,
+				enrollment,
+				total
             };
 
             return View(model);

@@ -8,93 +8,110 @@
 
 <table class="table table-condensed table-hover">
     <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Entity)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IncludeInSync)
-            </th>
-            <th>
-                Load:
-                @Html.DisplayNameFor(model => model.Added)
-            </th>
-            <th>
-                Load:
-                @Html.DisplayNameFor(model => model.Modified)
-            </th>
-            <th>
-                Load:
-                @Html.DisplayNameFor(model => model.NoChange)
-            </th>
-            <th>
-                Load:
-                @Html.DisplayNameFor(model => model.Deleted)
-            </th>
-            <th>
-                Sync:
-                @Html.DisplayNameFor(model => model.Loaded)
-            </th>
-            <th>
-                Sync:
-                @Html.DisplayNameFor(model => model.ReadyToApply)
-            </th>
-            <th>
-                Sync:
-                @Html.DisplayNameFor(model => model.Applied)
-            </th>
-            <th>
-                Sync:
-                @Html.DisplayNameFor(model => model.AppliedFailed)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TotalRecords)
-            </th>
-        </tr>
+    <tr>
+	    <th>
+		    Sync Enabled
+	    </th>
+	    <th>
+		    @Html.DisplayNameFor(model => model.Entity)
+	    </th>
+	    <th>
+		    @Html.DisplayNameFor(model => model.IncludeInSync)
+	    </th>
+	    <th>
+		    Load:
+		    @Html.DisplayNameFor(model => model.Added)
+	    </th>
+	    <th>
+		    Load:
+		    @Html.DisplayNameFor(model => model.Modified)
+	    </th>
+	    <th>
+		    Load:
+		    @Html.DisplayNameFor(model => model.NoChange)
+	    </th>
+	    <th>
+		    Load:
+		    @Html.DisplayNameFor(model => model.Deleted)
+	    </th>
+	    <th>
+		    Sync:
+		    @Html.DisplayNameFor(model => model.Loaded)
+	    </th>
+	    <th>
+		    Sync:
+		    @Html.DisplayNameFor(model => model.ReadyToApply)
+	    </th>
+	    <th>
+		    Sync:
+		    @Html.DisplayNameFor(model => model.Applied)
+	    </th>
+	    <th>
+		    Sync:
+		    @Html.DisplayNameFor(model => model.AppliedFailed)
+	    </th>
+	    <th>
+		    @Html.DisplayNameFor(model => model.TotalRecords)
+	    </th>
+    </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Entity)
-            </td>
-	        <td>
-		        <strong> @Html.DisplayFor(modelItem => item.IncludeInSync)</strong>
-	        </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Added)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Modified)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NoChange)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Deleted)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Loaded)
-            </td>
-	        <td>
-		        <a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.ReadyToApply.GetHashCode()" asp-route-table="@item.Entity">
-					<strong>@Html.DisplayFor(modelItem => item.ReadyToApply)</strong>
-		        </a>
-	        </td>
-	        <td>
-				<a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.Applied.GetHashCode()" asp-route-table="@item.Entity">
-					@Html.DisplayFor(modelItem => item.Applied)
-				</a>
-	        </td>
-	        <td>
-				<a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.ApplyFailed.GetHashCode()" asp-route-table="@item.Entity">
-					@Html.DisplayFor(modelItem => item.AppliedFailed)
-				</a>
-	        </td>
-	        <td>
-		        @Html.DisplayFor(modelItem => item.TotalRecords)
-	        </td>
-        </tr>
+	<tr>
+		<td>
+			@if (item.Entity != "Totals")
+			{
+				if (item.SyncEnabled)
+				 {
+					 <i class="fas fa-check" title="Sync Enabled"></i>
+				 }
+				 else
+				 {
+					 <i class="fas fa-times" title="Sync Disabled"></i>
+				 }
+			}
+
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.Entity)
+		</td>
+		<td>
+			<strong> @Html.DisplayFor(modelItem => item.IncludeInSync)</strong>
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.Added)
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.Modified)
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.NoChange)
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.Deleted)
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.Loaded)
+		</td>
+		<td>
+			<a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.ReadyToApply.GetHashCode()" asp-route-table="@item.Entity">
+				<strong>@Html.DisplayFor(modelItem => item.ReadyToApply)</strong>
+			</a>
+		</td>
+		<td>
+			<a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.Applied.GetHashCode()" asp-route-table="@item.Entity">
+				@Html.DisplayFor(modelItem => item.Applied)
+			</a>
+		</td>
+		<td>
+			<a asp-action="DataSyncLines" asp-route-districtId="@ViewBag.districtId" asp-route-syncStatus="@SyncStatus.ApplyFailed.GetHashCode()" asp-route-table="@item.Entity">
+				@Html.DisplayFor(modelItem => item.AppliedFailed)
+			</a>
+		</td>
+		<td>
+			@Html.DisplayFor(modelItem => item.TotalRecords)
+		</td>
+	</tr>
 }
     </tbody>
 </table>

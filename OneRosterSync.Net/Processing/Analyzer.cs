@@ -81,7 +81,12 @@ namespace OneRosterSync.Net.Processing
 
 			// now walk the classes and include those which map to an included course
 			var classMap = cache.GetMap<CsvClass>();
-			var courseIds = cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Select(l => l.SourcedId).ToHashSet();
+			var courseIds = cache.GetMap<CsvCourse>()
+				.Values
+				.Where(l => l.IncludeInSync)
+				.Select(l => l.SourcedId)
+				.ToHashSet();
+
 			foreach (var _class in classMap.Values.Where(IsUnappliedChangeWithoutIncludedInSync))
 			{
 				CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);

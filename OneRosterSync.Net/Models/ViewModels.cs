@@ -23,6 +23,7 @@ namespace OneRosterSync.Net.Models
 
         public string Entity { get; set; }
         public int IncludeInSync { get; set; }
+		public bool SyncEnabled { get; set; }
 
         // LoadStatus
         [DisplayName("Load: Added")]
