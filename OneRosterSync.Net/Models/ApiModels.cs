@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Models
 {
@@ -88,13 +89,39 @@ namespace OneRosterSync.Net.Models
         /// Kludge for tracking TargetIds of an Enrollment
         /// </summary>
         public EnrollmentMap EnrollmentMap { get; set; }
+
+		public string ClassTargetId { get; set; }
+		public string UserTargetId { get; set; }
+
+		/// <summary>
+		/// Default action is to enroll. Will add support for un-enrollment later.
+		/// </summary>
+	    public string Action => "enroll";
+    }
     }
 
+	public class ApiClassPost : ApiPost<CsvClass>
+	{
+		public ApiClassPost()
+			: base()
+		{
+		}
 
-    /// <summary>
-    /// Expected response from LMS API call
-    /// </summary>
-    public class ApiResponse
+		public ApiClassPost(string json)
+			: base(json)
+		{
+		}
+
+		public string CourseTargetId { get; set; }
+		public string TermTargetId { get; set; }
+		public string SchoolTargetId { get; set; }
+	}
+
+
+	/// <summary>
+	/// Expected response from LMS API call
+	/// </summary>
+	public class ApiResponse
     {
         /// <summary>
         /// Was the LMS able to successfully process the API request?
@@ -116,4 +143,15 @@ namespace OneRosterSync.Net.Models
         /// </summary>
         public string ErrorMessage { get; set; }
     }
-}
+
+
+	/// <summary>
+	/// The enrollment actions
+	/// </summary>
+	public enum EnrollmentAction
+	{
+		Enroll,
+		UnEnroll
+
+	}
+

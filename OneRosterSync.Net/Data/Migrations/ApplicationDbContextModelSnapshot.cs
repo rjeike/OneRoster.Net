@@ -362,6 +362,18 @@ namespace OneRosterSync.Net.Data.Migrations
 
                     b.Property<int>("ProcessingStatus");
 
+                    b.Property<bool>("SyncAcademicSessions");
+
+                    b.Property<bool>("SyncClasses");
+
+                    b.Property<bool>("SyncCourses");
+
+                    b.Property<bool>("SyncEnrollment");
+
+                    b.Property<bool>("SyncOrgs");
+
+                    b.Property<bool>("SyncUsers");
+
                     b.Property<string>("TargetId");
 
                     b.Property<int>("Version");

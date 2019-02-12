@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.DAL;
+using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
 
 namespace OneRosterSync.Net.Controllers
@@ -69,7 +70,13 @@ namespace OneRosterSync.Net.Controllers
 		        LmsClassEndPoint = @"class",
 		        LmsUserEndPoint = @"user",
 		        LmsEnrollmentEndPoint = @"enrollment",
-		        LmsAcademicSessionEndPoint = @"academicSession"
+		        LmsAcademicSessionEndPoint = @"academicSession",
+				SyncAcademicSessions = true,
+				SyncClasses = true,
+				SyncCourses = true,
+				SyncEnrollment = true,
+				SyncOrgs = true,
+				SyncUsers = true
 	        };
 
 	        return View(district);
@@ -86,10 +93,38 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.DeleteDistrict();
 
-            return RedirectToAction(nameof(DistrictList));
+            return RedirectToAction(nameof(DistrictList)).WithSuccess("District deleted successfully");
         }
 
-        private IActionResult RedirectToDistrict(int districtId) =>
+		/// <summary>
+		/// This is fore testing and debugging purposes only
+		/// </summary>
+		/// <param name="districtId"></param>
+		/// <returns></returns>
+	    [HttpPost, ValidateAntiForgeryToken]
+	    public async Task<IActionResult> DistrictClone(int districtId)
+	    {
+		    var repo = new DistrictRepo(db, districtId);
+
+		    var clonedDistrict = repo.District.ShallowCopy();
+		    clonedDistrict.DistrictId = 0;
+		    clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
+		    clonedDistrict.ProcessingStatus = ProcessingStatus.None;
+		    clonedDistrict.ProcessingAction = ProcessingAction.None;
+			clonedDistrict.Created = DateTime.Now;
+		    clonedDistrict.Modified = DateTime.Now;
+
+			db.Add(clonedDistrict);
+		    db.SaveChanges();
+
+		    clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
+
+		    db.SaveChanges();
+
+			return RedirectToAction(nameof(DistrictList)).WithSuccess($"District cloned as {clonedDistrict.Name}");
+	    }
+
+		private IActionResult RedirectToDistrict(int districtId) =>
             RedirectToAction(nameof(DistrictDashboard), new { districtId });
 
         [HttpPost, ValidateAntiForgeryToken]
@@ -105,7 +140,7 @@ namespace OneRosterSync.Net.Controllers
 	        district.BasePath = $"CSVFiles/{district.DistrictId}";
 	        await db.SaveChangesAsync();
 
-			return RedirectToDistrict(district.DistrictId);
+			return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
         }
 
         [HttpGet]
@@ -215,19 +250,22 @@ namespace OneRosterSync.Net.Controllers
         {
             var repo = new DistrictRepo(db, districtId);
 	        ViewBag.districtId = districtId;
+	        ViewBag.orgSourceId = orgSourceId;
 
 			// Get all courses that belong to this school
 			var model= repo.Lines<CsvCourse>().Where(c =>
 		        JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
-            //var model = await repo.Lines<CsvCourse>().ToListAsync();
             return View(model);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> SelectCourses(int districtId, IEnumerable<string> SelectedCourses)
+        public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId, IEnumerable<string> SelectedCourses)
         {
             var repo = new DistrictRepo(db, districtId);
-            var model = await repo.Lines<CsvCourse>().ToListAsync();
+            var model = await repo.Lines<CsvCourse>()
+	            .Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
+	            .ToListAsync();
+
 	        ViewBag.districtId = districtId;
 
 			foreach (var course in model)
@@ -242,7 +280,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-	        return RedirectToAction(nameof(SelectOrgs), new {districtId});
+	        return RedirectToAction(nameof(SelectCourses), new {districtId, orgSourceId}).WithSuccess("Courses saved successfully");
         }
 
 	    [HttpGet]
@@ -272,8 +310,7 @@ namespace OneRosterSync.Net.Controllers
 
 		    await repo.Committer.Invoke();
 
-		    return RedirectToAction(nameof(SelectOrgs), new { districtId });
-		    //return RedirectToDistrict(districtId);
+		    return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
 	    }
 
 		private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
@@ -283,7 +320,7 @@ namespace OneRosterSync.Net.Controllers
             district.ProcessingAction = processingAction;
             await db.SaveChangesAsync();
 
-            return RedirectToDistrict(districtId);
+            return RedirectToDistrict(districtId).WithSuccess($"{processingAction} has been queued");
         }
 
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Load(int districtId) => await Process(districtId, ProcessingAction.Load);
@@ -337,16 +374,38 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> DistrictReport(int districtId)
         {
             var repo = new DistrictRepo(db, districtId);
+	        ViewBag.districtId = districtId;
 
-            var model = new DataSyncLineReportLine[]
+	        var org = await ReportLine<CsvOrg>(repo);
+	        org.SyncEnabled = repo.District.SyncOrgs;
+
+	        var course = await ReportLine<CsvCourse>(repo);
+	        course.SyncEnabled = repo.District.SyncCourses;
+
+			var academicSession = await ReportLine<CsvAcademicSession>(repo);
+	        academicSession.SyncEnabled = repo.District.SyncAcademicSessions;
+
+			var _class = await ReportLine<CsvClass>(repo);
+	        _class.SyncEnabled = repo.District.SyncClasses;
+
+			var user = await ReportLine<CsvUser>(repo);
+	        user.SyncEnabled = repo.District.SyncUsers;
+
+			var enrollment = await ReportLine<CsvEnrollment>(repo);
+	        enrollment.SyncEnabled = repo.District.SyncEnrollment;
+
+			var total = await ReportLine(repo.Lines().AsNoTracking(), "Totals");
+	        total.SyncEnabled = true;
+
+			var model = new[]
             {
-                await ReportLine<CsvOrg>(repo),
-                await ReportLine<CsvCourse>(repo),
-                await ReportLine<CsvAcademicSession>(repo),
-                await ReportLine<CsvClass>(repo),
-                await ReportLine<CsvUser>(repo),
-                await ReportLine<CsvEnrollment>(repo),
-                await ReportLine(repo.Lines().AsNoTracking(), "Totals"),
+                org,
+				course,
+				academicSession,
+				_class,
+				user,
+				enrollment,
+				total
             };
 
             return View(model);
@@ -382,8 +441,7 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-            //return RedirectToDistrict(line.DistrictId);
-            return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId);
+            return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId).WithSuccess("Dataline updated successfully");
         }
 
 
@@ -435,6 +493,13 @@ namespace OneRosterSync.Net.Controllers
 	        district.LmsEnrollmentEndPoint = postedDistrict.LmsEnrollmentEndPoint;
 	        district.LmsAcademicSessionEndPoint = postedDistrict.LmsAcademicSessionEndPoint;
 
+	        district.SyncEnrollment = postedDistrict.SyncEnrollment;
+	        district.SyncAcademicSessions = postedDistrict.SyncAcademicSessions;
+	        district.SyncClasses = postedDistrict.SyncClasses;
+	        district.SyncCourses = postedDistrict.SyncCourses;
+	        district.SyncOrgs = postedDistrict.SyncOrgs;
+	        district.SyncUsers = postedDistrict.SyncUsers;
+
 			DistrictRepo.UpdateNextProcessingTime(district);
             
             district.Touch();
@@ -459,7 +524,7 @@ namespace OneRosterSync.Net.Controllers
 			    }
 		    }
 
-			return RedirectToDistrict(districtId);
+			return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
 		}
 	}
 }
