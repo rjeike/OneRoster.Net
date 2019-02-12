@@ -36,9 +36,9 @@ namespace OneRosterSync.Net
 				options.MinimumSameSitePolicy = SameSiteMode.None;
 			});
 
-			var hostname = Environment.GetEnvironmentVariable("SQLSERVER_HOST");
-			var password = Environment.GetEnvironmentVariable("SQLSERVER_SA_PASSWORD");
-			var connString = $"Data Source={hostname};Initial Catalog=OnRosterSyncNetDb;User ID=sa;Password={password};";
+			//var hostname = Environment.GetEnvironmentVariable("SQLSERVER_HOST");
+			//var password = Environment.GetEnvironmentVariable("SQLSERVER_SA_PASSWORD");
+			//var connString = $"Data Source={hostname};Initial Catalog=OnRosterSyncNetDb;User ID=sa;Password={password};";
 
 			services.AddDbContext<ApplicationDbContext>(options =>
 				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
@@ -88,10 +88,10 @@ namespace OneRosterSync.Net
 			else
 			{
 				app.UseExceptionHandler("/Home/Error");
-				app.UseHsts();
+				//app.UseHsts();
 			}
 
-			app.UseHttpsRedirection();
+			//app.UseHttpsRedirection();
 			app.UseStaticFiles();
 			app.UseCookiePolicy();
 
