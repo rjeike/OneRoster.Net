@@ -9,10 +9,10 @@ COPY OneRosterSync.Net/OneRosterSync.Net.csproj OneRosterSync.Net/
 RUN dotnet restore OneRosterSync.Net/OneRosterSync.Net.csproj
 COPY . .
 WORKDIR /src/OneRosterSync.Net
-RUN dotnet build OneRosterSync.Net.csproj -c Release -o /app
+RUN dotnet build OneRosterSync.Net.csproj -c Debug -o /app
 
 FROM build AS publish
-RUN dotnet publish OneRosterSync.Net.csproj -c Release -o /app
+RUN dotnet publish OneRosterSync.Net.csproj -c Debug -o /app
 
 FROM base AS final
 WORKDIR /app

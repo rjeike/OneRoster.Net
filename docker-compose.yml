@@ -2,13 +2,13 @@ version: '3.4'
 
 services:
   onerostersync.net:
-    image: ${DOCKER_REGISTRY}onerostersyncnet
+    image: onerostersyncnet
     build:
       context: .
       dockerfile: OneRosterSync.Net/Dockerfile
     depends_on:
-      - db
-  db:
+      - sqlserver
+  sqlserver:
     image: "mcr.microsoft.com/mssql/server"
     environment:
         SA_PASSWORD: "1Roster.Net"
