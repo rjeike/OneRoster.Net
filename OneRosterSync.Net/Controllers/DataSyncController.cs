@@ -101,28 +101,28 @@ namespace OneRosterSync.Net.Controllers
 		/// </summary>
 		/// <param name="districtId"></param>
 		/// <returns></returns>
-	    [HttpPost, ValidateAntiForgeryToken]
-	    public async Task<IActionResult> DistrictClone(int districtId)
-	    {
-		    var repo = new DistrictRepo(db, districtId);
+		[HttpPost, ValidateAntiForgeryToken]
+		public IActionResult DistrictClone(int districtId)
+		{
+			var repo = new DistrictRepo(db, districtId);
 
-		    var clonedDistrict = repo.District.ShallowCopy();
-		    clonedDistrict.DistrictId = 0;
-		    clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
-		    clonedDistrict.ProcessingStatus = ProcessingStatus.None;
-		    clonedDistrict.ProcessingAction = ProcessingAction.None;
+			var clonedDistrict = repo.District.ShallowCopy();
+			clonedDistrict.DistrictId = 0;
+			clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
+			clonedDistrict.ProcessingStatus = ProcessingStatus.None;
+			clonedDistrict.ProcessingAction = ProcessingAction.None;
 			clonedDistrict.Created = DateTime.Now;
-		    clonedDistrict.Modified = DateTime.Now;
+			clonedDistrict.Modified = DateTime.Now;
 
 			db.Add(clonedDistrict);
-		    db.SaveChanges();
+			db.SaveChanges();
 
-		    clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
+			clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
 
-		    db.SaveChanges();
+			db.SaveChanges();
 
 			return RedirectToAction(nameof(DistrictList)).WithSuccess($"District cloned as {clonedDistrict.Name}");
-	    }
+		}
 
 		private IActionResult RedirectToDistrict(int districtId) =>
             RedirectToAction(nameof(DistrictDashboard), new { districtId });
@@ -245,20 +245,20 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId)
-        {
-            var repo = new DistrictRepo(db, districtId);
-	        ViewBag.districtId = districtId;
-	        ViewBag.orgSourceId = orgSourceId;
+		[HttpGet]
+		public IActionResult SelectCourses(int districtId, string orgSourceId)
+		{
+			var repo = new DistrictRepo(db, districtId);
+			ViewBag.districtId = districtId;
+			ViewBag.orgSourceId = orgSourceId;
 
 			// Get all courses that belong to this school
-			var model= repo.Lines<CsvCourse>().Where(c =>
-		        JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
-            return View(model);
-        }
+			var model = repo.Lines<CsvCourse>().Where(c =>
+				 JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
+			return View(model);
+		}
 
-        [HttpPost, ValidateAntiForgeryToken]
+		[HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId, IEnumerable<string> SelectedCourses)
         {
             var repo = new DistrictRepo(db, districtId);
