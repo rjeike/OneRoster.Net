@@ -3,6 +3,7 @@ version: '3.4'
 services:
   onerostersync.net:
     image: onerostersyncnet
+    restart: always
     build:
       context: .
       dockerfile: OneRosterSync.Net/Dockerfile
@@ -10,6 +11,7 @@ services:
       - sqlserver
   sqlserver:
     image: "mcr.microsoft.com/mssql/server"
+    restart: always
     environment:
         SA_PASSWORD: "1Roster.Net"
         ACCEPT_EULA: "Y"
