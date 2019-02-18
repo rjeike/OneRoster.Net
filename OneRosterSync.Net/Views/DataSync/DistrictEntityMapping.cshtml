@@ -1,0 +1,45 @@
+﻿
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@model OneRosterSync.Net.Models.District
+@addTagHelper *, OneRosterSync.Net
+@{
+	ViewData["Title"] = "District Entity Mappings";
+}
+
+<div class="row">
+	<div class="col-md-6">
+		<h2>Mapping: <small>@Model.Name</small></h2>
+
+
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-6">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h3 class="panel-title">Course Mapping</h3>
+			</div>
+			<div class="panel-body">
+				Upload Course Mapping CSV to set TargetIds for the Courses entity.
+				<br />
+				<br />
+				<form method="post" enctype="multipart/form-data" asp-action="UploadFiles">
+					<input type="hidden" asp-for="@Model.DistrictId" />
+					
+					<div class="form-group">
+
+						<label class="btn btn-primary" for="my-file-selector">
+							<input accept=".csv" id="my-file-selector" name="files" type="file" style="display: none;" multiple>
+							Browse Files
+						</label>
+
+					</div>
+					<div class="form-group">
+						<input type="submit" value="Upload" class="btn btn-success" />
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
