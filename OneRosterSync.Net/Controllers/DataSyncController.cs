@@ -411,7 +411,14 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
-        [HttpGet]
+		[HttpGet]
+	    public async Task<IActionResult> DistrictEntityMapping(int districtId)
+	    {
+		    var repo = new DistrictRepo(db, districtId);
+			return View(repo.District);
+	    }
+
+	    [HttpGet]
         public async Task<IActionResult> DataSyncLineEdit(int id)
         {
             var model = await db.DataSyncLines
@@ -526,5 +533,24 @@ namespace OneRosterSync.Net.Controllers
 
 			return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
 		}
+
+	    [HttpPost]
+	    public async Task<IActionResult> UploadMappingFile(List<IFormFile> files, int districtId)
+	    {
+			// TODO: Resume from here.
+		    var path = Path.Combine(_hostingEnvironment.ContentRootPath, "CSVFiles", districtId.ToString());
+		    Directory.CreateDirectory(path);
+
+		    foreach (var formFile in files)
+		    {
+			    if (formFile.Length <= 0) continue;
+			    using (var stream = new FileStream(Path.Combine(path, formFile.FileName), FileMode.Create))
+			    {
+				    await formFile.CopyToAsync(stream);
+			    }
+		    }
+
+		    return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
+	    }
 	}
 }
