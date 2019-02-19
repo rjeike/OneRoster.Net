@@ -24,13 +24,14 @@
 				Upload Course Mapping CSV to set TargetIds for the Courses entity.
 				<br />
 				<br />
-				<form method="post" enctype="multipart/form-data" asp-action="UploadFiles">
+				<form method="post" enctype="multipart/form-data" asp-action="UploadMappingFiles">
 					<input type="hidden" asp-for="@Model.DistrictId" />
-					
+					<input type="hidden" name="tableName" value="CsvCourse" />
+
 					<div class="form-group">
 
 						<label class="btn btn-primary" for="my-file-selector">
-							<input accept=".csv" id="my-file-selector" name="files" type="file" style="display: none;" multiple>
+							<input accept=".csv" id="my-file-selector" name="files" type="file" style="display: none;">
 							Browse Files
 						</label>
 

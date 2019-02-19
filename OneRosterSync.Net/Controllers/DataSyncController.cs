@@ -418,7 +418,66 @@ namespace OneRosterSync.Net.Controllers
 			return View(repo.District);
 	    }
 
-	    [HttpGet]
+	    [HttpPost]
+	    public async Task<IActionResult> UploadMappingFiles(List<IFormFile> files, int districtId, string tableName)
+	    {
+		    var path = Path.GetTempFileName();
+
+			// TODO: Restrict to just one file upload
+		    foreach (var formFile in files)
+		    {
+			    if (formFile.Length <= 0) continue;
+			    using (var stream = new FileStream(path, FileMode.Create))
+			    {
+				    await formFile.CopyToAsync(stream);
+			    }
+		    }
+
+		    var repo = new DistrictRepo(db, districtId);
+
+		    using (var file = System.IO.File.OpenText(path))
+		    {
+			    using (var csv = new CsvHelper.CsvReader(file))
+			    {
+				    csv.Configuration.MissingFieldFound = null;
+				    csv.Configuration.HasHeaderRecord = true;
+
+				    csv.Read();
+				    csv.ReadHeader();
+
+				    for (int i = 0; await csv.ReadAsync(); i++)
+				    {
+					    dynamic record = null;
+					    try
+					    {
+						    record = csv.GetRecord<dynamic>();
+						    string sourcedId = record.sourcedId;
+						    string targetId = record.targetId;
+
+							// TODO: Pick line based on type of mapping file
+						    var line = repo.Lines<CsvCourse>().Where(c => c.SourcedId == sourcedId).FirstOrDefault();
+
+						    if (line != null)
+						    {
+							    line.TargetId = targetId;
+								line.Touch();
+							}
+
+						}
+					    catch (Exception ex)
+					    {
+							Logger.Here().LogError(ex, ex.Message);
+					    }
+				    }
+
+				    await repo.Committer.Invoke();
+			    }
+		    }
+
+		    return View(nameof(DistrictEntityMapping), repo.District).WithSuccess($"Uploaded {tableName} Mapping file.");
+	    }
+
+		[HttpGet]
         public async Task<IActionResult> DataSyncLineEdit(int id)
         {
             var model = await db.DataSyncLines
@@ -533,24 +592,5 @@ namespace OneRosterSync.Net.Controllers
 
 			return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
 		}
-
-	    [HttpPost]
-	    public async Task<IActionResult> UploadMappingFile(List<IFormFile> files, int districtId)
-	    {
-			// TODO: Resume from here.
-		    var path = Path.Combine(_hostingEnvironment.ContentRootPath, "CSVFiles", districtId.ToString());
-		    Directory.CreateDirectory(path);
-
-		    foreach (var formFile in files)
-		    {
-			    if (formFile.Length <= 0) continue;
-			    using (var stream = new FileStream(Path.Combine(path, formFile.FileName), FileMode.Create))
-			    {
-				    await formFile.CopyToAsync(stream);
-			    }
-		    }
-
-		    return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
-	    }
 	}
 }
