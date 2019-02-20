@@ -64,6 +64,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\sample-files\sample_mapping.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="Views\DataSync\Components\DataSyncHistories\CurrentHistory.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
