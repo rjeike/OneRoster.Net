@@ -16,28 +16,42 @@
 
 <div class="row">
 	<div class="col-md-6">
+		<br/>
 		<div class="panel panel-default">
 			<div class="panel-heading">
-				<h3 class="panel-title">Course Mapping</h3>
+				<h3 class="panel-title">Entity Mapping</h3>
 			</div>
 			<div class="panel-body">
-				Upload Course Mapping CSV to set TargetIds for the Courses entity.
-				<br />
-				<br />
+				Upload Mapping CSV to set TargetId for the selected entity.<br/>
+				<a href="~/sample-files/sample_mapping.csv">Download Sample Mapping File</a>
+				<br/>
+				<br/>
 				<form method="post" enctype="multipart/form-data" asp-action="UploadMappingFiles">
-					<input type="hidden" asp-for="@Model.DistrictId" />
-					<input type="hidden" name="tableName" value="CsvCourse" />
+
+					<select class="form-control" name="tableName">
+						<option value="">(Table)</option>
+						<option value="CsvOrg">CsvOrg</option>
+						<option value="CsvCourse">CsvCourse</option>
+						<option value="CsvClass">CsvClass</option>
+						<option value="CsvUser">CsvUser</option>
+						<option value="CsvEnrollment">CsvEnrollment</option>
+						<option value="CsvAcademicSession">CsvAcademicSession</option>
+					</select>
+
+					<br/>
+
+					<input type="hidden" asp-for="@Model.DistrictId"/>
 
 					<div class="form-group">
 
 						<label class="btn btn-primary" for="my-file-selector">
-							<input accept=".csv" id="my-file-selector" name="files" type="file" style="display: none;">
+							<input accept=".csv" id="my-file-selector" name="mappingFile" type="file" style="display: none;">
 							Browse Files
 						</label>
 
 					</div>
 					<div class="form-group">
-						<input type="submit" value="Upload" class="btn btn-success" />
+						<input type="submit" value="Upload" class="btn btn-success"/>
 					</div>
 				</form>
 			</div>

@@ -419,21 +419,23 @@ namespace OneRosterSync.Net.Controllers
 	    }
 
 	    [HttpPost]
-	    public async Task<IActionResult> UploadMappingFiles(List<IFormFile> files, int districtId, string tableName)
+	    public async Task<IActionResult> UploadMappingFiles(IFormFile mappingFile, int districtId, string tableName)
 	    {
 		    var path = Path.GetTempFileName();
-
-			// TODO: Restrict to just one file upload
-		    foreach (var formFile in files)
-		    {
-			    if (formFile.Length <= 0) continue;
-			    using (var stream = new FileStream(path, FileMode.Create))
-			    {
-				    await formFile.CopyToAsync(stream);
-			    }
-		    }
-
 		    var repo = new DistrictRepo(db, districtId);
+		    var mapCount = 0;
+		    var lineCount = 0;
+
+		    if (string.IsNullOrWhiteSpace(tableName) || mappingFile == null)
+		    {
+			    return View(nameof(DistrictEntityMapping), repo.District)
+				    .WithDanger($"Please select Table Name and select a file first.");
+			}
+
+		    using (var stream = new FileStream(path, FileMode.Create))
+			{
+				await mappingFile.CopyToAsync(stream);
+			}
 
 		    using (var file = System.IO.File.OpenText(path))
 		    {
@@ -454,19 +456,26 @@ namespace OneRosterSync.Net.Controllers
 						    string sourcedId = record.sourcedId;
 						    string targetId = record.targetId;
 
-							// TODO: Pick line based on type of mapping file
-						    var line = repo.Lines<CsvCourse>().Where(c => c.SourcedId == sourcedId).FirstOrDefault();
+						    mapCount++;
 
-						    if (line != null)
+						    var line = repo.Lines()
+							    .Where(l => l.SourcedId == sourcedId && l.Table == tableName)
+							    .FirstOrDefault();
+
+							if (line != null)
 						    {
 							    line.TargetId = targetId;
 								line.Touch();
-							}
+
+							    lineCount++;
+						    }
 
 						}
 					    catch (Exception ex)
 					    {
 							Logger.Here().LogError(ex, ex.Message);
+						    return View(nameof(DistrictEntityMapping), repo.District)
+							    .WithDanger($"Failed to apply Mappings. {ex.Message}");
 					    }
 				    }
 
@@ -474,7 +483,8 @@ namespace OneRosterSync.Net.Controllers
 			    }
 		    }
 
-		    return View(nameof(DistrictEntityMapping), repo.District).WithSuccess($"Uploaded {tableName} Mapping file.");
+		    return View(nameof(DistrictEntityMapping), repo.District)
+			    .WithSuccess($"Successfully Processed Mapping for {tableName}. Mapping applied to {lineCount} records out of {mapCount} mapping records.");
 	    }
 
 		[HttpGet]
