@@ -252,10 +252,27 @@ namespace OneRosterSync.Net.Controllers
 			ViewBag.districtId = districtId;
 			ViewBag.orgSourceId = orgSourceId;
 
-			// Get all courses that belong to this school
-			var model = repo.Lines<CsvCourse>().Where(c =>
-				 JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
-			return View(model);
+			// TODO: Add config to determine how to pick up courses.
+			
+			// Direct Mapping: Get all courses that belong to this school
+			//var model = repo.Lines<CsvCourse>().Where(c =>
+			//	 JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
+
+			// Indirect Mapping: Get classes that belong to this School,
+			// then get the courses for them that match the sourceId.
+			// then apply unique on courseSourcedId
+
+			// TODO: Optimize the following
+			var courseSourcedIds = repo.Lines<CsvClass>()
+				.Where(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).schoolSourcedId == orgSourceId)
+				.Select(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).courseSourcedId);
+
+			var courses = repo.Lines<CsvCourse>()
+				.Where(cr => courseSourcedIds.Contains(cr.SourcedId))
+				.OrderBy(cr => cr.SourcedId)
+				.Distinct();
+
+			return View(courses);
 		}
 
 		[HttpPost, ValidateAntiForgeryToken]
