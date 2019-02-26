@@ -280,7 +280,8 @@ namespace OneRosterSync.Net.Controllers
         {
             var repo = new DistrictRepo(db, districtId);
             var model = await repo.Lines<CsvCourse>()
-	            .Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
+	            //.Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
+	            .Where(c => SelectedCourses.Contains(c.SourcedId))
 	            .ToListAsync();
 
 	        ViewBag.districtId = districtId;
