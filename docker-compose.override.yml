@@ -3,7 +3,7 @@ version: '3.4'
 services:
   onerostersync.net:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_ENVIRONMENT=Development
       #- ASPNETCORE_URLS=https://+:443;http://+:80
       #- ASPNETCORE_HTTPS_PORT=44312
     ports:
