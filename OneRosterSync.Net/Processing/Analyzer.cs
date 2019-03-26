@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -69,9 +70,13 @@ namespace OneRosterSync.Net.Processing
 			var cache = new DataLineCache();
 			await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
+			var orgIds = new List<string>();
 			// include Orgs that have been selected for sync
 			foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
+			{
+				orgIds.Add(org.SourcedId);
 				IncludeReadyTouch(org);
+			}
 			await Repo.Committer.Invoke();
 
 			// courses are manually marked for sync, so choose only those
@@ -79,7 +84,7 @@ namespace OneRosterSync.Net.Processing
 				IncludeReadyTouch(course);
 			await Repo.Committer.Invoke();
 
-			// now walk the classes and include those which map to an included course
+			// now walk the classes and include those which map to an included course and are part of the selected orgs.
 			var classMap = cache.GetMap<CsvClass>();
 			var courseIds = cache.GetMap<CsvCourse>()
 				.Values
@@ -90,7 +95,7 @@ namespace OneRosterSync.Net.Processing
 			foreach (var _class in classMap.Values.Where(IsUnappliedChangeWithoutIncludedInSync))
 			{
 				CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
-				if (courseIds.Contains(csvClass.courseSourcedId))
+				if (courseIds.Contains(csvClass.courseSourcedId) && orgIds.Contains(csvClass.schoolSourcedId))
 					IncludeReadyTouch(_class);
 				await Repo.Committer.InvokeIfChunk();
 			}
@@ -105,7 +110,7 @@ namespace OneRosterSync.Net.Processing
 					// figure out if we need to process this enrollment
 					if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
 						!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-						!IsUnappliedChangeWithoutIncludedInSync(enrollment))                             // only include if unapplied change in enrollment
+						!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
 						return;
 
 					var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
@@ -131,9 +136,9 @@ namespace OneRosterSync.Net.Processing
 				&& u.LoadStatus != LoadStatus.NoChange
 				&& u.SyncStatus != SyncStatus.ReadyToApply)
 				.ForEachInChunksForShrinkingList(chunkSize: 200,
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+					#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 					action: async (user) => IncludeReadyTouch(user),
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+					#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 					onChunkComplete: async () => await Repo.Committer.Invoke());
 
 
