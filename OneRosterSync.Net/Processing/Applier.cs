@@ -139,9 +139,9 @@ namespace OneRosterSync.Net.Processing
 				// TODO: Handle multiple terms, termSourceIds can be a comma separated list of terms.
 	            var term = repo.Lines<CsvAcademicSession>().SingleOrDefault(s => s.SourcedId == classCsv.termSourcedIds);
 
-				var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == courseCsv.orgSourcedId );
+				var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == classCsv.schoolSourcedId);
 
-	            var _class = new ApiClassPost(line.RawData)
+                var _class = new ApiClassPost(line.RawData)
 	            {
 		            CourseTargetId = course.TargetId,
 		            SchoolTargetId = org.TargetId,
