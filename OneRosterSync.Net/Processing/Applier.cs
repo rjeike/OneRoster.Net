@@ -145,7 +145,8 @@ namespace OneRosterSync.Net.Processing
 	            {
 		            CourseTargetId = course.TargetId,
 		            SchoolTargetId = org.TargetId,
-		            TermTargetId = term.TargetId
+		            TermTargetId = term.TargetId,
+                    Period = classCsv.periods
 	            };
 
 	            data = _class;

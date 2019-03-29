@@ -97,6 +97,7 @@ namespace OneRosterSync.Net.Models
         public string classType { get; set; }
         public string schoolSourcedId { get; set; }
         public string termSourcedIds { get; set; }
+        public string periods { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]

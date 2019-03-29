@@ -115,7 +115,8 @@ namespace OneRosterSync.Net.Models
 		public string CourseTargetId { get; set; }
 		public string TermTargetId { get; set; }
 		public string SchoolTargetId { get; set; }
-	}
+        public string Period { get; set; }
+    }
 
 
 	/// <summary>
