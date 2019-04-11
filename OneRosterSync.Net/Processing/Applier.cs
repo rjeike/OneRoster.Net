@@ -145,7 +145,7 @@ namespace OneRosterSync.Net.Processing
 	            {
 		            CourseTargetId = course.TargetId,
 		            SchoolTargetId = org.TargetId,
-		            TermTargetId = term.TargetId,
+		            TermTargetId = string.IsNullOrWhiteSpace(term.TargetId) ? "2018" : term.TargetId, //TODO: Add a default term setting in District Entity
                     Period = classCsv.periods
 	            };
 
