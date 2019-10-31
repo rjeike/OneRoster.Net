@@ -108,10 +108,11 @@ namespace OneRosterSync.Net.Processing
 					CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
 
 					// figure out if we need to process this enrollment
-					if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
-						!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-						!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
-						return;
+                    // Sandesh. commented because we have to enroll in school regardless of class
+					//if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
+					//	!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
+					//	!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
+					//	return;
 
 					var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
 					if (user == null) // should never happen

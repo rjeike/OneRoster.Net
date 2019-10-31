@@ -107,6 +107,10 @@ namespace OneRosterSync.Net.Models
         public string schoolSourcedId { get; set; }
         public string userSourcedId { get; set; }
         public string role { get; set; }
+        //Sandesh
+        public string user_id { get; set; }
+        public string nces_schoolid { get; set; }
+        public string action => "enrollinschool";
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
@@ -125,8 +129,11 @@ namespace OneRosterSync.Net.Models
 
     public class EnrollmentMap
     {
-        public string classTargetId { get; set; }
-        public string userTargetId { get; set; }
+        //Sandesh
+        //public string classTargetId { get; set; }
+        //public string userTargetId { get; set; }
+        public string user_id { get; set; }
+        public string nces_schoolid { get; set; }
     }
 
 #pragma warning restore IDE1006 // Naming Styles

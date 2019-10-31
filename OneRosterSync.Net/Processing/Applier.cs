@@ -110,17 +110,30 @@ namespace OneRosterSync.Net.Processing
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
                 DataSyncLine cls = repo.Lines<CsvClass>().SingleOrDefault(l => l.SourcedId == csvEnrollment.classSourcedId);
                 DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
+                DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvEnrollment.schoolSourcedId); //Sandesh
+
+                var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
 
                 var map = new EnrollmentMap
                 {
-                    classTargetId = cls?.TargetId,
-                    userTargetId = usr?.TargetId,
+                    //Sandesh
+                    //classTargetId = cls?.TargetId,
+                    //userTargetId = usr?.TargetId,
+                    user_id = usr?.SourcedId,
+                    nces_schoolid = orgCsv?.identifier
                 };
+
+                // set nces school id in enrollment object
+                csvEnrollment.nces_schoolid = orgCsv?.identifier;
+                enrollment.Data.nces_schoolid = orgCsv?.identifier;
+                enrollment.Data.user_id = usr?.TargetId;
 
                 // this provides a mapping of LMS TargetIds (rather than sourcedId's)
                 enrollment.EnrollmentMap = map;
-	            enrollment.ClassTargetId = cls?.TargetId;
-	            enrollment.UserTargetId = usr?.TargetId;
+                //enrollment.ClassTargetId = cls?.TargetId;
+                //enrollment.UserTargetId = usr?.TargetId;
+                enrollment.user_id = usr?.TargetId;
+                enrollment.nces_schoolid = orgCsv?.identifier;
 
                 // cache map in the database (for display/troubleshooting only)
                 line.EnrollmentMap = JsonConvert.SerializeObject(map); 
@@ -145,7 +158,7 @@ namespace OneRosterSync.Net.Processing
 	            {
 		            CourseTargetId = course.TargetId,
 		            SchoolTargetId = org.TargetId,
-		            TermTargetId = string.IsNullOrWhiteSpace(term.TargetId) ? "2018" : term.TargetId, //TODO: Add a default term setting in District Entity
+		            TermTargetId = string.IsNullOrWhiteSpace(term.TargetId) ? "2019" : term.TargetId, //TODO: Add a default term setting in District Entity
                     Period = classCsv.periods
 	            };
 
@@ -155,8 +168,8 @@ namespace OneRosterSync.Net.Processing
             {
                 data = new ApiPost<T>(line.RawData);
             }
-			
-	        data.DistrictId = repo.District.TargetId;
+            
+            data.DistrictId = repo.District.DistrictId.ToString(); //repo.District.TargetId;
             data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;
             data.SourcedId = line.SourcedId;

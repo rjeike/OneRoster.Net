@@ -15,6 +15,8 @@ using OneRosterSync.Net.Models;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
+using Renci.SshNet;
+using System.IO.Compression;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -55,6 +57,54 @@ namespace OneRosterSync.Net.Controllers
             .ToListAsync();
                 
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult LoadFiles()
+        {
+            try
+            {
+                // TODO. Sandesh
+                string Host = "sftp.summitk12.com", Username = "HisdSk12OR11", Password = "0moTYQEtEevtokg5qUvA";
+                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", LocalFolder = "CSVFiles/1";
+
+                var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
+                using (var sftp = new SftpClient(connectionInfo))
+                {
+                    sftp.Connect();
+                    MemoryStream outputSteam = new MemoryStream();
+                    sftp.DownloadFile($"{Folder}/{FileName}", outputSteam);
+                    sftp.Disconnect();
+
+                    CreateCSVDirectory(LocalFolder, Directory.Exists(LocalFolder));
+                    using (var fileStream = new FileStream($@"{LocalFolder}\csv_files.zip", FileMode.Create))
+                    {
+                        outputSteam.Seek(0, SeekOrigin.Begin);
+                        outputSteam.CopyTo(fileStream);
+                    }
+
+                    ZipFile.ExtractToDirectory($@"{LocalFolder}\csv_files.zip", $@"{LocalFolder}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Here().LogError(ex, ex.Message);
+            }
+
+            return RedirectToAction("DistrictList");
+        }
+
+        public void CreateCSVDirectory(string FolderName, bool Exists)
+        {
+            if (Exists)
+            {
+                Directory.Delete(FolderName, true);
+                CreateCSVDirectory(FolderName, false);
+            }
+            else
+            {
+                Directory.CreateDirectory(FolderName);
+            }
         }
 
         [HttpGet]
@@ -140,7 +190,8 @@ namespace OneRosterSync.Net.Controllers
 	        district.BasePath = $"CSVFiles/{district.DistrictId}";
 	        await db.SaveChangesAsync();
 
-			return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
+            //return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
+            return RedirectToAction("DistrictList", district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
         }
 
         [HttpGet]
@@ -429,6 +480,133 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, bool AppliedFlag = false)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            ViewBag.districtId = districtId;
+
+            var EnrollmentsToSync = repo.Lines<CsvEnrollment>()
+                .Where(w => w.DistrictId == districtId
+                    && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
+                        || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
+                        || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
+                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s))
+                .ToList();
+
+            List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
+            for (int i = 0; i < EnrollmentsToSync.Count; i++)
+            {
+                var enrLine = EnrollmentsToSync[i];
+                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrLine.RawData);
+                DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
+                DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvEnrollment.schoolSourcedId);
+                if (org.IncludeInSync || AppliedFlag)
+                {
+                    var usrCsv = JsonConvert.DeserializeObject<CsvUser>(usr.RawData);
+                    var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+
+                    EnrollmentSyncLineViewModel obj = new EnrollmentSyncLineViewModel();
+                    obj.Created = enrLine.Created;
+                    obj.DataSyncLineId = enrLine.DataSyncLineId;
+                    obj.DistrictId = enrLine.DistrictId;
+                    obj.Email = usrCsv.email;
+                    obj.Username = usrCsv.username;
+                    obj.Name = $"{usrCsv.givenName} {usrCsv.familyName}";
+                    obj.Version = enrLine.Version;
+                    obj.SyncStatus = enrLine.SyncStatus;
+                    obj.Error = enrLine.Error;
+                    obj.IncludeInSync = enrLine.IncludeInSync;
+                    obj.Table = enrLine.Table;
+                    obj.SchoolName = orgCsv.name;
+
+                    EnrollmentLines.Add(obj);
+                }
+            }
+
+            var district = await db.Districts.FirstOrDefaultAsync(w => w.DistrictId == districtId);
+            ViewBag.CurrentDistrict = district;
+
+            return View(EnrollmentLines);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApplyEnrollmentSyncDetails(int districtId)
+        {
+            await Process(districtId, ProcessingAction.Apply);
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+        }
+
+        [HttpGet]
+        public IActionResult ViewAllAppliedEnrollmentSyncDetails(int districtId)
+        {
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId = districtId, AppliedFlag = true });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoadEnrollmentSyncDetails(int districtId)
+        {
+            await Process(districtId, ProcessingAction.Load);
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AnalyzeEnrollmentSyncDetails(int districtId)
+        {
+            await Process(districtId, ProcessingAction.Analyze);
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> ToggleIncludeInSyncFlag(bool flag, int LineId)
+        {
+            var responseFlag = true;
+            try
+            {
+                var line = db.DataSyncLines.FirstOrDefault(w => w.DataSyncLineId == LineId);
+                line.IncludeInSync = flag;
+                await DataSyncLineEdit(line);
+
+            }
+            catch (Exception ex)
+            {
+                responseFlag = false;
+            }
+
+            return Json(responseFlag);
+        }
+
+        public DataSyncLineViewModel GetDataSyncLineViewModel<T>(DataSyncLine Data) where T : CsvBaseObject
+        {
+            var ViewModel = new DataSyncLineViewModel
+            {
+                Created = Data.Created,
+                Data = Data.Data,
+                DataSyncLineId = Data.DataSyncLineId,
+                DeserializedRawData = JsonConvert.DeserializeObject<T>(Data.RawData),
+                EnrollmentMap = Data.EnrollmentMap,
+                DistrictId = Data.DistrictId,
+                Error = Data.Error,
+                IncludeInSync = Data.IncludeInSync,
+                LastSeen = Data.LastSeen,
+                LoadStatus = Data.LoadStatus,
+                Modified = Data.Modified,
+                RawData = Data.RawData,
+                SourcedId = Data.SourcedId,
+                SyncStatus = Data.SyncStatus,
+                Table = Data.Table,
+                TargetId = Data.TargetId,
+                Version = Data.Version
+            };
+
+            if (Data.Table == "CsvEnrollment" && !string.IsNullOrEmpty(Data.EnrollmentMap))
+            {
+                ViewModel.DeserializedEnrollmentMap = JsonConvert.DeserializeObject<EnrollmentMap>(Data.EnrollmentMap);
+            }
+
+            return ViewModel;
+        }
+
 		[HttpGet]
 	    public async Task<IActionResult> DistrictEntityMapping(int districtId)
 	    {
@@ -599,8 +777,9 @@ namespace OneRosterSync.Net.Controllers
             district.Touch();
 
             await db.SaveChangesAsync();
-
-            return RedirectToDistrict(district.DistrictId);
+            
+            //return RedirectToDistrict(district.DistrictId);
+            return RedirectToAction("DistrictList", new { district.DistrictId });
         }
 
 	    [HttpPost]

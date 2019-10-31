@@ -7,6 +7,7 @@
 <h2>School Districts <small>CSV Synchronization Automation</small></h2>
 <p>
     <a asp-action="DistrictCreate">Create New District</a>
+    <a asp-action="LoadFiles" style="padding-left: 20px">Load files</a>
 </p>
 
 <table class="table table-hover">
@@ -50,7 +51,9 @@
                 @Html.DisplayFor(modelItem => item.NumRecords)
             </td>
             <td>
-                <a asp-action="DistrictDashboard" asp-route-districtId="@item.DistrictId">Dashboard</a>
+                @*<a asp-action="DistrictDashboard" asp-route-districtId="@item.DistrictId">Dashboard</a>*@
+                <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@item.DistrictId">Sync Details</a>
+                <a asp-action="DistrictEdit" asp-route-id="@item.DistrictId">Edit</a>
             </td>
         </tr>
         }

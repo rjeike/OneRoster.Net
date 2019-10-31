@@ -1,0 +1,259 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.EnrollmentSyncLineViewModel>
+@{
+    ViewData["Title"] = "EnrollmentSyncDetails";
+    string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
+
+    if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
+        ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
+    {
+        if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None)
+        {
+            disabledLoad = string.Empty;
+        }
+        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.LoadingDone)
+        {
+            disabledSelectOrgs = string.Empty;
+            disabledAnalyze = string.Empty;
+        }
+        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone)
+        {
+            disabledApply = string.Empty;
+        }
+        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.ApplyingDone)
+        {
+            disabledLoad = string.Empty;
+        }
+    }
+}
+
+<h2>Enrollment Sync Details</h2>
+<style>
+    .form-esd form {
+        display: inline-block;
+    }
+
+    .form-esd.lft div,
+    .form-esd.rht div {
+        padding: 0 7.5px;
+    }
+
+        .form-esd.lft div:nth-child(1),
+        .form-esd.rht div:nth-child(1) {
+            padding-left: 0;
+        }
+
+        .form-esd.lft div:last-child,
+        .form-esd.rht div:last-child {
+            padding-right: 0;
+        }
+
+    .form-esd.lft {
+        display: -webkit-box !important;
+        display: -ms-flexbox !important;
+        display: flex !important;
+        -webkit-box-pack: start !important;
+        -ms-flex-pack: start !important;
+        justify-content: flex-start !important;
+    }
+
+    .form-esd.rht {
+        display: -webkit-box !important;
+        display: -ms-flexbox !important;
+        display: flex !important;
+        -webkit-box-pack: end !important;
+        -ms-flex-pack: end !important;
+        justify-content: flex-end !important;
+    }
+</style>
+<div class="row">
+    <div class="col-md-7 form-esd lft">
+        <div>
+            <form asp-action="LoadEnrollmentSyncDetails">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                @if (disabledLoad.Length > 0)
+                {
+                    <input type="submit" value="1. Load" class="btn btn-primary" disabled="@disabledLoad" />
+                }
+                else
+                {
+                    <input type="submit" value="1. Load" class="btn btn-primary" />
+                }
+            </form>
+        </div>
+        <div>
+            <form asp-action="SelectOrgs">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                @if (disabledSelectOrgs.Length > 0)
+                {
+                    <input type="submit" value="2. Select Orgs" class="btn btn-primary" disabled="@disabledSelectOrgs" />
+                }
+                else
+                {
+                    <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
+                }
+            </form>
+        </div>
+        <div>
+            <form asp-action="AnalyzeEnrollmentSyncDetails">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                @if (disabledAnalyze.Length > 0)
+                {
+                    <input type="submit" value="3. Analyze" class="btn btn-primary" disabled="@disabledAnalyze" />
+                }
+                else
+                {
+                    <input type="submit" value="3. Analyze" class="btn btn-primary" />
+                }
+            </form>
+        </div>
+    </div>
+    <div class="col-md-5 form-esd rht">
+        <div>
+            <form asp-action="ViewAllAppliedEnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="View all applied" class="btn btn-primary" />
+            </form>
+        </div>
+        <div>
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="View all Ready to Apply" class="btn btn-primary" />
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <dl class="dl-horizontal">
+        <dt>
+            Processing Status
+        </dt>
+        <dd>
+            @ViewBag.CurrentDistrict.ProcessingStatus
+        </dd>
+    </dl>
+</div>
+
+<div class="row">
+    <table class="table table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Table)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.IncludeInSync)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Name)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Username)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Email)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SchoolName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SyncStatus)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Error)
+                </th>
+                @*<th></th>*@
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Table)
+                    </td>
+                    <td>
+                        @*@if (item.IncludeInSync)
+                            {
+                                <i class="fas fa-check" title="Sync Enabled"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-times" title="Sync Disabled"></i>
+                            }
+                            @Html.CheckBoxFor(modelItem => item.IncludeInSync)*@
+                        <input type="checkbox" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Username)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Email)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SchoolName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SyncStatus)
+                    </td>
+                    <td>
+                        @if (item.SyncStatus == SyncStatus.ApplyFailed)
+                        {
+                            if (!string.IsNullOrEmpty(item.Error))
+                            {
+                                <div><i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i> @item.Error</div>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check-circle" style="color: green" title="No error"></i>
+                            }
+                        }
+                    </td>
+                    @*<td>
+                            @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" })
+                        </td*@>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div class="row">
+    <form asp-action="ApplyEnrollmentSyncDetails">
+        <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+        <div class="form-group">
+            @if (disabledApply.Length > 0)
+            {
+                <input type="submit" value="Apply" class="btn btn-primary" disabled="disabled" />
+            }
+            else
+            {
+                <input type="submit" value="Apply" class="btn btn-primary" />
+            }
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    function toggleIncludeInSync(control, lineId) {
+        let url = '@Url.Action("ToggleIncludeInSyncFlag","DataSync")';
+        let flag = $(control).prop('checked');
+
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            data: { flag: flag, LineId: lineId },
+            async: false,
+            type: 'POST',
+            success: function (response) {
+                if (!response) {
+                    alert('Something went wrong while toggling the flag. Please contact administrator.');
+                }
+            }
+        });
+
+    }
+</script>

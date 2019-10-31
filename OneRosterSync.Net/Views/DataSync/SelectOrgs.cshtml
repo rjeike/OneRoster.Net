@@ -25,10 +25,11 @@
 			@Html.Hidden("districtId", districtId)
 			<select name="SelectedOrgs" asp-items="list" multiple size="20" class="form-control"></select>
 			<br/><br/>
-			<div class="form-group">
-				<input type="submit" value="Save" class="btn btn-primary" />
-				<a asp-action="DistrictDashboard" asp-route-districtId="@districtId" class="btn btn-default">Back to Dashboard</a>
-			</div>
+                 <div class="form-group">
+                     <input type="submit" value="Save" class="btn btn-primary" />
+                     @*<a asp-action="DistrictDashboard" asp-route-districtId="@districtId" class="btn btn-default">Back to Dashboard</a>*@
+                     <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@districtId" class="btn btn-default">Back to Details</a>
+                 </div>
 		</form>
 	</div>
     <div class="col-md-6">

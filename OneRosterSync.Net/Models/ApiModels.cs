@@ -61,7 +61,7 @@ namespace OneRosterSync.Net.Models
                 EntityType = EntityType.Substring(3);
         }
 
-        public ApiPost(string json) 
+        public ApiPost(string json)
             : this()
         {
             Data = JsonConvert.DeserializeObject<T>(json);
@@ -75,7 +75,7 @@ namespace OneRosterSync.Net.Models
 
     public class ApiEnrollmentPost : ApiPost<CsvEnrollment>
     {
-        public ApiEnrollmentPost() 
+        public ApiEnrollmentPost()
             : base()
         {
         }
@@ -89,70 +89,72 @@ namespace OneRosterSync.Net.Models
         /// Kludge for tracking TargetIds of an Enrollment
         /// </summary>
         public EnrollmentMap EnrollmentMap { get; set; }
+        //public string ClassTargetId { get; set; }
+        //public string UserTargetId { get; set; }
+        public string user_id { get; set; }
+        public string nces_schoolid { get; set; }
 
-		public string ClassTargetId { get; set; }
-		public string UserTargetId { get; set; }
-
-		/// <summary>
-		/// Default action is to enroll. Will add support for un-enrollment later.
-		/// </summary>
-	    public string Action => "enroll";
+        /// <summary>
+        /// Default action is to enroll. Will add support for un-enrollment later.
+        /// </summary>
+        //public string Action => "enroll";
+        public string Action => "enrollinschool";
     }
-    }
+}
 
-	public class ApiClassPost : ApiPost<CsvClass>
-	{
-		public ApiClassPost()
-			: base()
-		{
-		}
-
-		public ApiClassPost(string json)
-			: base(json)
-		{
-		}
-
-		public string CourseTargetId { get; set; }
-		public string TermTargetId { get; set; }
-		public string SchoolTargetId { get; set; }
-        public string Period { get; set; }
-    }
-
-
-	/// <summary>
-	/// Expected response from LMS API call
-	/// </summary>
-	public class ApiResponse
+public class ApiClassPost : ApiPost<CsvClass>
+{
+    public ApiClassPost()
+        : base()
     {
-        /// <summary>
-        /// Was the LMS able to successfully process the API request?
-        /// </summary>
-        public bool Success { get; set; }
-
-        /// <summary>
-        /// Unique Id of the record on the LMS side
-        /// </summary>
-        public string TargetId { get; set; }
-
-        /// <summary>
-        /// If an error, an code (that only has meaning on the LMS side)
-        /// </summary>
-        public string ErrorCode { get; set; }
-
-        /// <summary>
-        /// Helpful error message from LMS
-        /// </summary>
-        public string ErrorMessage { get; set; }
     }
 
+    public ApiClassPost(string json)
+        : base(json)
+    {
+    }
 
-	/// <summary>
-	/// The enrollment actions
-	/// </summary>
-	public enum EnrollmentAction
-	{
-		Enroll,
-		UnEnroll
+    public string CourseTargetId { get; set; }
+    public string TermTargetId { get; set; }
+    public string SchoolTargetId { get; set; }
+    public string Period { get; set; }
+}
 
-	}
+
+/// <summary>
+/// Expected response from LMS API call
+/// </summary>
+public class ApiResponse
+{
+    /// <summary>
+    /// Was the LMS able to successfully process the API request?
+    /// </summary>
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// Unique Id of the record on the LMS side
+    /// </summary>
+    public string TargetId { get; set; }
+
+    /// <summary>
+    /// If an error, an code (that only has meaning on the LMS side)
+    /// </summary>
+    public string ErrorCode { get; set; }
+
+    /// <summary>
+    /// Helpful error message from LMS
+    /// </summary>
+    public string ErrorMessage { get; set; }
+}
+
+
+/// <summary>
+/// The enrollment actions
+/// </summary>
+public enum EnrollmentAction
+{
+    Enroll,
+    UnEnroll
+
+}
 
