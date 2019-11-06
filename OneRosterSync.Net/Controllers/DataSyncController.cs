@@ -25,15 +25,15 @@ namespace OneRosterSync.Net.Controllers
         private readonly ApplicationDbContext db;
         private readonly ILogger Logger;
 
-	    private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IHostingEnvironment _hostingEnvironment;
 
 
-		public DataSyncController(ApplicationDbContext db, ILogger<DataSyncController> logger, IHostingEnvironment hostingEnvironment)
+        public DataSyncController(ApplicationDbContext db, ILogger<DataSyncController> logger, IHostingEnvironment hostingEnvironment)
         {
             this.db = db;
             Logger = logger;
-	        _hostingEnvironment = hostingEnvironment;
-		}
+            _hostingEnvironment = hostingEnvironment;
+        }
 
         [HttpGet]
         public IActionResult Index()
@@ -55,7 +55,7 @@ namespace OneRosterSync.Net.Controllers
             })
             .OrderByDescending(d => d.Modified)
             .ToListAsync();
-                
+
             return View(model);
         }
 
@@ -66,7 +66,7 @@ namespace OneRosterSync.Net.Controllers
             {
                 // TODO. Sandesh
                 string Host = "sftp.summitk12.com", Username = "HisdSk12OR11", Password = "0moTYQEtEevtokg5qUvA";
-                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", LocalFolder = "CSVFiles/1";
+                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", LocalFolder = "CSVFiles";
 
                 var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
                 using (var sftp = new SftpClient(connectionInfo))
@@ -77,6 +77,7 @@ namespace OneRosterSync.Net.Controllers
                     sftp.Disconnect();
 
                     CreateCSVDirectory(LocalFolder, Directory.Exists(LocalFolder));
+                    CreateCSVDirectory(LocalFolder, Directory.Exists(LocalFolder + "/1"));
                     using (var fileStream = new FileStream($@"{LocalFolder}\csv_files.zip", FileMode.Create))
                     {
                         outputSteam.Seek(0, SeekOrigin.Begin);
@@ -85,9 +86,13 @@ namespace OneRosterSync.Net.Controllers
 
                     ZipFile.ExtractToDirectory($@"{LocalFolder}\csv_files.zip", $@"{LocalFolder}");
                 }
+                ViewBag.SuccessFlag = true;
+                ViewBag.Message = "Files loaded successfully at path \"" + LocalFolder + "/1\"";
             }
             catch (Exception ex)
             {
+                ViewBag.SuccessFlag = false;
+                ViewBag.Message = ex.Message;
                 Logger.Here().LogError(ex, ex.Message);
             }
 
@@ -110,26 +115,26 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public IActionResult DistrictCreate()
         {
-	        // create default values
-			var district = new District
-	        {
-		        BasePath = @"CSVFiles",
-		        LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
-		        LmsOrgEndPoint = @"org",
-		        LmsCourseEndPoint = @"course",
-		        LmsClassEndPoint = @"class",
-		        LmsUserEndPoint = @"user",
-		        LmsEnrollmentEndPoint = @"enrollment",
-		        LmsAcademicSessionEndPoint = @"academicSession",
-				SyncAcademicSessions = true,
-				SyncClasses = true,
-				SyncCourses = true,
-				SyncEnrollment = true,
-				SyncOrgs = true,
-				SyncUsers = true
-	        };
+            // create default values
+            var district = new District
+            {
+                BasePath = @"CSVFiles",
+                LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
+                LmsOrgEndPoint = @"org",
+                LmsCourseEndPoint = @"course",
+                LmsClassEndPoint = @"class",
+                LmsUserEndPoint = @"user",
+                LmsEnrollmentEndPoint = @"enrollment",
+                LmsAcademicSessionEndPoint = @"academicSession",
+                SyncAcademicSessions = true,
+                SyncClasses = true,
+                SyncCourses = true,
+                SyncEnrollment = true,
+                SyncOrgs = true,
+                SyncUsers = true
+            };
 
-	        return View(district);
+            return View(district);
         }
 
         /// <summary>
@@ -146,49 +151,49 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(DistrictList)).WithSuccess("District deleted successfully");
         }
 
-		/// <summary>
-		/// This is fore testing and debugging purposes only
-		/// </summary>
-		/// <param name="districtId"></param>
-		/// <returns></returns>
-		[HttpPost, ValidateAntiForgeryToken]
-		public IActionResult DistrictClone(int districtId)
-		{
-			var repo = new DistrictRepo(db, districtId);
+        /// <summary>
+        /// This is fore testing and debugging purposes only
+        /// </summary>
+        /// <param name="districtId"></param>
+        /// <returns></returns>
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult DistrictClone(int districtId)
+        {
+            var repo = new DistrictRepo(db, districtId);
 
-			var clonedDistrict = repo.District.ShallowCopy();
-			clonedDistrict.DistrictId = 0;
-			clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
-			clonedDistrict.ProcessingStatus = ProcessingStatus.None;
-			clonedDistrict.ProcessingAction = ProcessingAction.None;
-			clonedDistrict.Created = DateTime.Now;
-			clonedDistrict.Modified = DateTime.Now;
+            var clonedDistrict = repo.District.ShallowCopy();
+            clonedDistrict.DistrictId = 0;
+            clonedDistrict.Name = $"Clone of {clonedDistrict.Name}";
+            clonedDistrict.ProcessingStatus = ProcessingStatus.None;
+            clonedDistrict.ProcessingAction = ProcessingAction.None;
+            clonedDistrict.Created = DateTime.Now;
+            clonedDistrict.Modified = DateTime.Now;
 
-			db.Add(clonedDistrict);
-			db.SaveChanges();
+            db.Add(clonedDistrict);
+            db.SaveChanges();
 
-			clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
+            clonedDistrict.BasePath = $"CSVFiles/{clonedDistrict.DistrictId}";
 
-			db.SaveChanges();
+            db.SaveChanges();
 
-			return RedirectToAction(nameof(DistrictList)).WithSuccess($"District cloned as {clonedDistrict.Name}");
-		}
+            return RedirectToAction(nameof(DistrictList)).WithSuccess($"District cloned as {clonedDistrict.Name}");
+        }
 
-		private IActionResult RedirectToDistrict(int districtId) =>
+        private IActionResult RedirectToDistrict(int districtId) =>
             RedirectToAction(nameof(DistrictDashboard), new { districtId });
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DistrictCreate(District district)
         {
-	        if (!ModelState.IsValid)
-		        return View(district);
+            if (!ModelState.IsValid)
+                return View(district);
 
-			db.Add(district);
+            db.Add(district);
             await db.SaveChangesAsync();
 
-			// Set the CSV Folder path
-	        district.BasePath = $"CSVFiles/{district.DistrictId}";
-	        await db.SaveChangesAsync();
+            // Set the CSV Folder path
+            district.BasePath = $"CSVFiles/{district.DistrictId}";
+            await db.SaveChangesAsync();
 
             //return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
             return RedirectToAction("DistrictList", district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
@@ -215,8 +220,8 @@ namespace OneRosterSync.Net.Controllers
         /// <param name="loadStatus"></param>
         /// <param name="syncStatus"></param>
         [HttpGet]
-        public async Task<IActionResult> DataSyncLines(int districtId, 
-            int page = 1, string table = null, string filter = null, 
+        public async Task<IActionResult> DataSyncLines(int districtId,
+            int page = 1, string table = null, string filter = null,
             LoadStatus? loadStatus = null, SyncStatus? syncStatus = null)
         {
             var repo = new DistrictRepo(db, districtId);
@@ -288,7 +293,7 @@ namespace OneRosterSync.Net.Controllers
             ViewData["DistrictName"] = history.District.Name;
 
             var model = await db.DataSyncHistoryDetails
-                .Where(d => d.DataSyncHistoryId == dataSyncHistoryId) 
+                .Where(d => d.DataSyncHistoryId == dataSyncHistoryId)
                 .OrderByDescending(d => d.Modified)
                 .Take(20)
                 .ToListAsync();
@@ -296,48 +301,48 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
-		[HttpGet]
-		public IActionResult SelectCourses(int districtId, string orgSourceId)
-		{
-			var repo = new DistrictRepo(db, districtId);
-			ViewBag.districtId = districtId;
-			ViewBag.orgSourceId = orgSourceId;
+        [HttpGet]
+        public IActionResult SelectCourses(int districtId, string orgSourceId)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            ViewBag.districtId = districtId;
+            ViewBag.orgSourceId = orgSourceId;
 
-			// TODO: Add config to determine how to pick up courses.
-			
-			// Direct Mapping: Get all courses that belong to this school
-			//var model = repo.Lines<CsvCourse>().Where(c =>
-			//	 JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
+            // TODO: Add config to determine how to pick up courses.
 
-			// Indirect Mapping: Get classes that belong to this School,
-			// then get the courses for them that match the sourceId.
-			// then apply unique on courseSourcedId
+            // Direct Mapping: Get all courses that belong to this school
+            //var model = repo.Lines<CsvCourse>().Where(c =>
+            //	 JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId).ToList();
 
-			// TODO: Optimize the following
-			var courseSourcedIds = repo.Lines<CsvClass>()
-				.Where(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).schoolSourcedId == orgSourceId)
-				.Select(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).courseSourcedId);
+            // Indirect Mapping: Get classes that belong to this School,
+            // then get the courses for them that match the sourceId.
+            // then apply unique on courseSourcedId
 
-			var courses = repo.Lines<CsvCourse>()
-				.Where(cr => courseSourcedIds.Contains(cr.SourcedId))
-				.OrderBy(cr => cr.SourcedId)
-				.Distinct();
+            // TODO: Optimize the following
+            var courseSourcedIds = repo.Lines<CsvClass>()
+                .Where(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).schoolSourcedId == orgSourceId)
+                .Select(c => JsonConvert.DeserializeObject<CsvClass>(c.RawData).courseSourcedId);
 
-			return View(courses);
-		}
+            var courses = repo.Lines<CsvCourse>()
+                .Where(cr => courseSourcedIds.Contains(cr.SourcedId))
+                .OrderBy(cr => cr.SourcedId)
+                .Distinct();
 
-		[HttpPost, ValidateAntiForgeryToken]
+            return View(courses);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SelectCourses(int districtId, string orgSourceId, IEnumerable<string> SelectedCourses)
         {
             var repo = new DistrictRepo(db, districtId);
             var model = await repo.Lines<CsvCourse>()
-	            //.Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
-	            .Where(c => SelectedCourses.Contains(c.SourcedId))
-	            .ToListAsync();
+                //.Where(c => JsonConvert.DeserializeObject<CsvCourse>(c.RawData).orgSourcedId == orgSourceId.ToString())
+                .Where(c => SelectedCourses.Contains(c.SourcedId))
+                .ToListAsync();
 
-	        ViewBag.districtId = districtId;
+            ViewBag.districtId = districtId;
 
-			foreach (var course in model)
+            foreach (var course in model)
             {
                 bool include = SelectedCourses.Contains(course.SourcedId);
                 if (course.IncludeInSync == include)
@@ -349,40 +354,40 @@ namespace OneRosterSync.Net.Controllers
 
             await repo.Committer.Invoke();
 
-	        return RedirectToAction(nameof(SelectCourses), new {districtId, orgSourceId}).WithSuccess("Courses saved successfully");
+            return RedirectToAction(nameof(SelectCourses), new { districtId, orgSourceId }).WithSuccess("Courses saved successfully");
         }
 
-	    [HttpGet]
-	    public async Task<IActionResult> SelectOrgs(int districtId)
-	    {
-		    var repo = new DistrictRepo(db, districtId);
-		    var model = await repo.Lines<CsvOrg>().ToListAsync();
-		    ViewBag.districtId = districtId;
-		    return View(model);
-	    }
+        [HttpGet]
+        public async Task<IActionResult> SelectOrgs(int districtId)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            var model = await repo.Lines<CsvOrg>().ToListAsync();
+            ViewBag.districtId = districtId;
+            return View(model);
+        }
 
-	    [HttpPost, ValidateAntiForgeryToken]
-	    public async Task<IActionResult> SelectOrgs(int districtId, IEnumerable<string> SelectedOrgs)
-	    {
-		    var repo = new DistrictRepo(db, districtId);
-		    var model = await repo.Lines<CsvOrg>().ToListAsync();
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SelectOrgs(int districtId, IEnumerable<string> SelectedOrgs)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            var model = await repo.Lines<CsvOrg>().ToListAsync();
 
-			foreach (var org in model)
-		    {
-			    bool include = SelectedOrgs.Contains(org.SourcedId);
-			    if (org.IncludeInSync == include)
-				    continue;
-			    org.IncludeInSync = include;
-			    org.Touch();
-			    repo.PushLineHistory(org, isNewData: false);
-		    }
+            foreach (var org in model)
+            {
+                bool include = SelectedOrgs.Contains(org.SourcedId);
+                if (org.IncludeInSync == include)
+                    continue;
+                org.IncludeInSync = include;
+                org.Touch();
+                repo.PushLineHistory(org, isNewData: false);
+            }
 
-		    await repo.Committer.Invoke();
+            await repo.Committer.Invoke();
 
-		    return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
-	    }
+            return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
+        }
 
-		private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
+        private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = await db.Districts.FindAsync(districtId);
 
@@ -443,38 +448,38 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> DistrictReport(int districtId)
         {
             var repo = new DistrictRepo(db, districtId);
-	        ViewBag.districtId = districtId;
+            ViewBag.districtId = districtId;
 
-	        var org = await ReportLine<CsvOrg>(repo);
-	        org.SyncEnabled = repo.District.SyncOrgs;
+            var org = await ReportLine<CsvOrg>(repo);
+            org.SyncEnabled = repo.District.SyncOrgs;
 
-	        var course = await ReportLine<CsvCourse>(repo);
-	        course.SyncEnabled = repo.District.SyncCourses;
+            var course = await ReportLine<CsvCourse>(repo);
+            course.SyncEnabled = repo.District.SyncCourses;
 
-			var academicSession = await ReportLine<CsvAcademicSession>(repo);
-	        academicSession.SyncEnabled = repo.District.SyncAcademicSessions;
+            var academicSession = await ReportLine<CsvAcademicSession>(repo);
+            academicSession.SyncEnabled = repo.District.SyncAcademicSessions;
 
-			var _class = await ReportLine<CsvClass>(repo);
-	        _class.SyncEnabled = repo.District.SyncClasses;
+            var _class = await ReportLine<CsvClass>(repo);
+            _class.SyncEnabled = repo.District.SyncClasses;
 
-			var user = await ReportLine<CsvUser>(repo);
-	        user.SyncEnabled = repo.District.SyncUsers;
+            var user = await ReportLine<CsvUser>(repo);
+            user.SyncEnabled = repo.District.SyncUsers;
 
-			var enrollment = await ReportLine<CsvEnrollment>(repo);
-	        enrollment.SyncEnabled = repo.District.SyncEnrollment;
+            var enrollment = await ReportLine<CsvEnrollment>(repo);
+            enrollment.SyncEnabled = repo.District.SyncEnrollment;
 
-			var total = await ReportLine(repo.Lines().AsNoTracking(), "Totals");
-	        total.SyncEnabled = true;
+            var total = await ReportLine(repo.Lines().AsNoTracking(), "Totals");
+            total.SyncEnabled = true;
 
-			var model = new[]
+            var model = new[]
             {
                 org,
-				course,
-				academicSession,
-				_class,
-				user,
-				enrollment,
-				total
+                course,
+                academicSession,
+                _class,
+                user,
+                enrollment,
+                total
             };
 
             return View(model);
@@ -607,83 +612,83 @@ namespace OneRosterSync.Net.Controllers
             return ViewModel;
         }
 
-		[HttpGet]
-	    public async Task<IActionResult> DistrictEntityMapping(int districtId)
-	    {
-		    var repo = new DistrictRepo(db, districtId);
-			return View(repo.District);
-	    }
+        [HttpGet]
+        public async Task<IActionResult> DistrictEntityMapping(int districtId)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            return View(repo.District);
+        }
 
-	    [HttpPost]
-	    public async Task<IActionResult> UploadMappingFiles(IFormFile mappingFile, int districtId, string tableName)
-	    {
-		    var path = Path.GetTempFileName();
-		    var repo = new DistrictRepo(db, districtId);
-		    var mapCount = 0;
-		    var lineCount = 0;
+        [HttpPost]
+        public async Task<IActionResult> UploadMappingFiles(IFormFile mappingFile, int districtId, string tableName)
+        {
+            var path = Path.GetTempFileName();
+            var repo = new DistrictRepo(db, districtId);
+            var mapCount = 0;
+            var lineCount = 0;
 
-		    if (string.IsNullOrWhiteSpace(tableName) || mappingFile == null)
-		    {
-			    return View(nameof(DistrictEntityMapping), repo.District)
-				    .WithDanger($"Please select Table Name and select a file first.");
-			}
+            if (string.IsNullOrWhiteSpace(tableName) || mappingFile == null)
+            {
+                return View(nameof(DistrictEntityMapping), repo.District)
+                    .WithDanger($"Please select Table Name and select a file first.");
+            }
 
-		    using (var stream = new FileStream(path, FileMode.Create))
-			{
-				await mappingFile.CopyToAsync(stream);
-			}
+            using (var stream = new FileStream(path, FileMode.Create))
+            {
+                await mappingFile.CopyToAsync(stream);
+            }
 
-		    using (var file = System.IO.File.OpenText(path))
-		    {
-			    using (var csv = new CsvHelper.CsvReader(file))
-			    {
-				    csv.Configuration.MissingFieldFound = null;
-				    csv.Configuration.HasHeaderRecord = true;
+            using (var file = System.IO.File.OpenText(path))
+            {
+                using (var csv = new CsvHelper.CsvReader(file))
+                {
+                    csv.Configuration.MissingFieldFound = null;
+                    csv.Configuration.HasHeaderRecord = true;
 
-				    csv.Read();
-				    csv.ReadHeader();
+                    csv.Read();
+                    csv.ReadHeader();
 
-				    for (int i = 0; await csv.ReadAsync(); i++)
-				    {
-					    dynamic record = null;
-					    try
-					    {
-						    record = csv.GetRecord<dynamic>();
-						    string sourcedId = record.sourcedId;
-						    string targetId = record.targetId;
+                    for (int i = 0; await csv.ReadAsync(); i++)
+                    {
+                        dynamic record = null;
+                        try
+                        {
+                            record = csv.GetRecord<dynamic>();
+                            string sourcedId = record.sourcedId;
+                            string targetId = record.targetId;
 
-						    mapCount++;
+                            mapCount++;
 
-						    var line = repo.Lines()
-							    .Where(l => l.SourcedId == sourcedId && l.Table == tableName)
-							    .FirstOrDefault();
+                            var line = repo.Lines()
+                                .Where(l => l.SourcedId == sourcedId && l.Table == tableName)
+                                .FirstOrDefault();
 
-							if (line != null)
-						    {
-							    line.TargetId = targetId;
-								line.Touch();
+                            if (line != null)
+                            {
+                                line.TargetId = targetId;
+                                line.Touch();
 
-							    lineCount++;
-						    }
+                                lineCount++;
+                            }
 
-						}
-					    catch (Exception ex)
-					    {
-							Logger.Here().LogError(ex, ex.Message);
-						    return View(nameof(DistrictEntityMapping), repo.District)
-							    .WithDanger($"Failed to apply Mappings. {ex.Message}");
-					    }
-				    }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Here().LogError(ex, ex.Message);
+                            return View(nameof(DistrictEntityMapping), repo.District)
+                                .WithDanger($"Failed to apply Mappings. {ex.Message}");
+                        }
+                    }
 
-				    await repo.Committer.Invoke();
-			    }
-		    }
+                    await repo.Committer.Invoke();
+                }
+            }
 
-		    return View(nameof(DistrictEntityMapping), repo.District)
-			    .WithSuccess($"Successfully Processed Mapping for {tableName}. Mapping applied to {lineCount} records out of {mapCount} mapping records.");
-	    }
+            return View(nameof(DistrictEntityMapping), repo.District)
+                .WithSuccess($"Successfully Processed Mapping for {tableName}. Mapping applied to {lineCount} records out of {mapCount} mapping records.");
+        }
 
-		[HttpGet]
+        [HttpGet]
         public async Task<IActionResult> DataSyncLineEdit(int id)
         {
             var model = await db.DataSyncLines
@@ -755,49 +760,49 @@ namespace OneRosterSync.Net.Controllers
             district.LmsApiBaseUrl = postedDistrict.LmsApiBaseUrl;
             district.Name = postedDistrict.Name;
             district.TargetId = postedDistrict.TargetId;
-	        district.LmsApiAuthenticatorType = postedDistrict.LmsApiAuthenticatorType;
-	        district.LmsApiAuthenticationJsonData = postedDistrict.LmsApiAuthenticationJsonData;
+            district.LmsApiAuthenticatorType = postedDistrict.LmsApiAuthenticatorType;
+            district.LmsApiAuthenticationJsonData = postedDistrict.LmsApiAuthenticationJsonData;
 
-	        district.LmsOrgEndPoint = postedDistrict.LmsOrgEndPoint;
-	        district.LmsCourseEndPoint = postedDistrict.LmsCourseEndPoint;
-	        district.LmsClassEndPoint = postedDistrict.LmsClassEndPoint;
-	        district.LmsUserEndPoint = postedDistrict.LmsUserEndPoint;
-	        district.LmsEnrollmentEndPoint = postedDistrict.LmsEnrollmentEndPoint;
-	        district.LmsAcademicSessionEndPoint = postedDistrict.LmsAcademicSessionEndPoint;
+            district.LmsOrgEndPoint = postedDistrict.LmsOrgEndPoint;
+            district.LmsCourseEndPoint = postedDistrict.LmsCourseEndPoint;
+            district.LmsClassEndPoint = postedDistrict.LmsClassEndPoint;
+            district.LmsUserEndPoint = postedDistrict.LmsUserEndPoint;
+            district.LmsEnrollmentEndPoint = postedDistrict.LmsEnrollmentEndPoint;
+            district.LmsAcademicSessionEndPoint = postedDistrict.LmsAcademicSessionEndPoint;
 
-	        district.SyncEnrollment = postedDistrict.SyncEnrollment;
-	        district.SyncAcademicSessions = postedDistrict.SyncAcademicSessions;
-	        district.SyncClasses = postedDistrict.SyncClasses;
-	        district.SyncCourses = postedDistrict.SyncCourses;
-	        district.SyncOrgs = postedDistrict.SyncOrgs;
-	        district.SyncUsers = postedDistrict.SyncUsers;
+            district.SyncEnrollment = postedDistrict.SyncEnrollment;
+            district.SyncAcademicSessions = postedDistrict.SyncAcademicSessions;
+            district.SyncClasses = postedDistrict.SyncClasses;
+            district.SyncCourses = postedDistrict.SyncCourses;
+            district.SyncOrgs = postedDistrict.SyncOrgs;
+            district.SyncUsers = postedDistrict.SyncUsers;
 
-			DistrictRepo.UpdateNextProcessingTime(district);
-            
+            DistrictRepo.UpdateNextProcessingTime(district);
+
             district.Touch();
 
             await db.SaveChangesAsync();
-            
+
             //return RedirectToDistrict(district.DistrictId);
             return RedirectToAction("DistrictList", new { district.DistrictId });
         }
 
-	    [HttpPost]
-	    public async Task<IActionResult> UploadFiles(List<IFormFile> files, int districtId)
-	    {
-		    var path = Path.Combine(_hostingEnvironment.ContentRootPath, "CSVFiles", districtId.ToString());
-		    Directory.CreateDirectory(path);
+        [HttpPost]
+        public async Task<IActionResult> UploadFiles(List<IFormFile> files, int districtId)
+        {
+            var path = Path.Combine(_hostingEnvironment.ContentRootPath, "CSVFiles", districtId.ToString());
+            Directory.CreateDirectory(path);
 
-			foreach (var formFile in files)
-		    {
-			    if (formFile.Length <= 0) continue;
-			    using (var stream = new FileStream(Path.Combine(path, formFile.FileName), FileMode.Create))
-			    {
-				    await formFile.CopyToAsync(stream);
-			    }
-		    }
+            foreach (var formFile in files)
+            {
+                if (formFile.Length <= 0) continue;
+                using (var stream = new FileStream(Path.Combine(path, formFile.FileName), FileMode.Create))
+                {
+                    await formFile.CopyToAsync(stream);
+                }
+            }
 
-			return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
-		}
-	}
+            return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
+        }
+    }
 }

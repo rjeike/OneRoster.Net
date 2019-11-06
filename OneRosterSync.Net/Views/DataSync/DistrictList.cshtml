@@ -5,6 +5,21 @@
 }
 
 <h2>School Districts <small>CSV Synchronization Automation</small></h2>
+
+@if (ViewBag.SuccessFlag != null)
+{
+    <p>
+        if (ViewBag.SuccessFlag)
+        {
+        <div class="alert alert-success">@ViewBag.Message</div>
+        }
+        else
+        {
+        <div class="alert alert-danger">@ViewBag.Message</div>
+        }
+    </p>
+}
+
 <p>
     <a asp-action="DistrictCreate">Create New District</a>
     <a asp-action="LoadFiles" style="padding-left: 20px">Load files</a>
@@ -34,28 +49,28 @@
     <tbody>
         @foreach (var item in Model)
         {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TimeOfDay)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProcessingStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Modified)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumRecords)
-            </td>
-            <td>
-                @*<a asp-action="DistrictDashboard" asp-route-districtId="@item.DistrictId">Dashboard</a>*@
-                <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@item.DistrictId">Sync Details</a>
-                <a asp-action="DistrictEdit" asp-route-id="@item.DistrictId">Edit</a>
-            </td>
-        </tr>
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TimeOfDay)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ProcessingStatus)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Modified)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumRecords)
+                </td>
+                <td>
+                    @*<a asp-action="DistrictDashboard" asp-route-districtId="@item.DistrictId">Dashboard</a>*@
+                    <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@item.DistrictId">Sync Details</a>
+                    <a asp-action="DistrictEdit" asp-route-id="@item.DistrictId">Edit</a>
+                </td>
+            </tr>
         }
     </tbody>
 </table>
