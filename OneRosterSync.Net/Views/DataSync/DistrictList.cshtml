@@ -6,18 +6,19 @@
 
 <h2>School Districts <small>CSV Synchronization Automation</small></h2>
 
-@if (ViewBag.SuccessFlag != null)
+@if (TempData["SuccessFlag"] != null)
 {
-    <p>
-        if (ViewBag.SuccessFlag)
-        {
-        <div class="alert alert-success">@ViewBag.Message</div>
-        }
-        else
-        {
-        <div class="alert alert-danger">@ViewBag.Message</div>
-        }
-    </p>
+
+    if (Convert.ToBoolean(TempData["SuccessFlag"]))
+    {
+        <p><div class="alert alert-success">@TempData["Message"]</div></p>
+    }
+    else
+    {
+        <p>
+            <div class="alert alert-danger">@TempData["Message"]</div>
+        </p>
+    }
 }
 
 <p>
