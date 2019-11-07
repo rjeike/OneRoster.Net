@@ -15,7 +15,7 @@
             disabledSelectOrgs = string.Empty;
             disabledAnalyze = string.Empty;
         }
-        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone)
+        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() > 0)
         {
             disabledApply = string.Empty;
         }

@@ -38,7 +38,7 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public async Task ApplyLines<T>() where T : CsvBaseObject
         {
-            for (int last = 0; ; )
+            for (int last = 0; ;)
             {
                 using (var scope = Services.CreateScope())
                 using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
@@ -47,7 +47,7 @@ namespace OneRosterSync.Net.Processing
 
                     // filter on all lines that are included and ready to be applied or apply was failed
                     var lines = repo.Lines<T>().Where(
-	                    l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
+                        l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
@@ -97,16 +97,16 @@ namespace OneRosterSync.Net.Processing
             }
 
             ApiPostBase data;
-	        var apiManager = new ApiManager(repo.District.LmsApiBaseUrl)
-	        {
-		        ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(repo.District.LmsApiAuthenticatorType,
-			        repo.District.LmsApiAuthenticationJsonData)
-	        };
+            var apiManager = new ApiManager(repo.District.LmsApiBaseUrl)
+            {
+                ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(repo.District.LmsApiAuthenticatorType,
+                    repo.District.LmsApiAuthenticationJsonData)
+            };
 
-	        if (line.Table == nameof(CsvEnrollment))
+            if (line.Table == nameof(CsvEnrollment))
             {
                 var enrollment = new ApiEnrollmentPost(line.RawData);
-               
+
                 CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(line.RawData);
                 DataSyncLine cls = repo.Lines<CsvClass>().SingleOrDefault(l => l.SourcedId == csvEnrollment.classSourcedId);
                 DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
@@ -123,6 +123,23 @@ namespace OneRosterSync.Net.Processing
                     nces_schoolid = orgCsv?.identifier
                 };
 
+                if (!(org?.IncludeInSync ?? false))
+                {
+                    // Is NCES school ID given?
+                    line.SyncStatus = SyncStatus.ApplyFailed;
+                    if (string.IsNullOrEmpty(map.nces_schoolid))
+                    {
+                        line.Error = "NCES school ID not found";
+                    }
+                    else
+                    {
+                        line.Error = $"CsvOrg line ID {org.DataSyncLineId} is not marked to sync with LMS.";
+                    }
+                    line.Touch();
+                    repo.PushLineHistory(line, isNewData: false);
+                    return;
+                }
+
                 // set nces school id in enrollment object
                 csvEnrollment.nces_schoolid = orgCsv?.identifier;
                 enrollment.Data.nces_schoolid = orgCsv?.identifier;
@@ -136,46 +153,46 @@ namespace OneRosterSync.Net.Processing
                 enrollment.nces_schoolid = orgCsv?.identifier;
 
                 // cache map in the database (for display/troubleshooting only)
-                line.EnrollmentMap = JsonConvert.SerializeObject(map); 
+                line.EnrollmentMap = JsonConvert.SerializeObject(map);
 
                 data = enrollment;
             }
-			else if (line.Table == nameof(CsvClass))
+            else if (line.Table == nameof(CsvClass))
             {
-	            var classCsv = JsonConvert.DeserializeObject<CsvClass>(line.RawData);
-				
-	            // Get course & school of this class
-				var course = repo.Lines<CsvCourse>().SingleOrDefault(l => l.SourcedId == classCsv.courseSourcedId);
-	            var courseCsv = JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
+                var classCsv = JsonConvert.DeserializeObject<CsvClass>(line.RawData);
 
-				// Get Term of this class
-				// TODO: Handle multiple terms, termSourceIds can be a comma separated list of terms.
-	            var term = repo.Lines<CsvAcademicSession>().SingleOrDefault(s => s.SourcedId == classCsv.termSourcedIds);
+                // Get course & school of this class
+                var course = repo.Lines<CsvCourse>().SingleOrDefault(l => l.SourcedId == classCsv.courseSourcedId);
+                var courseCsv = JsonConvert.DeserializeObject<CsvCourse>(course.RawData);
 
-				var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == classCsv.schoolSourcedId);
+                // Get Term of this class
+                // TODO: Handle multiple terms, termSourceIds can be a comma separated list of terms.
+                var term = repo.Lines<CsvAcademicSession>().SingleOrDefault(s => s.SourcedId == classCsv.termSourcedIds);
+
+                var org = repo.Lines<CsvOrg>().SingleOrDefault(o => o.SourcedId == classCsv.schoolSourcedId);
 
                 var _class = new ApiClassPost(line.RawData)
-	            {
-		            CourseTargetId = course.TargetId,
-		            SchoolTargetId = org.TargetId,
-		            TermTargetId = string.IsNullOrWhiteSpace(term.TargetId) ? "2019" : term.TargetId, //TODO: Add a default term setting in District Entity
+                {
+                    CourseTargetId = course.TargetId,
+                    SchoolTargetId = org.TargetId,
+                    TermTargetId = string.IsNullOrWhiteSpace(term.TargetId) ? "2019" : term.TargetId, //TODO: Add a default term setting in District Entity
                     Period = classCsv.periods
-	            };
+                };
 
-	            data = _class;
+                data = _class;
             }
             else
             {
                 data = new ApiPost<T>(line.RawData);
             }
-            
+
             data.DistrictId = repo.District.DistrictId.ToString(); //repo.District.TargetId;
             data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
-			
+
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
 
             if (response.Success)
@@ -190,35 +207,34 @@ namespace OneRosterSync.Net.Processing
                 line.SyncStatus = SyncStatus.ApplyFailed;
                 line.Error = response.ErrorMessage;
 
-	            // The Lms can send false success if the entity already exist. In such a case we read the targetId
-				if (!string.IsNullOrEmpty(response.TargetId))
-		            line.TargetId = response.TargetId;
-			}
+                // The Lms can send false success if the entity already exist. In such a case we read the targetId
+                if (!string.IsNullOrEmpty(response.TargetId))
+                    line.TargetId = response.TargetId;
+            }
 
             line.Touch();
-
             repo.PushLineHistory(line, isNewData: false);
         }
 
-	    private string GetEntityEndpoint(string entityType, DistrictRepo repo)
-	    {
-			switch (entityType)
-			{
-				case "org":
-					return repo.District.LmsOrgEndPoint;
-				case "course":
-					return repo.District.LmsCourseEndPoint;
-				case "class":
-					return repo.District.LmsClassEndPoint;
-				case "user":
-					return repo.District.LmsUserEndPoint;
-				case "enrollment":
-					return repo.District.LmsEnrollmentEndPoint;
-				case "academicsession":
-					return repo.District.LmsAcademicSessionEndPoint;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(entityType), entityType, "An unknown entity was provided for which there is not endpoint.");
-			}
-		}
-	}
+        private string GetEntityEndpoint(string entityType, DistrictRepo repo)
+        {
+            switch (entityType)
+            {
+                case "org":
+                    return repo.District.LmsOrgEndPoint;
+                case "course":
+                    return repo.District.LmsCourseEndPoint;
+                case "class":
+                    return repo.District.LmsClassEndPoint;
+                case "user":
+                    return repo.District.LmsUserEndPoint;
+                case "enrollment":
+                    return repo.District.LmsEnrollmentEndPoint;
+                case "academicsession":
+                    return repo.District.LmsAcademicSessionEndPoint;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(entityType), entityType, "An unknown entity was provided for which there is not endpoint.");
+            }
+        }
+    }
 }

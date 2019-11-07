@@ -66,8 +66,12 @@ namespace OneRosterSync.Net.Controllers
             {
                 // TODO. Sandesh
                 string Host = "sftp.summitk12.com", Username = "HisdSk12OR11", Password = "0moTYQEtEevtokg5qUvA";
-                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", LocalFolder = "CSVFiles/1";
+                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1";
 
+                if (!Directory.Exists(BaseFolder))
+                {
+                    CreateCSVDirectory(BaseFolder, false);
+                }
                 var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
                 using (var sftp = new SftpClient(connectionInfo))
                 {
@@ -76,17 +80,18 @@ namespace OneRosterSync.Net.Controllers
                     sftp.DownloadFile($"{Folder}/{FileName}", outputSteam);
                     sftp.Disconnect();
 
-                    CreateCSVDirectory(LocalFolder, Directory.Exists(LocalFolder.Split("/")[0]));
-                    using (var fileStream = new FileStream($@"{LocalFolder}\csv_files.zip", FileMode.Create))
+                    CreateCSVDirectory($@"{BaseFolder}\{SubFolder}", Directory.Exists($@"{BaseFolder}\{SubFolder}"));
+                    using (var fileStream = new FileStream($@"{BaseFolder}\{SubFolder}\csv_files.zip", FileMode.Create))
                     {
                         outputSteam.Seek(0, SeekOrigin.Begin);
                         outputSteam.CopyTo(fileStream);
                     }
 
-                    ZipFile.ExtractToDirectory($@"{LocalFolder}\csv_files.zip", $@"{LocalFolder}");
+                    ZipFile.ExtractToDirectory($@"{BaseFolder}\{SubFolder}\csv_files.zip", $@"{BaseFolder}\{SubFolder}");
                 }
+
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = "Files loaded successfully at path \"" + LocalFolder + "\"";
+                TempData["Message"] = $"Files loaded successfully at path '{BaseFolder}\\{ SubFolder}'";
             }
             catch (Exception ex)
             {
@@ -102,13 +107,12 @@ namespace OneRosterSync.Net.Controllers
         {
             if (Exists)
             {
-                Directory.Delete(FolderName.Split("/")[0], true);
+                Directory.Delete(FolderName, true);
                 CreateCSVDirectory(FolderName, false);
             }
             else
             {
                 Directory.CreateDirectory(FolderName);
-                //FolderName.Split("/").ToList().ForEach(folder => Directory.CreateDirectory(folder));
             }
         }
 
