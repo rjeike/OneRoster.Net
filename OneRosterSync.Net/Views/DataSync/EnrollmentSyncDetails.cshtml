@@ -6,7 +6,7 @@
     if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
         ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
     {
-        if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None ||  && Model.Count() < 1)
+        if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None || (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() < 1))
         {
             disabledLoad = string.Empty;
         }
