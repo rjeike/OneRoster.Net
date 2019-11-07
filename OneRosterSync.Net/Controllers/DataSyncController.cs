@@ -68,9 +68,9 @@ namespace OneRosterSync.Net.Controllers
                 string Host = "sftp.summitk12.com", Username = "sftpd30", /*"HisdSk12OR11",*/ Password = "kRg92eceJGNd"; // "0moTYQEtEevtokg5qUvA";
                 string Folder = "/files", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1";
 
-                if (!Directory.Exists(BaseFolder))
+                if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
                 {
-                    CreateCSVDirectory(BaseFolder, false);
+                    CreateCSVDirectory(Path.GetFullPath(BaseFolder), false);
                 }
                 var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
                 using (var sftp = new SftpClient(connectionInfo))
@@ -80,18 +80,18 @@ namespace OneRosterSync.Net.Controllers
                     sftp.DownloadFile($"{Folder}/{FileName}", outputSteam);
                     sftp.Disconnect();
 
-                    CreateCSVDirectory($@"{BaseFolder}\{SubFolder}", Directory.Exists($@"{BaseFolder}\{SubFolder}"));
-                    using (var fileStream = new FileStream($@"{BaseFolder}\{SubFolder}\csv_files.zip", FileMode.Create))
+                    CreateCSVDirectory(Path.GetFullPath($@"{BaseFolder}\{SubFolder}"), Directory.Exists(Path.GetFullPath($@"{BaseFolder}\{SubFolder}")));
+                    using (var fileStream = new FileStream(Path.GetFullPath($@"{BaseFolder}\{SubFolder}\csv_files.zip"), FileMode.Create))
                     {
                         outputSteam.Seek(0, SeekOrigin.Begin);
                         outputSteam.CopyTo(fileStream);
                     }
 
-                    ZipFile.ExtractToDirectory($@"{BaseFolder}\{SubFolder}\csv_files.zip", $@"{BaseFolder}\{SubFolder}");
+                    ZipFile.ExtractToDirectory(Path.GetFullPath($@"{BaseFolder}\{SubFolder}\csv_files.zip"), Path.GetFullPath($@"{BaseFolder}\{SubFolder}"));
                 }
 
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = $"Files loaded successfully at path '{BaseFolder}\\{ SubFolder}'";
+                TempData["Message"] = $"Files loaded successfully at path '{Path.GetFullPath(BaseFolder)}\\{ SubFolder}'";
             }
             catch (Exception ex)
             {
