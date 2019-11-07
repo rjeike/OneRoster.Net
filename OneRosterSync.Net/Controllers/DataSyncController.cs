@@ -65,8 +65,8 @@ namespace OneRosterSync.Net.Controllers
             try
             {
                 // TODO. Sandesh
-                string Host = "sftp.summitk12.com", Username = "HisdSk12OR11", Password = "0moTYQEtEevtokg5qUvA";
-                string Folder = "/workspace", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1";
+                string Host = "sftp.summitk12.com", Username = "sftpd30", /*"HisdSk12OR11",*/ Password = "kRg92eceJGNd"; // "0moTYQEtEevtokg5qUvA";
+                string Folder = "/files", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1";
 
                 if (!Directory.Exists(BaseFolder))
                 {
