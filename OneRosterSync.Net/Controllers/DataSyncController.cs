@@ -67,7 +67,7 @@ namespace OneRosterSync.Net.Controllers
             {
                 // TODO. Sandesh
                 string Host = "sftp.summitk12.com", Username = "sftpd30", /*"HisdSk12OR11",*/ Password = "kRg92eceJGNd"; // "0moTYQEtEevtokg5qUvA";
-                string Folder = "/files", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1";
+                string Folder = "/files", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1", FullPath = Path.Combine(BaseFolder, SubFolder);
 
                 if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
                 {
@@ -81,18 +81,18 @@ namespace OneRosterSync.Net.Controllers
                     sftp.DownloadFile($"{Folder}/{FileName}", outputSteam);
                     sftp.Disconnect();
 
-                    CreateCSVDirectory(Path.GetFullPath($@"{BaseFolder}\{SubFolder}"), Directory.Exists(Path.GetFullPath($@"{BaseFolder}\{SubFolder}")));
-                    using (var fileStream = new FileStream(Path.GetFullPath($@"{BaseFolder}\{SubFolder}\csv_files.zip"), FileMode.Create))
+                    CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")));
+                    using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), FileMode.Create))
                     {
                         outputSteam.Seek(0, SeekOrigin.Begin);
                         outputSteam.CopyTo(fileStream);
                     }
 
-                    ZipFile.ExtractToDirectory(Path.GetFullPath($@"{BaseFolder}\{SubFolder}\csv_files.zip"), Path.GetFullPath($@"{BaseFolder}\{SubFolder}"));
+                    ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
                 }
 
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = $"System.AppDomain.CurrentDomain.BaseDirectory: {System.AppDomain.CurrentDomain.BaseDirectory}, Assembly.GetEntryAssembly().Location: {Assembly.GetEntryAssembly().Location}... Files loaded successfully at path '{Path.GetFullPath(BaseFolder)}\\{ SubFolder}'";
+                TempData["Message"] = $"System.AppDomain.CurrentDomain.BaseDirectory: {System.AppDomain.CurrentDomain.BaseDirectory}, Assembly.GetEntryAssembly().Location: {Assembly.GetEntryAssembly().Location}... Files loaded successfully at path '{Path.GetFullPath($@"{FullPath}")}'";
             }
             catch (Exception ex)
             {
