@@ -17,6 +17,7 @@ using OneRosterSync.Net.Extensions;
 using ReflectionIT.Mvc.Paging;
 using Renci.SshNet;
 using System.IO.Compression;
+using System.Reflection;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -91,7 +92,7 @@ namespace OneRosterSync.Net.Controllers
                 }
 
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = $"Files loaded successfully at path '{Path.GetFullPath(BaseFolder)}\\{ SubFolder}'";
+                TempData["Message"] = $"System.AppDomain.CurrentDomain.BaseDirectory: {System.AppDomain.CurrentDomain.BaseDirectory}, Assembly.GetEntryAssembly().Location: {Assembly.GetEntryAssembly().Location}... Files loaded successfully at path '{Path.GetFullPath(BaseFolder)}\\{ SubFolder}'";
             }
             catch (Exception ex)
             {
