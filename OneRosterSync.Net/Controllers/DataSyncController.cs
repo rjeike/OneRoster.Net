@@ -537,6 +537,14 @@ namespace OneRosterSync.Net.Controllers
             var district = await db.Districts.FirstOrDefaultAsync(w => w.DistrictId == districtId);
             ViewBag.CurrentDistrict = district;
 
+            var ApplyError = await db.DataSyncHistories
+                    .Where(w => w.DistrictId == districtId)
+                    .OrderByDescending(o => o.DataSyncHistoryId)
+                    .Select(s => s.ApplyError)
+                    .FirstOrDefaultAsync();
+
+            ViewBag.SyncApplyError = ApplyError;
+
             return View(EnrollmentLines);
         }
 

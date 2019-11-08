@@ -124,15 +124,26 @@
 </div>
 
 <div class="row">
-    <dl class="dl-horizontal">
-        <dt>
-            Processing Status
-        </dt>
-        <dd>
-            @ViewBag.CurrentDistrict.ProcessingStatus
-        </dd>
-    </dl>
+    <div class="col-md-2">
+        Processing Status
+    </div>
+    <div class="col-md-10">
+        @ViewBag.CurrentDistrict.ProcessingStatus
+
+    </div>
 </div>
+
+@if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
+{
+    <div class="row">
+        <div class="col-md-2">
+            Last Apply Error
+        </div>
+        <div class="col-md-10">
+            @ViewBag.SyncApplyError
+        </div>
+    </div>
+}
 
 <div class="row">
     <table class="table table-condensed table-hover">
@@ -176,11 +187,11 @@
                     <td>
                         @*@if (item.IncludeInSync)
                             {
-                                <i class="fas fa-check" title="Sync Enabled"></i>
+                            <i class="fas fa-check" title="Sync Enabled"></i>
                             }
                             else
                             {
-                                <i class="fas fa-times" title="Sync Disabled"></i>
+                            <i class="fas fa-times" title="Sync Disabled"></i>
                             }
                             @Html.CheckBoxFor(modelItem => item.IncludeInSync)*@
                         <input type="checkbox" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
@@ -214,7 +225,7 @@
                         }
                     </td>
                     @*<td>
-                            @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" })
+                        @Html.ActionLink("Edit", "DataSyncLineEdit", new { id = item.DataSyncLineId }, new { target = "_blank" })
                         </td*@>
                 </tr>
             }
@@ -239,21 +250,23 @@
 
 <script type="text/javascript">
     function toggleIncludeInSync(control, lineId) {
-        let url = '@Url.Action("ToggleIncludeInSyncFlag","DataSync")';
-        let flag = $(control).prop('checked');
+        /**/
+        let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
+    /**/
+    let flag = $(control).prop('checked');
 
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            data: { flag: flag, LineId: lineId },
-            async: false,
-            type: 'POST',
-            success: function (response) {
-                if (!response) {
-                    alert('Something went wrong while toggling the flag. Please contact administrator.');
-                }
+    $.ajax({
+        url: url,
+        dataType: 'json',
+        data: { flag: flag, LineId: lineId },
+        async: false,
+        type: 'POST',
+        success: function (response) {
+            if (!response) {
+                alert('Something went wrong while toggling the flag. Please contact administrator.');
             }
-        });
+        }
+    });
 
-    }
+}
 </script>
