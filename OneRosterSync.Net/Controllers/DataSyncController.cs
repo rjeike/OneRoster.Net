@@ -101,11 +101,12 @@ namespace OneRosterSync.Net.Controllers
                             }
 
                             ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                            Message += $"FTP fetch successfull for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                         }
                     }
                     catch (Exception ex)
                     {
-                        Message += $"Sync failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                        Message += $"FTP fetch failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                         Logger.Here().LogError(ex, ex.Message);
                     }
                 }
