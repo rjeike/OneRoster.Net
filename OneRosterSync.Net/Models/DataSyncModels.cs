@@ -189,7 +189,14 @@ namespace OneRosterSync.Net.Models
 	    [DisplayName("Sync Enrollments")]
 		public bool SyncEnrollment { get; set; }
 
-	    public District ShallowCopy()
+        [DisplayName("FTP Username")]
+        public string FTPUsername { get; set; }
+        [DisplayName("FTP Password")]
+        public string FTPPassword { get; set; }
+        [DisplayName("FTP Path")]
+        public string FTPPath { get; set; }
+
+        public District ShallowCopy()
 	    {
 		    return (District)MemberwiseClone();
 	    }

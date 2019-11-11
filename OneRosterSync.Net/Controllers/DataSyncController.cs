@@ -65,34 +65,54 @@ namespace OneRosterSync.Net.Controllers
         {
             try
             {
-                // TODO. Sandesh
-                string Host = "sftp.summitk12.com", Username = "sftpd30", /*"HisdSk12OR11",*/ Password = "kRg92eceJGNd"; // "0moTYQEtEevtokg5qUvA";
-                string Folder = "/files", FileName = "HISD_Summitk12.zip", BaseFolder = "CSVFiles", SubFolder = "1", FullPath = Path.Combine(BaseFolder, SubFolder);
-
+                string Host = "sftp.summitk12.com", BaseFolder = "CSVFiles", Message = string.Empty;
                 if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
                 {
                     CreateCSVDirectory(Path.GetFullPath(BaseFolder), false);
                 }
-                var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
-                using (var sftp = new SftpClient(connectionInfo))
+
+                var districts = db.Districts.ToList();
+                foreach (var district in districts)
                 {
-                    sftp.Connect();
-                    MemoryStream outputSteam = new MemoryStream();
-                    sftp.DownloadFile($"{Folder}/{FileName}", outputSteam);
-                    sftp.Disconnect();
-
-                    CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")));
-                    using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), FileMode.Create))
+                    if(string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
                     {
-                        outputSteam.Seek(0, SeekOrigin.Begin);
-                        outputSteam.CopyTo(fileStream);
+                        Message += $"FTP information is missing for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                        continue;
                     }
+                    try
+                    {
+                        string Username = district.FTPUsername, Password = district.FTPPassword,
+                         FTPFilePath = district.FTPPath, SubFolder = district.DistrictId.ToString(),
+                         FullPath = Path.Combine(BaseFolder, SubFolder);
 
-                    ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                        var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
+                        using (var sftp = new SftpClient(connectionInfo))
+                        {
+                            sftp.Connect();
+                            MemoryStream outputSteam = new MemoryStream();
+                            sftp.DownloadFile($"{FTPFilePath}", outputSteam);
+                            sftp.Disconnect();
+
+                            CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")));
+                            using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), FileMode.Create))
+                            {
+                                outputSteam.Seek(0, SeekOrigin.Begin);
+                                outputSteam.CopyTo(fileStream);
+                            }
+
+                            ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Message += $"Sync failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                        Logger.Here().LogError(ex, ex.Message);
+                    }
                 }
 
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = $"System.AppDomain.CurrentDomain.BaseDirectory: {System.AppDomain.CurrentDomain.BaseDirectory}, Assembly.GetEntryAssembly().Location: {Assembly.GetEntryAssembly().Location}... Files loaded successfully at path '{Path.GetFullPath($@"{FullPath}")}'";
+                TempData["Message"] = string.IsNullOrEmpty(Message) ? $"Files loaded successfully." : Message;
+
             }
             catch (Exception ex)
             {
@@ -789,6 +809,10 @@ namespace OneRosterSync.Net.Controllers
             district.SyncCourses = postedDistrict.SyncCourses;
             district.SyncOrgs = postedDistrict.SyncOrgs;
             district.SyncUsers = postedDistrict.SyncUsers;
+
+            district.FTPUsername = postedDistrict.FTPUsername;
+            district.FTPPassword = postedDistrict.FTPPassword;
+            district.FTPPath = postedDistrict.FTPPath;
 
             DistrictRepo.UpdateNextProcessingTime(district);
 

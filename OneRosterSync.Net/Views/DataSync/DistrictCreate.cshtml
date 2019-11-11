@@ -10,123 +10,143 @@
 <hr />
 <div class="row">
 	<div class="col-md-4">
-		<form asp-action="DistrictCreate">
-			<div class="form-group">
-				<label asp-for="Name" class="control-label"></label>
-				<input asp-for="Name" class="form-control" />
-				<span asp-validation-for="Name" class="text-danger"></span>
-			</div>
+        <form asp-action="DistrictCreate">
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="BasePath" class="control-label"></label>
-				<input asp-for="BasePath" class="form-control" />
-				<span asp-validation-for="BasePath" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="BasePath" class="control-label"></label>
+                <input asp-for="BasePath" class="form-control" />
+                <span asp-validation-for="BasePath" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsApiBaseUrl" class="control-label"></label>
-				<input asp-for="LmsApiBaseUrl" class="form-control" />
-				<span asp-validation-for="LmsApiBaseUrl" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsApiBaseUrl" class="control-label"></label>
+                <input asp-for="LmsApiBaseUrl" class="form-control" />
+                <span asp-validation-for="LmsApiBaseUrl" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsOrgEndPoint" class="control-label"></label>
-				<input asp-for="LmsOrgEndPoint" class="form-control" />
-				<span asp-validation-for="LmsOrgEndPoint" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsOrgEndPoint" class="control-label"></label>
+                <input asp-for="LmsOrgEndPoint" class="form-control" />
+                <span asp-validation-for="LmsOrgEndPoint" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsCourseEndPoint" class="control-label"></label>
-				<input asp-for="LmsCourseEndPoint" class="form-control" />
-				<span asp-validation-for="LmsCourseEndPoint" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsCourseEndPoint" class="control-label"></label>
+                <input asp-for="LmsCourseEndPoint" class="form-control" />
+                <span asp-validation-for="LmsCourseEndPoint" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsClassEndPoint" class="control-label"></label>
-				<input asp-for="LmsClassEndPoint" class="form-control" />
-				<span asp-validation-for="LmsClassEndPoint" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsClassEndPoint" class="control-label"></label>
+                <input asp-for="LmsClassEndPoint" class="form-control" />
+                <span asp-validation-for="LmsClassEndPoint" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsUserEndPoint" class="control-label"></label>
-				<input asp-for="LmsUserEndPoint" class="form-control" />
-				<span asp-validation-for="LmsUserEndPoint" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsUserEndPoint" class="control-label"></label>
+                <input asp-for="LmsUserEndPoint" class="form-control" />
+                <span asp-validation-for="LmsUserEndPoint" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsEnrollmentEndPoint" class="control-label"></label>
-				<input asp-for="LmsEnrollmentEndPoint" class="form-control" />
-				<span asp-validation-for="LmsEnrollmentEndPoint" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <label asp-for="LmsEnrollmentEndPoint" class="control-label"></label>
+                <input asp-for="LmsEnrollmentEndPoint" class="form-control" />
+                <span asp-validation-for="LmsEnrollmentEndPoint" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<label asp-for="LmsAcademicSessionEndPoint" class="control-label"></label>
-				<input asp-for="LmsAcademicSessionEndPoint" class="form-control" />
-				<span asp-validation-for="LmsAcademicSessionEndPoint" class="text-danger"></span>
-			</div>
-			
-			<div class="alert alert-info" role="alert">You can choose flags below to not include an entity in sync if needed. 
-				Please note these are not hierarchical and are different from IncludeInSync Flag per CSV record.   </div>
+            <div class="form-group">
+                <label asp-for="LmsAcademicSessionEndPoint" class="control-label"></label>
+                <input asp-for="LmsAcademicSessionEndPoint" class="form-control" />
+                <span asp-validation-for="LmsAcademicSessionEndPoint" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="FTPUsername" class="control-label"></label>
+                <input asp-for="FTPUsername" class="form-control" />
+                <span asp-validation-for="FTPUsername" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="FTPPassword" class="control-label"></label>
+                <input asp-for="FTPPassword" class="form-control" />
+                <span asp-validation-for="FTPPassword" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="FTPPath" class="control-label"></label>
+                <input asp-for="FTPPath" class="form-control" placeholder="/myfolder/myfile.zip" />
+                <span asp-validation-for="FTPPath" class="text-danger"></span>
+            </div>
+
+            <div class="alert alert-info" role="alert">
+                You can choose flags below to not include an entity in sync if needed.
+                Please note these are not hierarchical and are different from IncludeInSync Flag per CSV record.
+            </div>
 
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncUsers" /> @Html.DisplayNameFor(model => model.SyncUsers)
-					</label>
-				</div>
-				<span asp-validation-for="SyncUsers" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncUsers" /> @Html.DisplayNameFor(model => model.SyncUsers)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncUsers" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncAcademicSessions" /> @Html.DisplayNameFor(model => model.SyncAcademicSessions)
-					</label>
-				</div>
-				<span asp-validation-for="SyncAcademicSessions" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncAcademicSessions" /> @Html.DisplayNameFor(model => model.SyncAcademicSessions)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncAcademicSessions" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncClasses" /> @Html.DisplayNameFor(model => model.SyncClasses)
-					</label>
-				</div>
-				<span asp-validation-for="SyncClasses" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncClasses" /> @Html.DisplayNameFor(model => model.SyncClasses)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncClasses" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncCourses" /> @Html.DisplayNameFor(model => model.SyncCourses)
-					</label>
-				</div>
-				<span asp-validation-for="SyncCourses" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncCourses" /> @Html.DisplayNameFor(model => model.SyncCourses)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncCourses" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncEnrollment" /> @Html.DisplayNameFor(model => model.SyncEnrollment)
-					</label>
-				</div>
-				<span asp-validation-for="SyncEnrollment" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncEnrollment" /> @Html.DisplayNameFor(model => model.SyncEnrollment)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncEnrollment" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<div class="checkbox">
-					<label>
-						<input asp-for="SyncOrgs" /> @Html.DisplayNameFor(model => model.SyncOrgs)
-					</label>
-				</div>
-				<span asp-validation-for="SyncOrgs" class="text-danger"></span>
-			</div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="SyncOrgs" /> @Html.DisplayNameFor(model => model.SyncOrgs)
+                    </label>
+                </div>
+                <span asp-validation-for="SyncOrgs" class="text-danger"></span>
+            </div>
 
-			<div class="form-group">
-				<input type="submit" value="Create" class="btn btn-default" />
-			</div>
-		</form>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </form>
 	</div>
 </div>
 
