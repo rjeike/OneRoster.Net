@@ -119,7 +119,7 @@ namespace OneRosterSync.Net.Processing
                     //Sandesh
                     //classTargetId = cls?.TargetId,
                     //userTargetId = usr?.TargetId,
-                    user_id = usr?.SourcedId,
+                    user_id = usr?.TargetId,
                     nces_schoolid = orgCsv?.identifier
                 };
 
