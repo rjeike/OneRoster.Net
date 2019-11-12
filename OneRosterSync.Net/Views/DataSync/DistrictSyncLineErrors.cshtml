@@ -1,0 +1,73 @@
+﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLineViewModel>
+@{
+    ViewData["Title"] = "DistrictSyncLineErrors";
+}
+
+<h2>District Sync Line Errors</h2>
+
+
+<div class="row">
+    <table class="table table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.DataSyncLineId)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Table)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SourcedId)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Version)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.LoadStatus)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SyncStatus)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.IncludeInSync)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Error)
+                </th>
+                @*<th></th>*@
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.DataSyncLineId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Table)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SourcedId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Version)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.LoadStatus)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SyncStatus)
+                    </td>
+                    <td>
+                        @(item.IncludeInSync ? "Yes" : "No")
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Error)
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

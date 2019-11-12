@@ -61,6 +61,34 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> DistrictSyncLineErrors(int districtId)
+        {
+            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
+            {
+                DistrictId = d.DistrictId,
+                Created = d.Created,
+                Data = d.Data,
+                DataSyncLineId = d.DataSyncLineId,
+                EnrollmentMap = d.EnrollmentMap,
+                Error = d.Error,
+                IncludeInSync = d.IncludeInSync,
+                LastSeen = d.LastSeen,
+                LoadStatus = d.LoadStatus,
+                Modified = d.Modified,
+                RawData = d.RawData,
+                SourcedId = d.SourcedId,
+                SyncStatus = d.SyncStatus,
+                Table = d.Table,
+                TargetId = d.TargetId,
+                Version = d.Version
+            })
+            .OrderBy(d => d.Version)
+            .ToListAsync();
+
+            return View(model);
+        }
+
+        [HttpGet]
         public IActionResult LoadFiles()
         {
             try
@@ -74,7 +102,7 @@ namespace OneRosterSync.Net.Controllers
                 var districts = db.Districts.ToList();
                 foreach (var district in districts)
                 {
-                    if(string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
+                    if (string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
                     {
                         Message += $"FTP information is missing for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                         continue;
