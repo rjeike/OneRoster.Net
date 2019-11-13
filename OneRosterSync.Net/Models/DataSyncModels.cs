@@ -190,10 +190,13 @@ namespace OneRosterSync.Net.Models
 		public bool SyncEnrollment { get; set; }
 
         [DisplayName("FTP Username")]
+        [Required]
         public string FTPUsername { get; set; }
         [DisplayName("FTP Password")]
+        [Required]
         public string FTPPassword { get; set; }
         [DisplayName("FTP Path")]
+        [Required]
         public string FTPPath { get; set; }
 
         public District ShallowCopy()
