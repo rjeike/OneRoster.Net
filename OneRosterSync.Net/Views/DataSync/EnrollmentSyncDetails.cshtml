@@ -212,7 +212,7 @@
                         @Html.DisplayFor(modelItem => item.SyncStatus)
                     </td>
                     <td>
-                        @if (item.SyncStatus == SyncStatus.ApplyFailed)
+                        @if (item.SyncStatus == SyncStatus.Applied || item.SyncStatus == SyncStatus.ApplyFailed)
                         {
                             if (!string.IsNullOrEmpty(item.Error))
                             {
