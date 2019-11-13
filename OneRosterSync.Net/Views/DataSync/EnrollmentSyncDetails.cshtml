@@ -133,6 +133,28 @@
     </div>
 </div>
 
+@if (!string.IsNullOrEmpty(ViewBag.SyncLoadError))
+{
+    <div class="row">
+        <div class="col-md-2">
+            Last Load Error
+        </div>
+        <div class="col-md-10">
+            @ViewBag.SyncLoadError
+        </div>
+    </div>
+}
+@if (!string.IsNullOrEmpty(ViewBag.SyncAnalyzeError))
+{
+    <div class="row">
+        <div class="col-md-2">
+            Last Analyze Error
+        </div>
+        <div class="col-md-10">
+            @ViewBag.SyncAnalyzeError
+        </div>
+    </div>
+}
 @if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
 {
     <div class="row">
@@ -141,6 +163,11 @@
         </div>
         <div class="col-md-10">
             @ViewBag.SyncApplyError
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <a asp-action="DistrictSyncLineErrors" asp-route-districtId="@ViewBag.districtId">View More</a>
         </div>
     </div>
 }
