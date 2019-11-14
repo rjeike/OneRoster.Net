@@ -544,6 +544,7 @@ namespace OneRosterSync.Net.Controllers
         {
             var repo = new DistrictRepo(db, districtId);
             ViewBag.districtId = districtId;
+            ViewBag.AppliedFlag = AppliedFlag;
 
             var EnrollmentsToSync = repo.Lines<CsvEnrollment>()
                 .Where(w => w.DistrictId == districtId

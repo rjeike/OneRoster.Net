@@ -212,16 +212,24 @@
                         @Html.DisplayFor(modelItem => item.Table)
                     </td>
                     <td>
-                        @*@if (item.IncludeInSync)
+                        @if (ViewBag.AppliedFlag != null)
+                        {
+                            @if (ViewBag.AppliedFlag)
                             {
-                            <i class="fas fa-check" title="Sync Enabled"></i>
+                                if (item.IncludeInSync)
+                                {
+                                    <i class="fas fa-check" title="Sync Enabled"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-close" title="Sync Disabled"></i>
+                                }
                             }
                             else
                             {
-                            <i class="fas fa-times" title="Sync Disabled"></i>
+                                <input type="checkbox" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
                             }
-                            @Html.CheckBoxFor(modelItem => item.IncludeInSync)*@
-                        <input type="checkbox" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                        }
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.Name)
