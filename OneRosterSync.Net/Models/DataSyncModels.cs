@@ -199,6 +199,10 @@ namespace OneRosterSync.Net.Models
         [Required]
         public string FTPPath { get; set; }
 
+        [DisplayName("Enable in Nightly Sync?")]
+        public bool NightlySyncEnabled { get; set; } = true;
+        public DateTime? LastSyncedOn { get; set; }
+
         public District ShallowCopy()
 	    {
 		    return (District)MemberwiseClone();

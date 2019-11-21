@@ -1,7 +1,7 @@
 ﻿@model OneRosterSync.Net.Models.District
 
 @{
-	ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create";
 }
 
 <h2>Create</h2>
@@ -9,7 +9,7 @@
 <h4>District</h4>
 <hr />
 <div class="row">
-	<div class="col-md-4">
+    <div class="col-md-4">
         <form asp-action="DistrictCreate">
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
@@ -83,6 +83,15 @@
                 <span asp-validation-for="FTPPath" class="text-danger"></span>
             </div>
 
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="NightlySyncEnabled" /> @Html.DisplayNameFor(model => model.NightlySyncEnabled)
+                    </label>
+                </div>
+                <span asp-validation-for="NightlySyncEnabled" class="text-danger"></span>
+            </div>
+
             <div class="alert alert-info" role="alert">
                 You can choose flags below to not include an entity in sync if needed.
                 Please note these are not hierarchical and are different from IncludeInSync Flag per CSV record.
@@ -147,14 +156,14 @@
                 <input type="submit" value="Create" class="btn btn-default" />
             </div>
         </form>
-	</div>
+    </div>
 </div>
 
 <div>
-	<a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Back to List</a>
 </div>
 
 
 @section Scripts {
-	@{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

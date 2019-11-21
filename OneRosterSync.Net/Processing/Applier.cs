@@ -181,6 +181,15 @@ namespace OneRosterSync.Net.Processing
 
                 data = _class;
             }
+            else if (line.Table == nameof(CsvUser))
+            {
+                var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+                if (string.IsNullOrEmpty(userCsv.password))
+                {
+                    userCsv.password = line.SourcedId;
+                }
+                data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
+            }
             else
             {
                 data = new ApiPost<T>(line.RawData);

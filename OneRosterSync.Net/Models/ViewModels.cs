@@ -14,6 +14,7 @@ namespace OneRosterSync.Net.Models
         public string ProcessingStatus { get; set; }
         public string Modified { get; set; }
         public int NumRecords { get; set; }
+        public bool NightlySyncEnabled { get; set; }
     }
 
     public class DataSyncLineReportLine

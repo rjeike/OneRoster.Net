@@ -11,139 +11,145 @@ using OneRosterSync.Net.Models;
 
 namespace OneRosterSync.Net.Processing
 {
-	public class Analyzer
-	{
-		private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Analyzer>();
-		private readonly DistrictRepo Repo;
+    public class Analyzer
+    {
+        private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Analyzer>();
+        private readonly DistrictRepo Repo;
 
-		public Analyzer(ILogger logger, DistrictRepo repo)
-		{
-			Repo = repo;
-		}
+        public Analyzer(ILogger logger, DistrictRepo repo)
+        {
+            Repo = repo;
+        }
 
-		/// <summary>
-		/// Identifies records that were missing from the feed and marks them as Deleted
-		/// </summary>
-		public async Task MarkDeleted(DateTime start)
-		{
-			foreach (var line in await Repo.Lines().Where(l => l.LastSeen < start).ToListAsync())
-			{
-				line.LoadStatus = LoadStatus.Deleted;
-				await Repo.Committer.InvokeIfChunk();
-			}
-			await Repo.Committer.InvokeIfAny();
-		}
+        /// <summary>
+        /// Identifies records that were missing from the feed and marks them as Deleted
+        /// </summary>
+        public async Task MarkDeleted(DateTime start)
+        {
+            foreach (var line in await Repo.Lines().Where(l => l.LastSeen < start).ToListAsync())
+            {
+                line.LoadStatus = LoadStatus.Deleted;
+                await Repo.Committer.InvokeIfChunk();
+            }
+            await Repo.Committer.InvokeIfAny();
+        }
 
-		/// <summary>
-		/// This is used to determine if any change needs to be pushed to the LMS and is included in sync.
-		/// Basically if a record has changed OR has never been Applied
-		/// which can happen if a record is loaded and later caused to be included in the Sync
-		/// </summary>
-		private static bool IsUnappliedChange(DataSyncLine line) =>
-			line.IncludeInSync &&
-			(line.LoadStatus != LoadStatus.NoChange ||
-			line.SyncStatus != SyncStatus.Applied);
+        /// <summary>
+        /// This is used to determine if any change needs to be pushed to the LMS and is included in sync.
+        /// Basically if a record has changed OR has never been Applied
+        /// which can happen if a record is loaded and later caused to be included in the Sync
+        /// </summary>
+        private static bool IsUnappliedChange(DataSyncLine line) =>
+            line.IncludeInSync &&
+            (line.LoadStatus != LoadStatus.NoChange ||
+            line.SyncStatus != SyncStatus.Applied);
 
-		private static bool IsUnappliedChangeWithoutIncludedInSync(DataSyncLine line) =>
-			(line.LoadStatus != LoadStatus.NoChange ||
-			 line.SyncStatus != SyncStatus.Applied);
+        private static bool IsUnappliedChangeWithoutIncludedInSync(DataSyncLine line) =>
+            (line.LoadStatus != LoadStatus.NoChange ||
+             line.SyncStatus != SyncStatus.Applied);
 
-		/// <summary>
-		/// Helper to mark a record to be included in the next push to LMS
-		/// </summary>
-		private void IncludeReadyTouch(DataSyncLine line)
-		{
-			line.IncludeInSync = true;
-			line.SyncStatus = SyncStatus.ReadyToApply;
-			line.Touch();
+        /// <summary>
+        /// Helper to mark a record to be included in the next push to LMS
+        /// </summary>
+        private void IncludeReadyTouch(DataSyncLine line)
+        {
+            line.IncludeInSync = true;
+            line.SyncStatus = SyncStatus.ReadyToApply;
+            line.Touch();
 
-			Repo.PushLineHistory(line, isNewData: false);
-		}
+            Repo.PushLineHistory(line, isNewData: false);
+        }
 
-		/// <summary>
-		/// Analyze the records to determine which should be included in the feed
-		/// based on dependencies.
-		/// </summary>
-		public async Task Analyze()
-		{
-			// load some small tables into memory for performance
-			var cache = new DataLineCache();
-			await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
+        /// <summary>
+        /// Analyze the records to determine which should be included in the feed
+        /// based on dependencies.
+        /// </summary>
+        public async Task Analyze()
+        {
+            // load some small tables into memory for performance
+            var cache = new DataLineCache();
+            await cache.Load(Repo.Lines(), new[] { nameof(CsvOrg), nameof(CsvCourse), nameof(CsvClass) });
 
-			var orgIds = new List<string>();
-			// include Orgs that have been selected for sync
-			foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
-			{
-				orgIds.Add(org.SourcedId);
-				IncludeReadyTouch(org);
-			}
-			await Repo.Committer.Invoke();
+            var orgIds = new List<string>();
+            // include Orgs that have been selected for sync
+            foreach (var org in cache.GetMap<CsvOrg>().Values.Where(IsUnappliedChange))
+            {
+                orgIds.Add(org.SourcedId);
+                IncludeReadyTouch(org);
+            }
+            await Repo.Committer.Invoke();
 
-			// courses are manually marked for sync, so choose only those
-			foreach (var course in cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Where(IsUnappliedChange))
-				IncludeReadyTouch(course);
-			await Repo.Committer.Invoke();
+            // courses are manually marked for sync, so choose only those
+            foreach (var course in cache.GetMap<CsvCourse>().Values.Where(l => l.IncludeInSync).Where(IsUnappliedChange))
+                IncludeReadyTouch(course);
+            await Repo.Committer.Invoke();
 
-			// now walk the classes and include those which map to an included course and are part of the selected orgs.
-			var classMap = cache.GetMap<CsvClass>();
-			var courseIds = cache.GetMap<CsvCourse>()
-				.Values
-				.Where(l => l.IncludeInSync)
-				.Select(l => l.SourcedId)
-				.ToHashSet();
+            // now walk the classes and include those which map to an included course and are part of the selected orgs.
+            var classMap = cache.GetMap<CsvClass>();
+            var orgMap = cache.GetMap<CsvOrg>();
+            var courseIds = cache.GetMap<CsvCourse>()
+                .Values
+                .Where(l => l.IncludeInSync)
+                .Select(l => l.SourcedId)
+                .ToHashSet();
 
-			foreach (var _class in classMap.Values.Where(IsUnappliedChangeWithoutIncludedInSync))
-			{
-				CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
-				if (courseIds.Contains(csvClass.courseSourcedId) && orgIds.Contains(csvClass.schoolSourcedId))
-					IncludeReadyTouch(_class);
-				await Repo.Committer.InvokeIfChunk();
-			}
-			await Repo.Committer.InvokeIfAny();
+            foreach (var _class in classMap.Values.Where(IsUnappliedChangeWithoutIncludedInSync))
+            {
+                CsvClass csvClass = JsonConvert.DeserializeObject<CsvClass>(_class.RawData);
+                if (courseIds.Contains(csvClass.courseSourcedId) && orgIds.Contains(csvClass.schoolSourcedId))
+                    IncludeReadyTouch(_class);
+                await Repo.Committer.InvokeIfChunk();
+            }
+            await Repo.Committer.InvokeIfAny();
 
-			// process enrollments in the database associated with the District based on the conditions below (in chunks of 200)
-			await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200,
-				action: async (enrollment) =>
-				{
-					CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
+            // process enrollments in the database associated with the District based on the conditions below (in chunks of 200)
+            await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200,
+                action: async (enrollment) =>
+                {
+                    CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
 
-					// figure out if we need to process this enrollment
+                    // figure out if we need to process this enrollment
                     // Sandesh. commented because we have to enroll in school regardless of class
-					//if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
-					//	!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-					//	!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
-					//	return;
+                    //if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
+                    //	!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
+                    //	!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
+                    //	return;
 
-					var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
-					if (user == null) // should never happen
-					{
-						enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";
-						Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
-						return;
-					}
+                    // check if organization is selected for enrollment
+                    var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvEnrollment.schoolSourcedId);
+                    if (org != null && !org.IncludeInSync)
+                        return;
 
-					// mark enrollment for sync
-					IncludeReadyTouch(enrollment);
+                    var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
+                    if (user == null) // should never happen
+                    {
+                        enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";
+                        Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
+                        return;
+                    }
 
-					// mark user for sync
-					//DataSyncLine user = userMap[csvEnrollment.userSourcedId];
-					if (IsUnappliedChangeWithoutIncludedInSync(user))
-						IncludeReadyTouch(user);
-				},
-				onChunkComplete: async () => await Repo.Committer.Invoke());
+                    // mark enrollment for sync
+                    IncludeReadyTouch(enrollment);
 
-			// now process any user changes we may have missed
-			await Repo.Lines<CsvUser>().Where(u => u.IncludeInSync
-				&& u.LoadStatus != LoadStatus.NoChange
-				&& u.SyncStatus != SyncStatus.ReadyToApply)
-				.ForEachInChunksForShrinkingList(chunkSize: 200,
-					#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-					action: async (user) => IncludeReadyTouch(user),
-					#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-					onChunkComplete: async () => await Repo.Committer.Invoke());
+                    // mark user for sync
+                    //DataSyncLine user = userMap[csvEnrollment.userSourcedId];
+                    if (IsUnappliedChangeWithoutIncludedInSync(user))
+                        IncludeReadyTouch(user);
+                },
+                onChunkComplete: async () => await Repo.Committer.Invoke());
+
+            // now process any user changes we may have missed
+            await Repo.Lines<CsvUser>().Where(u => u.IncludeInSync
+                && u.LoadStatus != LoadStatus.NoChange
+                && u.SyncStatus != SyncStatus.ReadyToApply)
+                .ForEachInChunksForShrinkingList(chunkSize: 200,
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+                    action: async (user) => IncludeReadyTouch(user),
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+                    onChunkComplete: async () => await Repo.Committer.Invoke());
 
 
-			await Repo.Committer.Invoke();
-		}
-	}
+            await Repo.Committer.Invoke();
+        }
+    }
 }

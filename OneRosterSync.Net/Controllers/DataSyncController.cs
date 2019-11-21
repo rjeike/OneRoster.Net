@@ -18,6 +18,7 @@ using ReflectionIT.Mvc.Paging;
 using Renci.SshNet;
 using System.IO.Compression;
 using System.Reflection;
+using System.Threading;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -53,6 +54,7 @@ namespace OneRosterSync.Net.Controllers
                 TimeOfDay = d.DailyProcessingTime.ToString(),
                 ProcessingStatus = d.ProcessingStatus.ToString(),
                 Modified = d.Modified.ToLocalTime().ToString(),
+                NightlySyncEnabled = d.NightlySyncEnabled
             })
             .OrderByDescending(d => d.Modified)
             .ToListAsync();
@@ -93,13 +95,9 @@ namespace OneRosterSync.Net.Controllers
         {
             try
             {
-                string Host = "sftp.summitk12.com", BaseFolder = "CSVFiles", Message = string.Empty;
-                if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
-                {
-                    CreateCSVDirectory(Path.GetFullPath(BaseFolder), false);
-                }
+                string Host = "sftp.summitk12.com", Message = string.Empty;
 
-                var districts = db.Districts.ToList();
+                var districts = db.Districts.Where(w => w.NightlySyncEnabled && w.LastSyncedOn == null).ToList();
                 foreach (var district in districts)
                 {
                     if (string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
@@ -109,9 +107,15 @@ namespace OneRosterSync.Net.Controllers
                     }
                     try
                     {
+                        string BaseFolder = district.BasePath.Split('/')[0]; //"CSVFiles";
+                        if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
+                        {
+                            CreateCSVDirectory(Path.GetFullPath(BaseFolder), false);
+                        }
+
                         string Username = district.FTPUsername, Password = district.FTPPassword,
-                         FTPFilePath = district.FTPPath, SubFolder = district.DistrictId.ToString(),
-                         FullPath = Path.Combine(BaseFolder, SubFolder);
+                            FTPFilePath = district.FTPPath, SubFolder = "",//district.DistrictId.ToString(),
+                            FullPath = Path.Combine(district.BasePath, SubFolder);
 
                         var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
                         using (var sftp = new SftpClient(connectionInfo))
@@ -131,6 +135,8 @@ namespace OneRosterSync.Net.Controllers
                             ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
                             Message += $"FTP fetch successfull for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                         }
+                        district.LastSyncedOn = DateTime.Now;
+                        db.Entry(district).State = EntityState.Modified;
                     }
                     catch (Exception ex)
                     {
@@ -138,9 +144,88 @@ namespace OneRosterSync.Net.Controllers
                         Logger.Here().LogError(ex, ex.Message);
                     }
                 }
+                db.SaveChanges();
 
                 TempData["SuccessFlag"] = true;
-                TempData["Message"] = string.IsNullOrEmpty(Message) ? $"Files loaded successfully." : Message;
+                TempData["Message"] = string.IsNullOrEmpty(Message) ? $"All districts are synced. Please load for each district manually for manual sync." : Message;
+            }
+            catch (Exception ex)
+            {
+                TempData["SuccessFlag"] = false;
+                TempData["Message"] = ex.Message;
+                Logger.Here().LogError(ex, ex.Message);
+            }
+
+            return RedirectToAction("DistrictList");
+        }
+
+        [HttpGet]
+        public IActionResult LoadFilesForDistrict(int districtId)
+        {
+            try
+            {
+                string Host = "sftp.summitk12.com", Message = string.Empty;
+
+                var district = db.Districts.FirstOrDefault(w => w.DistrictId == districtId);
+                if (district != null)
+                {
+                    if (string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
+                    {
+                        Message += $"FTP information is missing for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                    }
+                    else
+                    {
+                        try
+                        {
+                            string BaseFolder = district.BasePath.Split('/')[0]; //"CSVFiles";
+                            if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
+                            {
+                                CreateCSVDirectory(Path.GetFullPath(BaseFolder), false);
+                            }
+
+                            string Username = district.FTPUsername, Password = district.FTPPassword,
+                             FTPFilePath = district.FTPPath, SubFolder = "",//district.DistrictId.ToString(),
+                             FullPath = Path.Combine(district.BasePath, SubFolder);
+
+                            var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
+                            using (var sftp = new SftpClient(connectionInfo))
+                            {
+                                sftp.Connect();
+                                MemoryStream outputSteam = new MemoryStream();
+                                sftp.DownloadFile($"{FTPFilePath}", outputSteam);
+                                sftp.Disconnect();
+
+                                CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")));
+                                using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), FileMode.Create))
+                                {
+                                    outputSteam.Seek(0, SeekOrigin.Begin);
+                                    outputSteam.CopyTo(fileStream);
+                                }
+
+                                ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                                Message += $"FTP fetch successfull for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                            }
+                            district.LastSyncedOn = DateTime.Now;
+                            db.Entry(district).State = EntityState.Modified;
+                            db.SaveChanges();
+                        }
+                        catch (Exception ex)
+                        {
+                            Message += $"FTP fetch failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                            Logger.Here().LogError(ex, ex.Message);
+                        }
+                    }
+
+                    TempData["SuccessFlag"] = true;
+                    TempData["Message"] = string.IsNullOrEmpty(Message) ? $"Files loaded successfully for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}." : Message;
+                }
+                else
+                {
+                    TempData["SuccessFlag"] = false;
+                    TempData["Message"] = $"District not found with ID {districtId}";
+                }
+
+
 
             }
             catch (Exception ex)
@@ -158,6 +243,7 @@ namespace OneRosterSync.Net.Controllers
             if (Exists)
             {
                 Directory.Delete(FolderName, true);
+                Thread.Sleep(1500);
                 CreateCSVDirectory(FolderName, false);
             }
             else
@@ -844,6 +930,7 @@ namespace OneRosterSync.Net.Controllers
             district.FTPUsername = postedDistrict.FTPUsername;
             district.FTPPassword = postedDistrict.FTPPassword;
             district.FTPPath = postedDistrict.FTPPath;
+            district.NightlySyncEnabled = postedDistrict.NightlySyncEnabled;
 
             DistrictRepo.UpdateNextProcessingTime(district);
 
