@@ -5,10 +5,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Processing;
+using Renci.SshNet;
 using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -25,6 +27,7 @@ namespace OneRosterSync.Net.Data
 
                 if (!dbContext.NCESMappings.Any())
                 {
+                    CopyFile();
                     SeedNCESMapping(dbContext);
                 }
             }
@@ -36,7 +39,42 @@ namespace OneRosterSync.Net.Data
 
             if (!dbContext.NCESMappings.Any())
             {
+                CopyFile();
                 SeedNCESMapping(dbContext);
+            }
+        }
+
+        public static void CopyFile()
+        {
+            string BaseFolder = "CSVSample", Host = "sftp.summitk12.com", Username = "sftpd30", Password = "kRg92eceJGNd",
+             FTPFilePath = "/files/CSV_NCES.zip", localFilePath = Path.GetFullPath($@"{Path.Combine(BaseFolder, "csv_nces.zip")}");
+            if (!Directory.Exists(Path.GetFullPath(BaseFolder)))
+            {
+                Directory.CreateDirectory(Path.GetFullPath(BaseFolder));
+            }
+            else
+            {
+                if (File.Exists(localFilePath))
+                {
+                    File.Delete(localFilePath);
+                }
+            }
+
+            var connectionInfo = new PasswordConnectionInfo(Host, Username, Password);
+            using (var sftp = new SftpClient(connectionInfo))
+            {
+                sftp.Connect();
+                MemoryStream outputSteam = new MemoryStream();
+                sftp.DownloadFile($"{FTPFilePath}", outputSteam);
+                sftp.Disconnect();
+
+                using (var fileStream = new FileStream(localFilePath, FileMode.Create))
+                {
+                    outputSteam.Seek(0, SeekOrigin.Begin);
+                    outputSteam.CopyTo(fileStream);
+                }
+
+                ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(BaseFolder, "csv_nces.zip")}"), Path.GetFullPath($@"{BaseFolder}"));
             }
         }
 
