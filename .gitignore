@@ -262,3 +262,4 @@ __pycache__/
 
 /OneRosterSync.Net/OneRosterSync.Net.xml
 *.csv
+!state_nces_2019.csv

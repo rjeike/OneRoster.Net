@@ -95,9 +95,9 @@ namespace OneRosterSync.Net
 			app.UseStaticFiles();
 			app.UseCookiePolicy();
 
-            dbContext.Database.Migrate();
+            //dbContext.Database.Migrate();
             // Seeding database
-            DbSeeder.SeedDb(app);
+            //DbSeeder.SeedDb(app);
 
             app.UseAuthentication();
 
