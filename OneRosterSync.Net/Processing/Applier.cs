@@ -112,7 +112,8 @@ namespace OneRosterSync.Net.Processing
                 DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
                 DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvEnrollment.schoolSourcedId); //Sandesh
 
-                var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+                var ncesMapping = repo.GetNCESMapping(org.SourcedId);
+                //var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
 
                 var map = new EnrollmentMap
                 {
@@ -120,7 +121,7 @@ namespace OneRosterSync.Net.Processing
                     //classTargetId = cls?.TargetId,
                     //userTargetId = usr?.TargetId,
                     user_id = usr?.TargetId,
-                    nces_schoolid = orgCsv?.identifier
+                    nces_schoolid = ncesMapping?.ncesId //orgCsv?.identifier
                 };
 
                 if (!(org?.IncludeInSync ?? false))
@@ -141,8 +142,8 @@ namespace OneRosterSync.Net.Processing
                 }
 
                 // set nces school id in enrollment object
-                csvEnrollment.nces_schoolid = orgCsv?.identifier;
-                enrollment.Data.nces_schoolid = orgCsv?.identifier;
+                csvEnrollment.nces_schoolid = ncesMapping?.ncesId; //orgCsv?.identifier;
+                enrollment.Data.nces_schoolid = ncesMapping?.ncesId; //orgCsv?.identifier;
                 enrollment.Data.user_id = usr?.TargetId;
 
                 // this provides a mapping of LMS TargetIds (rather than sourcedId's)
@@ -150,7 +151,7 @@ namespace OneRosterSync.Net.Processing
                 //enrollment.ClassTargetId = cls?.TargetId;
                 //enrollment.UserTargetId = usr?.TargetId;
                 enrollment.user_id = usr?.TargetId;
-                enrollment.nces_schoolid = orgCsv?.identifier;
+                enrollment.nces_schoolid = ncesMapping?.ncesId; //orgCsv?.identifier;
 
                 // cache map in the database (for display/troubleshooting only)
                 line.EnrollmentMap = JsonConvert.SerializeObject(map);
@@ -184,6 +185,8 @@ namespace OneRosterSync.Net.Processing
             else if (line.Table == nameof(CsvUser))
             {
                 var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+                userCsv.email = userCsv.email.ToLower();
+                userCsv.username = userCsv.username.ToLower();
                 if (string.IsNullOrEmpty(userCsv.password))
                 {
                     userCsv.password = line.SourcedId;

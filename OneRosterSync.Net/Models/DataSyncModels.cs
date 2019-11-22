@@ -123,11 +123,11 @@ namespace OneRosterSync.Net.Models
         [DisplayName("LMS API BaseUrl")]
         public string LmsApiBaseUrl { get; set; }
 
-	    [DisplayName("Authenticator for LMS API")]
-		public ApiAuthenticatorType LmsApiAuthenticatorType { get; set; }
+        [DisplayName("Authenticator for LMS API")]
+        public ApiAuthenticatorType LmsApiAuthenticatorType { get; set; }
 
-	    [DisplayName("Authentication Data for LMS API")]
-		public string LmsApiAuthenticationJsonData { get; set; }
+        [DisplayName("Authentication Data for LMS API")]
+        public string LmsApiAuthenticationJsonData { get; set; }
 
         [DisplayName("Approval Required?")]
         public bool IsApprovalRequired { get; set; }
@@ -141,53 +141,53 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Next Processing")]
         public ProcessingAction ProcessingAction { get; set; }
 
-		[DefaultValue("org")]
-		[Required]
-		[DisplayName("LMS Org Endpoint")]
-		public string LmsOrgEndPoint { get; set; }
+        [DefaultValue("org")]
+        [Required]
+        [DisplayName("LMS Org Endpoint")]
+        public string LmsOrgEndPoint { get; set; }
 
-	    [DefaultValue("course")]
-	    [Required]
-	    [DisplayName("LMS Course Endpoint")]
-		public string LmsCourseEndPoint { get; set; }
+        [DefaultValue("course")]
+        [Required]
+        [DisplayName("LMS Course Endpoint")]
+        public string LmsCourseEndPoint { get; set; }
 
-	    [DefaultValue("class")]
-	    [Required]
-	    [DisplayName("LMS Class Endpoint")]
-		public string LmsClassEndPoint { get; set; }
+        [DefaultValue("class")]
+        [Required]
+        [DisplayName("LMS Class Endpoint")]
+        public string LmsClassEndPoint { get; set; }
 
-	    [DefaultValue("user")]
-	    [Required]
-	    [DisplayName("LMS User Endpoint")]
-		public string LmsUserEndPoint { get; set; }
+        [DefaultValue("user")]
+        [Required]
+        [DisplayName("LMS User Endpoint")]
+        public string LmsUserEndPoint { get; set; }
 
-	    [DefaultValue("enrollment")]
-	    [Required]
-	    [DisplayName("LMS Enrollment Endpoint")]
-		public string LmsEnrollmentEndPoint { get; set; }
+        [DefaultValue("enrollment")]
+        [Required]
+        [DisplayName("LMS Enrollment Endpoint")]
+        public string LmsEnrollmentEndPoint { get; set; }
 
-	    [DefaultValue("academicSession")]
-	    [Required]
-	    [DisplayName("LMS Academic Session Endpoint")]
-		public string LmsAcademicSessionEndPoint { get; set; }
+        [DefaultValue("academicSession")]
+        [Required]
+        [DisplayName("LMS Academic Session Endpoint")]
+        public string LmsAcademicSessionEndPoint { get; set; }
 
-	    [DisplayName("Sync Orgs")]
-		public bool SyncOrgs { get; set; }
+        [DisplayName("Sync Orgs")]
+        public bool SyncOrgs { get; set; }
 
-	    [DisplayName("Sync Classes")]
-		public bool SyncClasses { get; set; }
+        [DisplayName("Sync Classes")]
+        public bool SyncClasses { get; set; }
 
-	    [DisplayName("Sync Courses")]
-		public bool SyncCourses { get; set; }
+        [DisplayName("Sync Courses")]
+        public bool SyncCourses { get; set; }
 
-	    [DisplayName("Sync Academic Sessions")]
-		public bool SyncAcademicSessions { get; set; }
+        [DisplayName("Sync Academic Sessions")]
+        public bool SyncAcademicSessions { get; set; }
 
-	    [DisplayName("Sync Users")]
-		public bool SyncUsers { get; set; }
+        [DisplayName("Sync Users")]
+        public bool SyncUsers { get; set; }
 
-	    [DisplayName("Sync Enrollments")]
-		public bool SyncEnrollment { get; set; }
+        [DisplayName("Sync Enrollments")]
+        public bool SyncEnrollment { get; set; }
 
         [DisplayName("FTP Username")]
         [Required]
@@ -204,10 +204,10 @@ namespace OneRosterSync.Net.Models
         public DateTime? LastSyncedOn { get; set; }
 
         public District ShallowCopy()
-	    {
-		    return (District)MemberwiseClone();
-	    }
-	}
+        {
+            return (District)MemberwiseClone();
+        }
+    }
 
     public class DataSyncLine : DataObject
     {
@@ -313,5 +313,16 @@ namespace OneRosterSync.Net.Models
         public SyncStatus SyncStatus { get; set; }
 
         public string Table { get; set; }
+    }
+
+    public class NCESMapping : DataObject
+    {
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ID { get; set; }
+        [DisplayName("NCES ID")]
+        public string NCESId { get; set; }
+
+        [DisplayName("State ID")]
+        public string StateID { get; set; }
     }
 }

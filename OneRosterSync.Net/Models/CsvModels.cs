@@ -137,5 +137,11 @@ namespace OneRosterSync.Net.Models
         public string nces_schoolid { get; set; }
     }
 
+    public class NCESMappingModel
+    {
+        public string ncesId { get; set; }
+        public string stateSchoolId { get; set; }
+    }
+
 #pragma warning restore IDE1006 // Naming Styles
 }

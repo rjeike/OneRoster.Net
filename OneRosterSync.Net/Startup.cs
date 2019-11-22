@@ -41,7 +41,7 @@ namespace OneRosterSync.Net
 			//var connString = $"Data Source={hostname};Initial Catalog=OnRosterSyncNetDb;User ID=sa;Password={password};";
 
 			services.AddDbContext<ApplicationDbContext>(options =>
-				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+				options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlServerOptions=> sqlServerOptions.CommandTimeout(300)));
 				//options.UseSqlServer(connString));
 
 			services.AddDefaultIdentity<IdentityUser>()
@@ -76,7 +76,7 @@ namespace OneRosterSync.Net
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-		public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ApplicationDbContext dbContext)
 		{
 			ApplicationLogging.Factory = loggerFactory;
 
@@ -95,7 +95,11 @@ namespace OneRosterSync.Net
 			app.UseStaticFiles();
 			app.UseCookiePolicy();
 
-			app.UseAuthentication();
+            dbContext.Database.Migrate();
+            // Seeding database
+            DbSeeder.SeedDb(app);
+
+            app.UseAuthentication();
 
 			// Enable middleware to serve generated Swagger as a JSON endpoint.
 			app.UseSwagger();

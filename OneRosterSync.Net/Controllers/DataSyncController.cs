@@ -626,7 +626,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, bool AppliedFlag = false)
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int currentPage = -1, int paginationAction = 1, bool AppliedFlag = false)
         {
             var repo = new DistrictRepo(db, districtId);
             ViewBag.districtId = districtId;
@@ -637,8 +637,27 @@ namespace OneRosterSync.Net.Controllers
                     && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s))
+                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s)).ToList();
+
+            if (!AppliedFlag)
+            {
+                int RecordsPerPage = 1000;
+                if (paginationAction == 0)
+                    currentPage--;
+                else
+                    currentPage++;
+
+                ViewBag.CurrentPage = currentPage;
+                ViewBag.RecordsPerPage = RecordsPerPage;
+
+                EnrollmentsToSync = EnrollmentsToSync
+                    .Skip(RecordsPerPage * currentPage)
+                .Take(RecordsPerPage + 1)
                 .ToList();
+
+                ViewBag.EnrollmentsToSyncCount = EnrollmentsToSync.Count;
+                EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
+            }
 
             List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
             for (int i = 0; i < EnrollmentsToSync.Count; i++)

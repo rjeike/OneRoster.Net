@@ -57,7 +57,7 @@ namespace OneRosterSync.Net.DAL
         /// <summary>
         /// All DataSyncLines for a specific Entity Type
         /// </summary>
-        public IQueryable<DataSyncLine> Lines<T>() where T : CsvBaseObject => Lines().Where(l => l.Table == typeof(T).Name); 
+        public IQueryable<DataSyncLine> Lines<T>() where T : CsvBaseObject => Lines().Where(l => l.Table == typeof(T).Name);
 
         /// <summary>
         /// Add a DataSyncLine to the db and associated with this District
@@ -77,7 +77,7 @@ namespace OneRosterSync.Net.DAL
                 .OrderByDescending(h => h.Created)
                 .FirstOrDefault());
 
-        public async Task<DateTime?> GetLastLoadTime() => 
+        public async Task<DateTime?> GetLastLoadTime() =>
             await this.DataSyncHistories
                 .AsNoTracking()
                 .OrderByDescending(h => h.Created)
@@ -150,7 +150,7 @@ namespace OneRosterSync.Net.DAL
                 Logger.Here().LogError($"No current history.  Developer: create History record before Processing.");
                 return;
             }
-           
+
             switch (processingStage)
             {
                 case ProcessingStage.Load: CurrentHistory.LoadError = message; break;
@@ -264,6 +264,18 @@ namespace OneRosterSync.Net.DAL
                 SyncStatus = line.SyncStatus,
                 Table = line.Table,
             });
+        }
+
+        public NCESMappingModel GetNCESMapping(string SchoolId)
+        {
+            var ncesMap = Db.NCESMappings
+                .Where(w => w.StateID.EndsWith($"-{SchoolId}"))
+                .Select(s => new NCESMappingModel()
+                {
+                    ncesId = s.NCESId,
+                    stateSchoolId = s.StateID
+                }).FirstOrDefault();
+            return ncesMap;
         }
     }
 }

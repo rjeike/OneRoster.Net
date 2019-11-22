@@ -264,40 +264,73 @@
     </table>
 </div>
 <div class="row">
-    <form asp-action="ApplyEnrollmentSyncDetails">
-        <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+    <div class="col-md-8">
+        <form asp-action="ApplyEnrollmentSyncDetails">
+            <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+            <div class="form-group">
+                @if (disabledApply.Length > 0)
+                {
+                    <input type="submit" value="Apply" class="btn btn-primary" disabled="disabled" />
+                }
+                else
+                {
+                    <input type="submit" value="Apply" class="btn btn-primary" />
+                }
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 form-esd rht">
         <div class="form-group">
-            @if (disabledApply.Length > 0)
+            @if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag)
             {
-                <input type="submit" value="Apply" class="btn btn-primary" disabled="disabled" />
-            }
-            else
-            {
-                <input type="submit" value="Apply" class="btn btn-primary" />
+                <form asp-action="EnrollmentSyncDetails" method="get">
+                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                    <input type="hidden" name="currentPage" value="@ViewBag.CurrentPage" />
+                    <input type="hidden" id="hdnAction" name="paginationAction" value="0" />
+
+                    @if (ViewBag.CurrentPage > 0)
+                    {
+                        <input type="submit" value="Previous" class="btn btn-primary" onclick="setAction(0)" />
+                    }
+                    else
+                    {
+                        <input type="submit" value="Previous" class="btn btn-primary" disabled="disabled" />
+                    }
+                    @if (ViewBag.EnrollmentsToSyncCount > ViewBag.RecordsPerPage)
+                    {
+                        <input type="submit" value="Next" class="btn btn-primary" onclick="setAction(1)" />
+                    }
+                    else
+                    {
+                        <input type="submit" value="Next" class="btn btn-primary" disabled="disabled" />
+                    }
+                </form>
             }
         </div>
-    </form>
+    </div>
 </div>
 
 <script type="text/javascript">
     function toggleIncludeInSync(control, lineId) {
-        /**/
+
         let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
-    /**/
-    let flag = $(control).prop('checked');
+        let flag = $(control).prop('checked');
 
-    $.ajax({
-        url: url,
-        dataType: 'json',
-        data: { flag: flag, LineId: lineId },
-        async: false,
-        type: 'POST',
-        success: function (response) {
-            if (!response) {
-                alert('Something went wrong while toggling the flag. Please contact administrator.');
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            data: { flag: flag, LineId: lineId },
+            async: false,
+            type: 'POST',
+            success: function (response) {
+                if (!response) {
+                    alert('Something went wrong while toggling the flag. Please contact administrator.');
+                }
             }
-        }
-    });
+        });
+    }
 
-}
+    function setAction(val) {
+        $('[Id=hdnAction]').val(val);
+    }
 </script>
