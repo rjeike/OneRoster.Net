@@ -30,6 +30,16 @@ namespace OneRosterSync.Net.Data
             }
         }
 
+        public static void SeedDb(ApplicationDbContext dbContext)
+        {
+            dbContext.Database.EnsureCreated();
+
+            if (!dbContext.NCESMappings.Any())
+            {
+                SeedNCESMapping(dbContext);
+            }
+        }
+
         private static void SeedNCESMapping(ApplicationDbContext dbContext)
         {
             try
