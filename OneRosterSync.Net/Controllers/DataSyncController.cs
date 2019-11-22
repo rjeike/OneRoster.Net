@@ -37,7 +37,7 @@ namespace OneRosterSync.Net.Controllers
             _hostingEnvironment = hostingEnvironment;
 
             // Seeding database
-            //DbSeeder.SeedDb(db);
+            DbSeeder.SeedDb(db);
         }
 
         [HttpGet]
