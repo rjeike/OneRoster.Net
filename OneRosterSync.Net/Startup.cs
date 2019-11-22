@@ -97,7 +97,7 @@ namespace OneRosterSync.Net
 
             //dbContext.Database.Migrate();
             // Seeding database
-            //DbSeeder.SeedDb(app);
+            DbSeeder.SeedDb(app);
 
             app.UseAuthentication();
 
