@@ -30,6 +30,7 @@ namespace OneRosterSync.Net.Data
                     CopyFile();
                     SeedNCESMapping(dbContext);
                 }
+                InsertTestSchoolID(dbContext);
             }
         }
 
@@ -42,6 +43,7 @@ namespace OneRosterSync.Net.Data
                 CopyFile();
                 SeedNCESMapping(dbContext);
             }
+            InsertTestSchoolID(dbContext);
         }
 
         public static void CopyFile()
@@ -133,6 +135,22 @@ namespace OneRosterSync.Net.Data
             catch (Exception ex)
             {
                 throw new Exception($"Unhandled error processing method SeedNCESMapping", ex);
+            }
+        }
+
+        public static void InsertTestSchoolID(ApplicationDbContext dbContext)
+        {
+            var objTestSchool = dbContext.NCESMappings.FirstOrDefault(w => w.NCESId == "890000000000");
+            if (objTestSchool == null)
+            {
+                NCESMapping obj = new NCESMapping()
+                {
+                    NCESId = "890000000000",
+                    StateID = "-890000000000",
+                    Version = 1
+                };
+                dbContext.NCESMappings.Add(obj);
+                dbContext.SaveChanges();
             }
         }
     }
