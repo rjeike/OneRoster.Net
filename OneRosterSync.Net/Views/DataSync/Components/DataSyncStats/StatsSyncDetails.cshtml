@@ -1,0 +1,75 @@
+﻿@model OneRosterSync.Net.Models.DataSyncLineReportLine
+
+<div>
+    <dl class="dl-horizontal">
+        @*@if (!string.IsNullOrEmpty(Model.Entity))
+        {
+            <dt>
+                @Html.DisplayNameFor(model => model.Entity)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.Entity)
+            </dd>
+        }*@
+        @*<dt>
+            @Html.DisplayNameFor(model => model.TotalRecords)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.TotalRecords)
+        </dd>*@
+        @*<dt>
+            @Html.DisplayNameFor(model => model.IncludeInSync)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.IncludeInSync)
+        </dd>*@
+        <dt>
+            Loaded in Database
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Added)
+        </dd>
+        @*<dt>
+            @Html.DisplayNameFor(model => model.Modified)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Modified)
+        </dd>*@
+        @*<dt>
+            @Html.DisplayNameFor(model => model.NoChange)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NoChange)
+        </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Deleted)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Deleted)
+        </dd>*@
+        <dt>
+            Loaded for Apply
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Loaded)
+        </dd>
+        <dt>
+            Ready for Next Apply
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.ReadyToApply)
+        </dd>
+        <dt>
+            Last Apply Successfull
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Applied)
+        </dd>
+        <dt>
+            Last Apply Failed
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.AppliedFailed)
+        </dd>
+    </dl>
+</div>

@@ -22,13 +22,13 @@ namespace OneRosterSync.Net.Components
             Logger = logger;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int districtId)
+        public async Task<IViewComponentResult> InvokeAsync(int districtId, bool syncDetails)
         {
             var repo = new DistrictRepo(db, districtId);
 
             var model = await OneRosterSync.Net.Controllers.DataSyncController.ReportLine(repo.Lines(), "");
-
-            return View(viewName:"Stats", model: model);
+            string view = syncDetails ? "StatsSyncDetails" : "Stats";
+            return View(viewName: view, model: model);
         }
     }
 }

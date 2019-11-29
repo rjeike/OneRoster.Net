@@ -1,29 +1,36 @@
-﻿@model IEnumerable<OneRosterSync.Net.Models.EnrollmentSyncLineViewModel>
+﻿@using OneRosterSync.Net.Components
+@model IEnumerable<OneRosterSync.Net.Models.EnrollmentSyncLineViewModel>
+@addTagHelper *, OneRosterSync.Net
 @{
     ViewData["Title"] = "EnrollmentSyncDetails";
-    string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
+    //string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
 
-    if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
-        ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
-    {
-        if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None || (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() < 1))
-        {
-            disabledLoad = string.Empty;
-        }
-        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.LoadingDone)
-        {
-            disabledSelectOrgs = string.Empty;
-            disabledAnalyze = string.Empty;
-        }
-        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() > 0)
-        {
-            disabledApply = string.Empty;
-        }
-        else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.ApplyingDone)
-        {
-            disabledLoad = string.Empty;
-        }
-    }
+    //if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
+    //    ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
+    //{
+    //    if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None || (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() < 1))
+    //    {
+    //        disabledLoad = string.Empty;
+    //    }
+    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.LoadingDone)
+    //    {
+    //        disabledSelectOrgs = string.Empty;
+    //        disabledAnalyze = string.Empty;
+    //    }
+    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() > 0)
+    //    {
+    //        disabledApply = string.Empty;
+    //    }
+    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.ApplyingDone)
+    //    {
+    //        disabledLoad = string.Empty;
+    //    }
+    //}
+    //if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
+    //{
+    //    disabledSelectOrgs = string.Empty;
+    //    disabledAnalyze = string.Empty;
+    //}
 }
 
 <h2>Enrollment Sync Details</h2>
@@ -66,47 +73,48 @@
     }
 </style>
 <div class="row">
-    <div class="col-md-7 form-esd lft">
+    <div class="col-md-4 form-esd lft">
         <div>
             <form asp-action="LoadEnrollmentSyncDetails">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                @if (disabledLoad.Length > 0)
-                {
+                @*@if (disabledLoad.Length > 0)
+                    {
                     <input type="submit" value="1. Load" class="btn btn-primary" disabled="@disabledLoad" />
-                }
-                else
-                {
-                    <input type="submit" value="1. Load" class="btn btn-primary" />
-                }
+                    }
+                    else
+                    {*@
+                <input type="submit" value="1. Load" class="btn btn-primary" />
+                @*}*@
             </form>
         </div>
         <div>
             <form asp-action="SelectOrgs">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                @if (disabledSelectOrgs.Length > 0)
-                {
+                @*@if (disabledSelectOrgs.Length > 0)
+                    {
                     <input type="submit" value="2. Select Orgs" class="btn btn-primary" disabled="@disabledSelectOrgs" />
-                }
-                else
-                {
-                    <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
-                }
+                    }
+                    else
+                    {*@
+                <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
+                @*}*@
             </form>
         </div>
         <div>
             <form asp-action="AnalyzeEnrollmentSyncDetails">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                @if (disabledAnalyze.Length > 0)
-                {
+                @*@if (disabledAnalyze.Length > 0)
+                    {
                     <input type="submit" value="3. Analyze" class="btn btn-primary" disabled="@disabledAnalyze" />
-                }
-                else
-                {
-                    <input type="submit" value="3. Analyze" class="btn btn-primary" />
-                }
+                    }
+                    else
+                    {*@
+                <input type="submit" value="3. Analyze" class="btn btn-primary" />
+                @*}*@
             </form>
         </div>
     </div>
+
     <div class="col-md-5 form-esd rht">
         <div>
             <form asp-action="ViewAllAppliedEnrollmentSyncDetails" method="get">
@@ -121,6 +129,14 @@
             </form>
         </div>
     </div>
+
+    @if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.None)
+    {
+        <div class="col-md-3">
+            <vc:data-sync-stats district-id="@ViewBag.districtId" sync-details="true" />
+        </div>
+    }
+
 </div>
 
 <div class="row">
@@ -268,14 +284,14 @@
         <form asp-action="ApplyEnrollmentSyncDetails">
             <input type="hidden" name="districtId" value="@ViewBag.districtId" />
             <div class="form-group">
-                @if (disabledApply.Length > 0)
-                {
+                @*@if (disabledApply.Length > 0)
+                    {
                     <input type="submit" value="Apply" class="btn btn-primary" disabled="disabled" />
-                }
-                else
-                {
-                    <input type="submit" value="Apply" class="btn btn-primary" />
-                }
+                    }
+                    else
+                    {*@
+                <input type="submit" value="Apply" class="btn btn-primary" />
+                @*}*@
             </div>
         </form>
     </div>
@@ -311,9 +327,11 @@
 </div>
 
 <script type="text/javascript">
-    function toggleIncludeInSync(control, lineId) {
+        function toggleIncludeInSync(control, lineId) {
 
-        let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
+            /**/
+            let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
+        /**/
         let flag = $(control).prop('checked');
 
         $.ajax({
