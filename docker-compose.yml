@@ -7,13 +7,13 @@ services:
     build:
       context: .
       dockerfile: OneRosterSync.Net/Dockerfile
-    depends_on:
-      - sqlserver
-  sqlserver:
-    image: "mcr.microsoft.com/mssql/server"
-    restart: always
-    environment:
-        SA_PASSWORD: 1Roster.Net
-        ACCEPT_EULA: Y
-    ports:
-      - "1433:1433"
+    #depends_on:
+      #- sqlserver
+  #sqlserver:
+    #image: "mcr.microsoft.com/mssql/server"
+    #restart: always
+    #environment:
+    #    SA_PASSWORD: 1Roster.Net
+    #    ACCEPT_EULA: Y
+    #ports:
+    #  - "1433:1433"
