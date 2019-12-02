@@ -261,19 +261,33 @@ namespace OneRosterSync.Net.Controllers
             // create default values
             var district = new District
             {
+                //BasePath = @"CSVFiles",
+                //LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
+                //LmsOrgEndPoint = @"org",
+                //LmsCourseEndPoint = @"course",
+                //LmsClassEndPoint = @"class",
+                //LmsUserEndPoint = @"user",
+                //LmsEnrollmentEndPoint = @"enrollment",
+                //LmsAcademicSessionEndPoint = @"academicSession",
+                //SyncAcademicSessions = true,
+                //SyncClasses = true,
+                //SyncCourses = true,
+                //SyncEnrollment = true,
+                //SyncOrgs = true,
+                //SyncUsers = true
                 BasePath = @"CSVFiles",
-                LmsApiBaseUrl = @"https://localhost:44312/api/mockapi/",
+                LmsApiBaseUrl = @"https://lms.summitk12.com/webservice/rest/server.php",
                 LmsOrgEndPoint = @"org",
                 LmsCourseEndPoint = @"course",
                 LmsClassEndPoint = @"class",
-                LmsUserEndPoint = @"user",
-                LmsEnrollmentEndPoint = @"enrollment",
+                LmsUserEndPoint = @"?wstoken=a88e84ca9005c28169a0c8dfa826166d&wsfunction=local_oneroster_user&moodlewsrestformat=json",
+                LmsEnrollmentEndPoint = @"?wstoken=a88e84ca9005c28169a0c8dfa826166d&wsfunction=local_oneroster_enrollment&moodlewsrestformat=json",
                 LmsAcademicSessionEndPoint = @"academicSession",
                 SyncAcademicSessions = true,
                 SyncClasses = true,
                 SyncCourses = true,
                 SyncEnrollment = true,
-                SyncOrgs = true,
+                SyncOrgs = false,
                 SyncUsers = true
             };
 
