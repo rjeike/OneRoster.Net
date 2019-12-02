@@ -73,7 +73,7 @@
     }
 </style>
 <div class="row">
-    <div class="col-md-4 form-esd lft">
+    <div class="col-md-7 form-esd lft">
         <div>
             <form asp-action="LoadEnrollmentSyncDetails">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
@@ -130,14 +130,19 @@
         </div>
     </div>
 
-    @if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.None)
-    {
-        <div class="col-md-3">
+</div>
+
+@if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.None)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <vc:data-sync-histories district-id="@ViewBag.districtId" current="true" sync-detail="true" />
+        </div>
+        <div class="col-md-6">
             <vc:data-sync-stats district-id="@ViewBag.districtId" sync-details="true" />
         </div>
-    }
-
-</div>
+    </div>
+}
 
 <div class="row">
     <div class="col-md-2">
@@ -297,31 +302,35 @@
     </div>
     <div class="col-md-4 form-esd rht">
         <div class="form-group">
-            @if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag)
-            {
-                <form asp-action="EnrollmentSyncDetails" method="get">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="hidden" name="currentPage" value="@ViewBag.CurrentPage" />
-                    <input type="hidden" id="hdnAction" name="paginationAction" value="0" />
+            @*@if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag)*@
 
-                    @if (ViewBag.CurrentPage > 0)
-                    {
-                        <input type="submit" value="Previous" class="btn btn-primary" onclick="setAction(0)" />
-                    }
-                    else
-                    {
-                        <input type="submit" value="Previous" class="btn btn-primary" disabled="disabled" />
-                    }
-                    @if (ViewBag.EnrollmentsToSyncCount > ViewBag.RecordsPerPage)
-                    {
-                        <input type="submit" value="Next" class="btn btn-primary" onclick="setAction(1)" />
-                    }
-                    else
-                    {
-                        <input type="submit" value="Next" class="btn btn-primary" disabled="disabled" />
-                    }
-                </form>
-            }
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="currentPage" value="@ViewBag.CurrentPage" />
+                <input type="hidden" id="hdnAction" name="paginationAction" value="0" />
+                @if (ViewBag.AppliedFlag)
+                {
+                    <input type="hidden" name="appliedFlag" value="@ViewBag.AppliedFlag.ToString()" />
+                }
+
+                @if (ViewBag.CurrentPage > 0)
+                {
+                    <input type="submit" value="Previous" class="btn btn-primary" onclick="setAction(0)" />
+                }
+                else
+                {
+                    <input type="submit" value="Previous" class="btn btn-primary" disabled="disabled" />
+                }
+                @if (ViewBag.EnrollmentsToSyncCount > ViewBag.RecordsPerPage)
+                {
+                    <input type="submit" value="Next" class="btn btn-primary" onclick="setAction(1)" />
+                }
+                else
+                {
+                    <input type="submit" value="Next" class="btn btn-primary" disabled="disabled" />
+                }
+            </form>
+
         </div>
     </div>
 </div>
@@ -330,7 +339,11 @@
         function toggleIncludeInSync(control, lineId) {
 
             /**/
+            /**/
+            /**/
             let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
+        /**/
+        /**/
         /**/
         let flag = $(control).prop('checked');
 

@@ -642,7 +642,7 @@ namespace OneRosterSync.Net.Controllers
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
                 .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s)).ToList();
 
-            if (!AppliedFlag)
+            //if (!AppliedFlag)
             {
                 int RecordsPerPage = 1000;
                 if (paginationAction == 0)

@@ -20,7 +20,7 @@ namespace OneRosterSync.Net.Components
             this.db = db;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int districtId, bool current)
+        public async Task<IViewComponentResult> InvokeAsync(int districtId, bool current, bool syncDetail)
         {
             var repo = new DistrictRepo(db, districtId);
 
@@ -31,6 +31,8 @@ namespace OneRosterSync.Net.Components
                 .ToListAsync();
 
             string view = current ? "CurrentHistory" : "ListOfHistories";
+            if (syncDetail)
+                view = "CurrentHistorySyncDetails";
 
             return View(viewName: view, model: model);
         }

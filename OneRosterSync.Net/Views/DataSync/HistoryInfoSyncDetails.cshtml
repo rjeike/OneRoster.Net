@@ -1,0 +1,26 @@
+﻿@model OneRosterSync.Net.Models.DataSyncHistory
+@using OneRosterSync.Net.Utils
+
+<div>
+    <dl class="dl-horizontal">
+
+        @*<dt>@Html.DisplayNameFor(model => model.LoadError)</dt>
+        <dd>@Html.DisplayFor(model => model.LoadError)</dd>
+        <dt>@Html.DisplayNameFor(model => model.AnalyzeError)</dt>
+        <dd>@Html.DisplayFor(model => model.AnalyzeError)</dd>
+        <dt>@Html.DisplayNameFor(model => model.ApplyError)</dt>
+        <dd>@Html.DisplayFor(model => model.ApplyError)</dd>*@
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Started)
+        </dt>
+        <dd>
+            @(Model.Started.ToLocalTime())
+        </dd>
+
+        <dt>Load Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.LoadStarted, Model.LoadCompleted)</dd>
+        <dt>Analyze Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.AnalyzeStarted, Model.AnalyzeCompleted)</dd>
+        <dt>Apply Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.ApplyStarted, Model.ApplyCompleted)</dd>
+
+    </dl>
+</div>
