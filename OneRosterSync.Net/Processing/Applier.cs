@@ -25,7 +25,7 @@ namespace OneRosterSync.Net.Processing
         /// How many APIs should we call in parallel?
         /// TODO: make a property of the District
         /// </summary>
-        public int ParallelChunkSize { get; set; } = 10;
+        public int ParallelChunkSize { get; set; } = 30;
 
         public Applier(IServiceProvider services, int districtId)
         {
@@ -48,6 +48,11 @@ namespace OneRosterSync.Net.Processing
                     // filter on all lines that are included and ready to be applied or apply was failed
                     var lines = repo.Lines<T>().Where(
                         l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
+
+                    if(typeof(T) == typeof(CsvUser))
+                    {
+                        lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
+                    }
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
@@ -212,7 +217,7 @@ namespace OneRosterSync.Net.Processing
                 line.SyncStatus = SyncStatus.Applied;
                 if (!string.IsNullOrEmpty(response.TargetId))
                     line.TargetId = response.TargetId;
-                line.Error = null;
+                line.Error = response.ErrorMessage; 
             }
             else
             {
