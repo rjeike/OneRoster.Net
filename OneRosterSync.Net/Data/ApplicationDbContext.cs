@@ -31,6 +31,7 @@ namespace OneRosterSync.Net.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+            this.Database.SetCommandTimeout(300);
         }
 
         /// <summary>

@@ -649,32 +649,31 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.districtId = districtId;
             ViewBag.AppliedFlag = AppliedFlag;
 
-            var EnrollmentsToSync = repo.Lines<CsvEnrollment>()
+            int RecordsPerPage = 50;
+            if (paginationAction == 0)
+                currentPage--;
+            else
+                currentPage++;
+
+            var EnrollmentsToSync = repo.Lines<CsvEnrollment>().AsNoTracking()
                 .Where(w => w.DistrictId == districtId
                     && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s)).ToList();
+                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s))
+                .Skip(RecordsPerPage * currentPage)
+                .Take(RecordsPerPage + 1).ToList();
 
-            //if (!AppliedFlag)
-            {
-                int RecordsPerPage = 1000;
-                if (paginationAction == 0)
-                    currentPage--;
-                else
-                    currentPage++;
+            ViewBag.CurrentPage = currentPage;
+            ViewBag.RecordsPerPage = RecordsPerPage;
 
-                ViewBag.CurrentPage = currentPage;
-                ViewBag.RecordsPerPage = RecordsPerPage;
+            //EnrollmentsToSync = EnrollmentsToSync
+            //    .Skip(RecordsPerPage * currentPage)
+            //.Take(RecordsPerPage + 1)
+            //.ToList();
 
-                EnrollmentsToSync = EnrollmentsToSync
-                    .Skip(RecordsPerPage * currentPage)
-                .Take(RecordsPerPage + 1)
-                .ToList();
-
-                ViewBag.EnrollmentsToSyncCount = EnrollmentsToSync.Count;
-                EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
-            }
+            ViewBag.EnrollmentsToSyncCount = EnrollmentsToSync.Count;
+            EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
 
             List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
             for (int i = 0; i < EnrollmentsToSync.Count; i++)
