@@ -3,6 +3,8 @@
 @addTagHelper *, OneRosterSync.Net
 @{
     ViewData["Title"] = "EnrollmentSyncDetails";
+    var count = Model.Where(w => w.IncludeInSync).Count();
+    var headChecked = count == Model.Count();
     //string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
 
     //if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
@@ -201,6 +203,10 @@
                     @Html.DisplayNameFor(model => model.Table)
                 </th>
                 <th>
+                    @if (ViewBag.AppliedFlag == null || !ViewBag.AppliedFlag)
+                    {
+                        <input type="checkbox" checked="@headChecked" onchange="toggleIncludeInSyncAll(this)" />
+                    }
                     @Html.DisplayNameFor(model => model.IncludeInSync)
                 </th>
                 <th>
@@ -247,7 +253,7 @@
                             }
                             else
                             {
-                                <input type="checkbox" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                                <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
                             }
                         }
                     </td>
@@ -338,30 +344,29 @@
 <script type="text/javascript">
         function toggleIncludeInSync(control, lineId) {
 
-            /**/
-            /**/
-            /**/
             let url = '@Url.Action("ToggleIncludeInSyncFlag", "DataSync")';
-        /**/
-        /**/
-        /**/
-        let flag = $(control).prop('checked');
+            let flag = $(control).prop('checked');
 
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            data: { flag: flag, LineId: lineId },
-            async: false,
-            type: 'POST',
-            success: function (response) {
-                if (!response) {
-                    alert('Something went wrong while toggling the flag. Please contact administrator.');
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                data: { flag: flag, LineId: lineId },
+                async: false,
+                type: 'POST',
+                success: function (response) {
+                    if (!response) {
+                        alert('Something went wrong while toggling the flag. Please contact administrator.');
+                    }
                 }
-            }
-        });
+            });
     }
 
-    function setAction(val) {
-        $('[Id=hdnAction]').val(val);
-    }
+        function toggleIncludeInSyncAll(control) {
+            let checkFlag = $(control).prop('checked');
+            $('input[type=checkbox].chkToggle').map((i, item) => $(item).prop('checked', checkFlag).change());
+        }
+
+        function setAction(val) {
+            $('[Id=hdnAction]').val(val);
+        }
 </script>

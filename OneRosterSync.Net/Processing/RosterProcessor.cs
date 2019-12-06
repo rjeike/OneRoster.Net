@@ -160,7 +160,7 @@ namespace OneRosterSync.Net.Processing
 
                 // catch unhandled exception and blame sourceId
                 throw new ProcessingException(Logger.Here(), 
-                    $"Exception Loading data for {loader.LastEntity}.  Possible duplicate sourcedId. Inner Exception: {ex.Message}", ex);
+                    $"An error occured while processing CSV file of {loader.LastEntity}.  Possible duplicate sourcedId. Error message: {ex.Message}", ex);
             }
         }
 

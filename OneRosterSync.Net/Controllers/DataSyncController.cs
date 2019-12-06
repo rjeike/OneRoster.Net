@@ -649,18 +649,18 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.districtId = districtId;
             ViewBag.AppliedFlag = AppliedFlag;
 
-            int RecordsPerPage = 50;
+            int RecordsPerPage = 100;
             if (paginationAction == 0)
                 currentPage--;
             else
                 currentPage++;
 
-            var EnrollmentsToSync = repo.Lines<CsvEnrollment>().AsNoTracking()
+            var EnrollmentsToSync = repo.Lines<CsvUser>().AsNoTracking()
                 .Where(w => w.DistrictId == districtId
                     && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                .Select(s => GetDataSyncLineViewModel<CsvEnrollment>(s))
+                .Select(s => GetDataSyncLineViewModel<CsvUser>(s))
                 .Skip(RecordsPerPage * currentPage)
                 .Take(RecordsPerPage + 1).ToList();
 
@@ -678,27 +678,28 @@ namespace OneRosterSync.Net.Controllers
             List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
             for (int i = 0; i < EnrollmentsToSync.Count; i++)
             {
-                var enrLine = EnrollmentsToSync[i];
-                CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrLine.RawData);
-                DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == csvEnrollment.userSourcedId);
-                DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvEnrollment.schoolSourcedId);
+                var usrLine = EnrollmentsToSync[i];
+                //CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrLine.RawData);
+                CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(usrLine.RawData);
+                DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == usrLine.SourcedId);
+                DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
                 if (org.IncludeInSync || AppliedFlag)
                 {
                     var usrCsv = JsonConvert.DeserializeObject<CsvUser>(usr.RawData);
                     var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
 
                     EnrollmentSyncLineViewModel obj = new EnrollmentSyncLineViewModel();
-                    obj.Created = enrLine.Created;
-                    obj.DataSyncLineId = enrLine.DataSyncLineId;
-                    obj.DistrictId = enrLine.DistrictId;
+                    obj.Created = usrLine.Created;
+                    obj.DataSyncLineId = usrLine.DataSyncLineId;
+                    obj.DistrictId = usrLine.DistrictId;
                     obj.Email = usrCsv.email;
                     obj.Username = usrCsv.username;
                     obj.Name = $"{usrCsv.givenName} {usrCsv.familyName}";
-                    obj.Version = enrLine.Version;
-                    obj.SyncStatus = enrLine.SyncStatus;
-                    obj.Error = enrLine.Error;
-                    obj.IncludeInSync = enrLine.IncludeInSync;
-                    obj.Table = enrLine.Table;
+                    obj.Version = usrLine.Version;
+                    obj.SyncStatus = usrLine.SyncStatus;
+                    obj.Error = usrLine.Error;
+                    obj.IncludeInSync = usrLine.IncludeInSync;
+                    obj.Table = usrLine.Table;
                     obj.SchoolName = orgCsv.name;
 
                     EnrollmentLines.Add(obj);

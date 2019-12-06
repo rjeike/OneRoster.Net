@@ -34,47 +34,62 @@ namespace OneRosterSync.Net.Processing
             string filePath = Path.Combine(BasePath, filename);
             string table = typeof(T).Name;
 
-            using (var file = File.OpenText(filePath))
+            if (File.Exists(filePath))
             {
-                using (var csv = new CsvHelper.CsvReader(file))
+                using (var file = File.OpenText(filePath))
                 {
-                    csv.Configuration.MissingFieldFound = null;
-                    csv.Configuration.HasHeaderRecord = true;
-
-                    csv.Read();
-                    csv.ReadHeader();
-                    for (int i = 0; await csv.ReadAsync(); i++)
+                    using (var csv = new CsvHelper.CsvReader(file))
                     {
-                        T record = null;
-                        try
-                        {
-                            record = csv.GetRecord<T>();
-                            await ProcessRecord(record, table, now);
-                        }
-                        catch (Exception ex)
-                        {
-                            if (ex is ProcessingException)
-                                throw;
+                        csv.Configuration.MissingFieldFound = null;
+                        csv.Configuration.HasHeaderRecord = true;
 
-                            string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
-                            throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                        csv.Read();
+                        csv.ReadHeader();
+                        for (int i = 0; await csv.ReadAsync(); i++)
+                        {
+                            T record = null;
+                            try
+                            {
+                                record = csv.GetRecord<T>();
+                                await ProcessRecord(record, table, now);
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex is ProcessingException)
+                                    throw;
+
+                                string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
+                                throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                            }
+
+                            await Repo.Committer.InvokeIfChunk();
                         }
 
-                        await Repo.Committer.InvokeIfChunk();
+                        // commit any last changes
+                        await Repo.Committer.InvokeIfAny();
                     }
-
-                    // commit any last changes
-                    await Repo.Committer.InvokeIfAny();
+                    Logger.Here().LogInformation($"Processed Csv file {filePath}");
                 }
-                Logger.Here().LogInformation($"Processed Csv file {filePath}");
+            }
+            else
+            {
+                Logger.Here().LogInformation($"Csv file not found {filePath}");
             }
         }
 
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
         {
             if (string.IsNullOrEmpty(record.sourcedId))
-                throw new ProcessingException(Logger.Here(), 
+                throw new ProcessingException(Logger.Here(),
                     $"Record of type {typeof(T).Name} contains no SourcedId: {JsonConvert.SerializeObject(record)}");
+
+            if (typeof(T) == typeof(CsvUser))
+            {
+                if (string.IsNullOrEmpty((record as CsvUser).orgSourcedIds))
+                {
+                    throw new ProcessingException(Logger, $"orgSourcedIds cannot be empty in CsvUser for sourcedId {record.sourcedId}");
+                }
+            }
 
             DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
 

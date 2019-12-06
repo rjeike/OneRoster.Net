@@ -102,49 +102,66 @@ namespace OneRosterSync.Net.Processing
             }
             await Repo.Committer.InvokeIfAny();
 
+            //Commented as districts do not share enrollments CSV
             // process enrollments in the database associated with the District based on the conditions below (in chunks of 200)
-            await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200,
-                action: async (enrollment) =>
-                {
-                    CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
+            //await Repo.Lines<CsvEnrollment>().ForEachInChunksAsync(chunkSize: 200,
+            //    action: async (enrollment) =>
+            //    {
+            //        CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrollment.RawData);
 
-                    // figure out if we need to process this enrollment
-                    // Sandesh. commented because we have to enroll in school regardless of class
-                    //if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
-                    //	!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
-                    //	!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
-                    //	return;
+            //        // figure out if we need to process this enrollment
+            //        // Sandesh. commented because we have to enroll in school regardless of class
+            //        //if (!classMap.ContainsKey(csvEnrollment.classSourcedId) ||      // look up class associated with enrollment
+            //        //	!classMap[csvEnrollment.classSourcedId].IncludeInSync ||    // only include enrollment if the class is included
+            //        //	!IsUnappliedChangeWithoutIncludedInSync(enrollment))        // only include if unapplied change in enrollment
+            //        //	return;
 
-                    // check if organization is selected for enrollment
-                    var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvEnrollment.schoolSourcedId);
-                    if (org != null && !org.IncludeInSync)
-                        return;
+            //        // check if organization is selected for enrollment
+            //        var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvEnrollment.schoolSourcedId);
+            //        if (org != null && !org.IncludeInSync)
+            //            return;
 
-                    var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
-                    if (user == null) // should never happen
-                    {
-                        enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";
-                        Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
-                        return;
-                    }
+            //        var user = await Repo.Lines<CsvUser>().SingleOrDefaultAsync(l => l.SourcedId == csvEnrollment.userSourcedId);
+            //        if (user == null) // should never happen
+            //        {
+            //            enrollment.Error = $"Missing user for {csvEnrollment.userSourcedId}";
+            //            Logger.Here().LogError($"Missing user for enrollment for line {enrollment.DataSyncLineId}");
+            //            return;
+            //        }
 
-                    // mark enrollment for sync
-                    IncludeReadyTouch(enrollment);
+            //        // mark enrollment for sync
+            //        IncludeReadyTouch(enrollment);
 
-                    // mark user for sync
-                    //DataSyncLine user = userMap[csvEnrollment.userSourcedId];
-                    if (IsUnappliedChangeWithoutIncludedInSync(user))
-                        IncludeReadyTouch(user);
-                },
-                onChunkComplete: async () => await Repo.Committer.Invoke());
+            //        // mark user for sync
+            //        //DataSyncLine user = userMap[csvEnrollment.userSourcedId];
+            //        if (IsUnappliedChangeWithoutIncludedInSync(user))
+            //            IncludeReadyTouch(user);
+            //    },
+            //    onChunkComplete: async () => await Repo.Committer.Invoke());
 
             // now process any user changes we may have missed
-            await Repo.Lines<CsvUser>().Where(u => u.IncludeInSync
-                && u.LoadStatus != LoadStatus.NoChange
-                && u.SyncStatus != SyncStatus.ReadyToApply)
+            await Repo.Lines<CsvUser>()
+                //.Where(u => u.IncludeInSync // Commented for enrollment process changes
+                //&& u.LoadStatus != LoadStatus.NoChange
+                //&& u.SyncStatus != SyncStatus.ReadyToApply)
                 .ForEachInChunksForShrinkingList(chunkSize: 200,
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-                    action: async (user) => IncludeReadyTouch(user),
+                    action: async (user) =>
+                    {
+                        CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(user.RawData);
+
+                        var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvUser.orgSourcedIds);
+                        if (org == null) // should never happen
+                        {
+                            user.Error = $"Missing org for {csvUser.orgSourcedIds}";
+                            Logger.Here().LogError($"Missing org for enrollment for line {user.DataSyncLineId}");
+                            return;
+                        }
+                        if (org != null && !org.IncludeInSync)
+                            return;
+
+                        IncludeReadyTouch(user);
+                    },
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
                     onChunkComplete: async () => await Repo.Committer.Invoke());
 

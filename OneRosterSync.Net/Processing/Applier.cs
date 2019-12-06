@@ -49,10 +49,10 @@ namespace OneRosterSync.Net.Processing
                     var lines = repo.Lines<T>().Where(
                         l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
-                    if(typeof(T) == typeof(CsvUser))
-                    {
-                        lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
-                    }
+                    //if(typeof(T) == typeof(CsvUser))
+                    //{
+                    //    lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
+                    //}
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
@@ -107,7 +107,8 @@ namespace OneRosterSync.Net.Processing
                 ApiAuthenticator = ApiAuthenticatorFactory.GetApiAuthenticator(repo.District.LmsApiAuthenticatorType,
                     repo.District.LmsApiAuthenticationJsonData)
             };
-
+            // Commenting for changing process of enrollment
+            /*
             if (line.Table == nameof(CsvEnrollment))
             {
                 var enrollment = new ApiEnrollmentPost(line.RawData);
@@ -163,7 +164,9 @@ namespace OneRosterSync.Net.Processing
 
                 data = enrollment;
             }
-            else if (line.Table == nameof(CsvClass))
+            else
+            */
+            if (line.Table == nameof(CsvClass))
             {
                 var classCsv = JsonConvert.DeserializeObject<CsvClass>(line.RawData);
 
@@ -189,14 +192,22 @@ namespace OneRosterSync.Net.Processing
             }
             else if (line.Table == nameof(CsvUser))
             {
-                var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-                userCsv.email = userCsv.email.ToLower();
-                userCsv.username = userCsv.username.ToLower();
-                if (string.IsNullOrEmpty(userCsv.password))
+                if (string.IsNullOrEmpty(line.TargetId))
                 {
-                    userCsv.password = line.SourcedId;
+                    var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+                    userCsv.email = userCsv.email.ToLower();
+                    userCsv.username = userCsv.username.ToLower();
+                    if (string.IsNullOrEmpty(userCsv.password))
+                    {
+                        userCsv.password = line.SourcedId;
+                    }
+                    data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
                 }
-                data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
+                else
+                {
+                    await ApplyEnrollment(line, repo, apiManager);
+                    return;
+                }
             }
             else
             {
@@ -211,26 +222,38 @@ namespace OneRosterSync.Net.Processing
             data.Status = line.LoadStatus.ToString();
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
-
+            ReadResponse(line, repo, response);
             if (response.Success)
             {
-                line.SyncStatus = SyncStatus.Applied;
-                if (!string.IsNullOrEmpty(response.TargetId))
-                    line.TargetId = response.TargetId;
-                line.Error = response.ErrorMessage; 
+                if (line.Table == nameof(CsvUser))
+                {
+                    await ApplyEnrollment(line, repo, apiManager);
+                }
             }
-            else
-            {
-                line.SyncStatus = SyncStatus.ApplyFailed;
-                line.Error = response.ErrorMessage;
+            //if (response.Success)
+            //{
+            //    line.SyncStatus = SyncStatus.Applied;
+            //    if (!string.IsNullOrEmpty(response.TargetId))
+            //        line.TargetId = response.TargetId;
+            //    line.Error = response.ErrorMessage;
 
-                // The Lms can send false success if the entity already exist. In such a case we read the targetId
-                if (!string.IsNullOrEmpty(response.TargetId))
-                    line.TargetId = response.TargetId;
-            }
+            //    if (line.Table == nameof(CsvUser))
+            //    {
+            //        await ApplyEnrollment(line, repo, apiManager);
+            //    }
+            //}
+            //else
+            //{
+            //    line.SyncStatus = SyncStatus.ApplyFailed;
+            //    line.Error = response.ErrorMessage;
 
-            line.Touch();
-            repo.PushLineHistory(line, isNewData: false);
+            //    // The Lms can send false success if the entity already exist. In such a case we read the targetId
+            //    if (!string.IsNullOrEmpty(response.TargetId))
+            //        line.TargetId = response.TargetId;
+            //}
+
+            //line.Touch();
+            //repo.PushLineHistory(line, isNewData: false);
         }
 
         private string GetEntityEndpoint(string entityType, DistrictRepo repo)
@@ -252,6 +275,71 @@ namespace OneRosterSync.Net.Processing
                 default:
                     throw new ArgumentOutOfRangeException(nameof(entityType), entityType, "An unknown entity was provided for which there is not endpoint.");
             }
+        }
+
+        private async Task ApplyEnrollment(DataSyncLine line, DistrictRepo repo, ApiManager apiManager)
+        {
+            var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+            var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+            DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
+
+            if (!(org?.IncludeInSync ?? false))
+            {
+                // Is NCES school ID given?
+                line.SyncStatus = SyncStatus.ApplyFailed;
+                if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
+                {
+                    line.Error = "NCES school ID not found";
+                }
+                else
+                {
+                    line.Error = $"CsvOrg line ID {org.DataSyncLineId} is not marked to sync with LMS.";
+                }
+                line.Touch();
+                repo.PushLineHistory(line, isNewData: false);
+                return;
+            }
+
+            var enrollment = new CsvEnrollment
+            {
+                user_id = line.TargetId,
+                nces_schoolid = ncesMapping?.ncesId
+            };
+
+            var data = new ApiPost<CsvEnrollment>(JsonConvert.SerializeObject(enrollment));
+           
+            data.DistrictId = repo.District.DistrictId.ToString();
+            data.DistrictName = repo.District.Name;
+            data.LastSeen = line.LastSeen;
+            data.SourcedId = line.SourcedId;
+            data.TargetId = line.TargetId;
+            data.Status = line.LoadStatus.ToString();
+
+            var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
+            ReadResponse(line, repo, response);
+        }
+
+        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response)
+        {
+            if (response.Success)
+            {
+                line.SyncStatus = SyncStatus.Applied;
+                if (!string.IsNullOrEmpty(response.TargetId))
+                    line.TargetId = response.TargetId;
+                line.Error = response.ErrorMessage;
+            }
+            else
+            {
+                line.SyncStatus = SyncStatus.ApplyFailed;
+                line.Error = response.ErrorMessage;
+
+                // The Lms can send false success if the entity already exist. In such a case we read the targetId
+                if (!string.IsNullOrEmpty(response.TargetId))
+                    line.TargetId = response.TargetId;
+            }
+
+            line.Touch();
+            repo.PushLineHistory(line, isNewData: false);
         }
     }
 }
