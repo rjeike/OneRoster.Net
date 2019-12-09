@@ -202,6 +202,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Enable in Nightly Sync?")]
         public bool NightlySyncEnabled { get; set; } = true;
         public DateTime? LastSyncedOn { get; set; }
+        public bool StopCurrentAction { get; set; } = false;
 
         public District ShallowCopy()
         {

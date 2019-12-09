@@ -124,6 +124,7 @@ namespace OneRosterSync.Net.Processing
                 var pe = (ex as ProcessingException)
                     ?? new ProcessingException(Logger.Here(), $"Unhandled processing error.  {ex.Message}", ex);
                 Repo.RecordProcessingError(pe.Message, processingStage);
+                //Repo.SetStopFlag(Repo.DistrictId, false);
                 await Repo.Committer.Invoke();
                 return false;
             }

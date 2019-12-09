@@ -94,7 +94,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public IActionResult LoadFiles()
+        public async Task<IActionResult> LoadFiles()
         {
             try
             {
@@ -132,7 +132,7 @@ namespace OneRosterSync.Net.Controllers
                             using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), FileMode.Create))
                             {
                                 outputSteam.Seek(0, SeekOrigin.Begin);
-                                outputSteam.CopyTo(fileStream);
+                                await outputSteam.CopyToAsync(fileStream);
                             }
 
                             ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
@@ -547,7 +547,7 @@ namespace OneRosterSync.Net.Controllers
         private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = await db.Districts.FindAsync(districtId);
-
+            district.StopCurrentAction = false;
             district.ProcessingAction = processingAction;
             await db.SaveChangesAsync();
 
@@ -725,6 +725,15 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> ApplyEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Apply);
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StopCurrentAction(int districtId)
+        {
+            District district = await db.Districts.FindAsync(districtId);
+            district.StopCurrentAction = true;
+            await db.SaveChangesAsync();
             return RedirectToAction("EnrollmentSyncDetails", new { districtId });
         }
 

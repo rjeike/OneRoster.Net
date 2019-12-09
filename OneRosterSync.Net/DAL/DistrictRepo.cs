@@ -277,5 +277,23 @@ namespace OneRosterSync.Net.DAL
                 }).FirstOrDefault();
             return ncesMap;
         }
+
+        public bool GetStopFlag(int DistrictID)
+        {
+            bool flag = false;
+            var district = Db.Districts.FirstOrDefault(w => w.DistrictId == DistrictID);
+            Db.Entry(district).ReloadAsync().Wait();
+            if (district != null)
+                flag = district.StopCurrentAction;
+
+            return flag;
+        }
+
+        //public void SetStopFlag(int DistrictID, bool flag)
+        //{
+        //    var district = Db.Districts.FirstOrDefault(w => w.DistrictId == DistrictID);
+        //    if (district != null)
+        //        district.StopCurrentAction = flag;
+        //}
     }
 }

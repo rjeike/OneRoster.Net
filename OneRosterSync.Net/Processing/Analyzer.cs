@@ -101,6 +101,7 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.InvokeIfChunk();
             }
             await Repo.Committer.InvokeIfAny();
+            GC.Collect();
 
             //Commented as districts do not share enrollments CSV
             // process enrollments in the database associated with the District based on the conditions below (in chunks of 200)
@@ -138,7 +139,7 @@ namespace OneRosterSync.Net.Processing
             //            IncludeReadyTouch(user);
             //    },
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
-
+            
             // now process any user changes we may have missed
             await Repo.Lines<CsvUser>()
                 //.Where(u => u.IncludeInSync // Commented for enrollment process changes
@@ -148,8 +149,12 @@ namespace OneRosterSync.Net.Processing
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
                     action: async (user) =>
                     {
-                        CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(user.RawData);
+                        if (Repo.GetStopFlag(user.DistrictId))
+                        {
+                            throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                        }
 
+                        CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(user.RawData);
                         var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvUser.orgSourcedIds);
                         if (org == null) // should never happen
                         {
@@ -167,6 +172,7 @@ namespace OneRosterSync.Net.Processing
 
 
             await Repo.Committer.Invoke();
+            GC.Collect();
         }
     }
 }

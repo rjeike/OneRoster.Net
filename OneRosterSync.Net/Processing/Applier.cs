@@ -44,7 +44,7 @@ namespace OneRosterSync.Net.Processing
                 using (var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>())
                 {
                     var repo = new DistrictRepo(db, DistrictId);
-
+                    
                     // filter on all lines that are included and ready to be applied or apply was failed
                     var lines = repo.Lines<T>().Where(
                         l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
@@ -86,6 +86,10 @@ namespace OneRosterSync.Net.Processing
             {
                 // re-create the Repo and Data pulled from it
                 var repo = new DistrictRepo(db, DistrictId);
+                if (repo.GetStopFlag(DistrictId))
+                {
+                    throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                }
                 var newLine = await repo.Lines<T>().SingleAsync(l => l.DataSyncLineId == line.DataSyncLineId);
                 await ApplyLine<T>(repo, newLine);
                 await repo.Committer.Invoke();
@@ -307,7 +311,7 @@ namespace OneRosterSync.Net.Processing
             };
 
             var data = new ApiPost<CsvEnrollment>(JsonConvert.SerializeObject(enrollment));
-           
+
             data.DistrictId = repo.District.DistrictId.ToString();
             data.DistrictName = repo.District.Name;
             data.LastSeen = line.LastSeen;

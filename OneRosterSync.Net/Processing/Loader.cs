@@ -52,6 +52,15 @@ namespace OneRosterSync.Net.Processing
                             {
                                 record = csv.GetRecord<T>();
                                 await ProcessRecord(record, table, now);
+                                if (i > 2 && i % 2000 == 0)
+                                    GC.Collect();
+                                if (i > 2 && i % 100 == 0)
+                                {
+                                    if (Repo.GetStopFlag(Repo.DistrictId))
+                                    {
+                                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                                    }
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -90,7 +99,7 @@ namespace OneRosterSync.Net.Processing
                     throw new ProcessingException(Logger, $"orgSourcedIds cannot be empty in CsvUser for sourcedId {record.sourcedId}");
                 }
             }
-
+            
             DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
 
             bool isNewRecord = line == null;

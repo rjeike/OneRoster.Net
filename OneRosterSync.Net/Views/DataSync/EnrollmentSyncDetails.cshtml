@@ -6,7 +6,6 @@
     var count = Model.Where(w => w.IncludeInSync).Count();
     var headChecked = Model.Count() > 0 && count == Model.Count();
     //string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
-
     //if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
     //    ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
     //{
@@ -115,6 +114,14 @@
                 @*}*@
             </form>
         </div>
+        @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
+ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
+        {
+            <form asp-action="StopCurrentAction" method="post">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="Stop current action" class="btn btn-primary" />
+            </form>
+        }
     </div>
 
     <div class="col-md-5 form-esd rht">
@@ -237,7 +244,7 @@
                     <td>
                         @Html.DisplayFor(modelItem => item.Table)
                     </td>
-                    <td>
+                    <td style="text-align: center;">
                         @if (ViewBag.AppliedFlag != null)
                         {
                             @if (ViewBag.AppliedFlag)
