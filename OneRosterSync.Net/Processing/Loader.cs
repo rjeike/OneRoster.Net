@@ -45,33 +45,53 @@ namespace OneRosterSync.Net.Processing
 
                         csv.Read();
                         csv.ReadHeader();
-                        for (int i = 0; await csv.ReadAsync(); i++)
+                        //for (int i = 0; await csv.ReadAsync(); i++)
+                        //{
+                        //    T record = null;
+                        //    try
+                        //    {
+                        //        record = csv.GetRecord<T>();
+                        //        await ProcessRecord(record, table, now);
+                        //        if (i > 2 && i % 2000 == 0)
+                        //            GC.Collect();
+                        //        if (i > 2 && i % 100 == 0)
+                        //        {
+                        //            if (Repo.GetStopFlag(Repo.DistrictId))
+                        //            {
+                        //                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                        //            }
+                        //        }
+                        //    }
+                        //    catch (Exception ex)
+                        //    {
+                        //        if (ex is ProcessingException)
+                        //            throw;
+
+                        //        string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
+                        //        throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                        //    }
+
+                        //    await Repo.Committer.InvokeIfChunk();
+                        //}
+
+                        T rec = null;
+                        try
                         {
-                            T record = null;
-                            try
+                            var records = csv.GetRecords<T>();
+                            foreach (var r in records)
                             {
-                                record = csv.GetRecord<T>();
-                                await ProcessRecord(record, table, now);
-                                if (i > 2 && i % 2000 == 0)
-                                    GC.Collect();
-                                if (i > 2 && i % 100 == 0)
-                                {
-                                    if (Repo.GetStopFlag(Repo.DistrictId))
-                                    {
-                                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                                    }
-                                }
+                                rec = r;
+                                await ProcessRecord(r, table, now);
                             }
-                            catch (Exception ex)
-                            {
-                                if (ex is ProcessingException)
-                                    throw;
-
-                                string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
-                                throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
-                            }
-
                             await Repo.Committer.InvokeIfChunk();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex is ProcessingException)
+                                throw;
+
+                            string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
+                            throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
                         }
 
                         // commit any last changes
@@ -99,7 +119,7 @@ namespace OneRosterSync.Net.Processing
                     throw new ProcessingException(Logger, $"orgSourcedIds cannot be empty in CsvUser for sourcedId {record.sourcedId}");
                 }
             }
-            
+
             DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
 
             bool isNewRecord = line == null;
