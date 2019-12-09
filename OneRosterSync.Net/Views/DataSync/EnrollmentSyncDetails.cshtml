@@ -4,7 +4,7 @@
 @{
     ViewData["Title"] = "EnrollmentSyncDetails";
     var count = Model.Where(w => w.IncludeInSync).Count();
-    var headChecked = count == Model.Count();
+    var headChecked = Model.Count() > 0 && count == Model.Count();
     //string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
 
     //if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
@@ -35,7 +35,7 @@
     //}
 }
 
-<h2>Enrollment Sync Details</h2>
+<h2>Enrollment Sync Details - @ViewBag.CurrentDistrict.Name</h2>
 <style>
     .form-esd form {
         display: inline-block;
