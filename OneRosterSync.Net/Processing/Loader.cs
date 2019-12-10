@@ -82,8 +82,8 @@ namespace OneRosterSync.Net.Processing
                             {
                                 rec = r;
                                 await ProcessRecord(r, table, now);
+                                await Repo.Committer.InvokeIfChunk();
                             }
-                            await Repo.Committer.InvokeIfChunk();
                         }
                         catch (Exception ex)
                         {
