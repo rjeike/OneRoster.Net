@@ -656,7 +656,7 @@ namespace OneRosterSync.Net.Controllers
                 currentPage++;
 
             var EnrollmentsToSync = repo.Lines<CsvUser>().AsNoTracking()
-                .Where(w => w.DistrictId == districtId && w.IncludeInSync
+                .Where(w => w.DistrictId == districtId
                     && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
