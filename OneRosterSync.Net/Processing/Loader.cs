@@ -78,11 +78,19 @@ namespace OneRosterSync.Net.Processing
                         try
                         {
                             var records = csv.GetRecords<T>();
+                            int i = 0;
                             foreach (var r in records)
                             {
-                                rec = r;
+                                rec = r; i++;
                                 await ProcessRecord(r, table, now);
                                 await Repo.Committer.InvokeIfChunk();
+                                if (i > 2 && i % 100 == 0)
+                                {
+                                    if (Repo.GetStopFlag(Repo.DistrictId))
+                                    {
+                                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                                    }
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -96,6 +104,7 @@ namespace OneRosterSync.Net.Processing
 
                         // commit any last changes
                         await Repo.Committer.InvokeIfAny();
+                        GC.Collect();
                     }
                     Logger.Here().LogInformation($"Processed Csv file {filePath}");
                 }
