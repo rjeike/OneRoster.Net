@@ -102,7 +102,8 @@ namespace OneRosterSync.Net.Processing
             }
             else
             {
-                Logger.Here().LogInformation($"Csv file not found {filePath}");
+                Logger.Here().LogInformation($"Csv file for {LastEntity} not found {filePath}");
+                throw new ProcessingException(Logger.Here(), $"Csv file for {LastEntity} not found {filePath}");
             }
         }
 

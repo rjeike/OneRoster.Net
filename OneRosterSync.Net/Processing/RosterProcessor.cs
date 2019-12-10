@@ -148,11 +148,11 @@ namespace OneRosterSync.Net.Processing
             try
             {
                 await loader.LoadFile<CsvOrg>(@"orgs.csv");
-                await loader.LoadFile<CsvCourse>(@"courses.csv");
-                await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
-                await loader.LoadFile<CsvClass>(@"classes.csv");
+                //await loader.LoadFile<CsvCourse>(@"courses.csv");
+                //await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
+                //await loader.LoadFile<CsvClass>(@"classes.csv");
                 await loader.LoadFile<CsvUser>(@"users.csv");
-                await loader.LoadFile<CsvEnrollment>(@"enrollments.csv"); // Enrollments csv is not available
+                //await loader.LoadFile<CsvEnrollment>(@"enrollments.csv"); // Enrollments csv is not available
             }
             catch (Exception ex)
             {

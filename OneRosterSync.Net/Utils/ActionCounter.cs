@@ -56,7 +56,6 @@ namespace OneRosterSync.Net.Utils
             await AsyncAction.Invoke();
             TotalInvokes++;
             Count = 0;
-            GC.Collect();
         }
     }
 }

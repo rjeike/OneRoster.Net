@@ -101,7 +101,6 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.InvokeIfChunk();
             }
             await Repo.Committer.InvokeIfAny();
-            GC.Collect();
 
             //Commented as districts do not share enrollments CSV
             // process enrollments in the database associated with the District based on the conditions below (in chunks of 200)
@@ -139,13 +138,45 @@ namespace OneRosterSync.Net.Processing
             //            IncludeReadyTouch(user);
             //    },
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
-            
+
+            await Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).ForEachInChunksAsync(chunkSize: 200,
+                action: async (org) =>
+                {
+                    CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+                    string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
+                    var users = await Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && !w.IncludeInSync).ToListAsync();
+                    //int count = 0, total = users.Count;
+                    await users.AsQueryable().ForEachInChunksAsync(chunkSize: 200,
+                        action: async (user) =>
+                        {
+                            await Task.Yield();
+                            //count++;
+                            IncludeReadyTouch(user);
+                        },
+                        onChunkComplete: async () =>
+                        {
+                            await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
+                            {
+                                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                            }
+                        });
+                },
+                onChunkComplete: async () =>
+                {
+                    await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
+                    {
+                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                    }
+                });
+
+            //GC.Collect();
+            /*
             // now process any user changes we may have missed
             await Repo.Lines<CsvUser>()
                 //.Where(u => u.IncludeInSync // Commented for enrollment process changes
                 //&& u.LoadStatus != LoadStatus.NoChange
                 //&& u.SyncStatus != SyncStatus.ReadyToApply)
-                .ForEachInChunksForShrinkingList(chunkSize: 200,
+                .ForEachInChunksAsync(chunkSize: 200,
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
                     action: async (user) =>
                     {
@@ -162,15 +193,19 @@ namespace OneRosterSync.Net.Processing
                             Logger.Here().LogError($"Missing org for enrollment for line {user.DataSyncLineId}");
                             return;
                         }
-                        if (org != null && !org.IncludeInSync)
+                        else if (org != null && !org.IncludeInSync)
+                        {
+                            user.IncludeInSync = false;
+                            user.SyncStatus = org.SyncStatus = SyncStatus.Loaded;
                             return;
+                        }
 
                         IncludeReadyTouch(user);
                     },
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
                     onChunkComplete: async () => await Repo.Committer.Invoke());
 
-
+    */
             await Repo.Committer.Invoke();
             GC.Collect();
         }

@@ -656,24 +656,14 @@ namespace OneRosterSync.Net.Controllers
                 currentPage++;
 
             var EnrollmentsToSync = repo.Lines<CsvUser>().AsNoTracking()
-                .Where(w => w.DistrictId == districtId
+                .Where(w => w.DistrictId == districtId && w.IncludeInSync
                     && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
                         || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                .Select(s => GetDataSyncLineViewModel<CsvUser>(s))
-                .Skip(RecordsPerPage * currentPage)
-                .Take(RecordsPerPage + 1).ToList();
+                .Select(s => GetDataSyncLineViewModel<CsvUser>(s)).ToList();
 
             ViewBag.CurrentPage = currentPage;
             ViewBag.RecordsPerPage = RecordsPerPage;
-
-            //EnrollmentsToSync = EnrollmentsToSync
-            //    .Skip(RecordsPerPage * currentPage)
-            //.Take(RecordsPerPage + 1)
-            //.ToList();
-
-            ViewBag.EnrollmentsToSyncCount = EnrollmentsToSync.Count;
-            EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
 
             List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
             for (int i = 0; i < EnrollmentsToSync.Count; i++)
@@ -683,6 +673,7 @@ namespace OneRosterSync.Net.Controllers
                 CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(usrLine.RawData);
                 DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == usrLine.SourcedId);
                 DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
+                
                 if (org.IncludeInSync || AppliedFlag)
                 {
                     var usrCsv = JsonConvert.DeserializeObject<CsvUser>(usr.RawData);
@@ -706,6 +697,11 @@ namespace OneRosterSync.Net.Controllers
                 }
             }
 
+            ViewBag.TotalEnrollmentsToSyncCount = EnrollmentLines.Count;
+            EnrollmentLines = EnrollmentLines.Skip(RecordsPerPage * currentPage).Take(RecordsPerPage + 1).ToList();
+            ViewBag.EnrollmentsToSyncCount = EnrollmentLines.Count;
+            EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
+
             var district = await db.Districts.FirstOrDefaultAsync(w => w.DistrictId == districtId);
             ViewBag.CurrentDistrict = district;
 
@@ -718,6 +714,7 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.SyncAnalyzeError = SyncHistory?.AnalyzeError;
             ViewBag.SyncApplyError = SyncHistory?.ApplyError;
 
+            GC.Collect();
             return View(EnrollmentLines);
         }
 
