@@ -52,6 +52,10 @@ namespace OneRosterSync.Net.Processing
                             {
                                 record = csv.GetRecord<T>();
                                 await ProcessRecord(record, table, now);
+                                if (i > 2 && i % 2000 == 0)
+                                {
+                                    await Repo.Committer.InvokeIfChunk();
+                                }
                                 if (i > 2 && i % 100 == 0)
                                 {
                                     if (Repo.GetStopFlag(Repo.DistrictId))
