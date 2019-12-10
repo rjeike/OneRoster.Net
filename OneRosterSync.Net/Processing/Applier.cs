@@ -48,7 +48,7 @@ namespace OneRosterSync.Net.Processing
                     // filter on all lines that are included and ready to be applied or apply was failed
                     var lines = repo.Lines<T>().Where(
                         l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
-
+                    
                     //if(typeof(T) == typeof(CsvUser))
                     //{
                     //    lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
@@ -86,10 +86,6 @@ namespace OneRosterSync.Net.Processing
             {
                 // re-create the Repo and Data pulled from it
                 var repo = new DistrictRepo(db, DistrictId);
-                if (repo.GetStopFlag(DistrictId))
-                {
-                    throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                }
                 var newLine = await repo.Lines<T>().SingleAsync(l => l.DataSyncLineId == line.DataSyncLineId);
                 await ApplyLine<T>(repo, newLine);
                 await repo.Committer.Invoke();
@@ -198,7 +194,7 @@ namespace OneRosterSync.Net.Processing
             {
                 var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
                 DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == userCsv.orgSourcedIds);
-                if(org == null || !org.IncludeInSync)
+                if (org == null || !org.IncludeInSync)
                 {
                     return;
                 }
@@ -229,6 +225,11 @@ namespace OneRosterSync.Net.Processing
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
+
+            if (repo.GetStopFlag(DistrictId))
+            {
+                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+            }
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
             ReadResponse(line, repo, response);
