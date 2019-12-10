@@ -4,9 +4,14 @@ services:
   onerostersync.net:
     image: onerostersyncnet
     restart: always
+    network_mode: bridge
     build:
       context: .
       dockerfile: OneRosterSync.Net/Dockerfile
+    environment:
+      - VIRTUAL_HOST=oneroster.summitk12.com
+    expose:
+      - "80"
     #depends_on:
       #- sqlserver
   #sqlserver:
