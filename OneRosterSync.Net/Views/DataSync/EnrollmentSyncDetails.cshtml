@@ -380,7 +380,7 @@
 
     function toggleIncludeInSyncAll(control) {
         let checkFlag = $(control).prop('checked');
-        $('input[type=checkbox].chkToggle').map((i, item) => $(item).prop('checked', checkFlag).change());
+        $('input[type=checkbox].chkToggle').map(async (i, item) => $(item).prop('checked', checkFlag).change());
     }
 
     function setAction(val) {
