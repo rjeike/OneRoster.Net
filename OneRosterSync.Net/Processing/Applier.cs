@@ -273,7 +273,7 @@ namespace OneRosterSync.Net.Processing
             }
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
-            ReadResponse(line, repo, response);
+            ReadResponse(line, repo, response, false);
             if (response.Success)
             {
                 if (line.Table == nameof(CsvUser))
@@ -379,15 +379,15 @@ namespace OneRosterSync.Net.Processing
             data.Status = line.LoadStatus.ToString();
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
-            ReadResponse(line, repo, response);
+            ReadResponse(line, repo, response, true);
         }
 
-        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response)
+        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response, bool fromEnrollment)
         {
             if (response.Success)
             {
                 line.SyncStatus = SyncStatus.Applied;
-                if (!string.IsNullOrEmpty(response.TargetId))
+                if (!string.IsNullOrEmpty(response.TargetId) && !fromEnrollment)
                     line.TargetId = response.TargetId;
                 line.Error = response.ErrorMessage;
             }
