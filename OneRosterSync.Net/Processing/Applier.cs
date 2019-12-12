@@ -48,7 +48,7 @@ namespace OneRosterSync.Net.Processing
                     // filter on all lines that are included and ready to be applied or apply was failed
                     var lines = repo.Lines<T>().Where(
                         l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
-                    
+
                     //if(typeof(T) == typeof(CsvUser))
                     //{
                     //    lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
@@ -290,7 +290,6 @@ namespace OneRosterSync.Net.Processing
         private async Task ApplyEnrollment(DataSyncLine line, DistrictRepo repo, ApiManager apiManager)
         {
             var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-            var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
             DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
 
             if (org == null || !org.IncludeInSync)
@@ -298,8 +297,23 @@ namespace OneRosterSync.Net.Processing
                 return;
             }
 
+            var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+            string ncesId = string.Empty;
             // Is NCES school ID given?
-            if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
+            if (orgCsv != null && !string.IsNullOrEmpty(orgCsv.identifier))
+            {
+                ncesId = orgCsv.identifier;
+            }
+            else 
+            {
+                var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+                if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
+                {
+                    ncesId = ncesMapping.ncesId;
+                }
+            }
+            //else if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
+            if (string.IsNullOrEmpty(ncesId))
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
                 line.Error = "NCES school ID not found";
@@ -307,15 +321,11 @@ namespace OneRosterSync.Net.Processing
                 repo.PushLineHistory(line, isNewData: false);
                 return;
             }
-            //else
-            //{
-            //    line.Error = $"CsvOrg line ID {org.DataSyncLineId} is not marked to sync with LMS.";
-            //}
 
             var enrollment = new CsvEnrollment
             {
                 user_id = line.TargetId,
-                nces_schoolid = ncesMapping?.ncesId
+                nces_schoolid = ncesId // ncesMapping?.ncesId
             };
 
             var data = new ApiPost<CsvEnrollment>(JsonConvert.SerializeObject(enrollment));
