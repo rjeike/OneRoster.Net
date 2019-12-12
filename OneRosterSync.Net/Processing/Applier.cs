@@ -54,6 +54,30 @@ namespace OneRosterSync.Net.Processing
                     //    lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
                     //}
 
+                    if (typeof(T) == typeof(CsvUser))
+                    {
+                        var lineIDs = new List<int>();
+                        var orgs = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync);
+                        //lines = lines.Where(w => w.DataSyncLineId == 516196);
+                        await lines.ForEachAsync(line =>
+                        {
+                            var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+                            var org = orgs.SingleOrDefault(o => o.SourcedId == userCsv.orgSourcedIds);
+                            if (org != null && org.IncludeInSync)
+                            {
+                                lineIDs.Add(line.DataSyncLineId);
+                            }
+                        });
+                        if (lineIDs.Count > 0)
+                        {
+                            lines = lines.Where(w => lineIDs.Any(a => a == w.DataSyncLineId));
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
                     if (curr == 0)
@@ -66,14 +90,31 @@ namespace OneRosterSync.Net.Processing
                         throw new ProcessingException(Logger, "Apply failed to update SyncStatus of applied record. This indicates that some apply calls are failing and hence the apply process was aborted.");
                     last = curr;
 
+                    List<Task> tasks = new List<Task>();
+                    var task = lines.ForEachInChunksAsync(chunkSize: ParallelChunkSize,
+                        action: async (line) =>
+                        {
+                            await Task.Yield();
+                            //count++;
+                            ApplyLineParallel<T>(line).Wait();
+                        },
+                        onChunkComplete: async () =>
+                        {
+                            //await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
+                            //{
+                            //    throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                            //}
+                        });
+                    tasks.Add(task);
                     // process chunks of lines in parallel
-                    IEnumerable<Task> tasks = await lines
-                        .AsNoTracking()
-                        .Take(ParallelChunkSize)
-                        .Select(line => ApplyLineParallel<T>(line))
-                        .ToListAsync();
+                    //IEnumerable<Task> tasks = await lines
+                    //    .AsNoTracking()
+                    //    .Take(ParallelChunkSize)
+                    //    .Select(line => ApplyLineParallel<T>(line))
+                    //    .ToListAsync();
 
                     await Task.WhenAll(tasks);
+                    //await Task.WhenAll(tasks);
                 }
             }
         }
@@ -304,7 +345,7 @@ namespace OneRosterSync.Net.Processing
             {
                 ncesId = orgCsv.identifier;
             }
-            else 
+            else
             {
                 var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
                 if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))

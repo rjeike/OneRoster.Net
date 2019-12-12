@@ -198,30 +198,30 @@ namespace OneRosterSync.Net.Processing
 			    await applier.ApplyLines<CsvOrg>();
 		    }
 
-		    if (Repo.District.SyncCourses)
-		    {
-			    await applier.ApplyLines<CsvCourse>();
-		    }
+		    //if (Repo.District.SyncCourses)
+		    //{
+			   // await applier.ApplyLines<CsvCourse>();
+		    //}
 
-		    if (Repo.District.SyncAcademicSessions)
-		    {
-			    await applier.ApplyLines<CsvAcademicSession>();
-		    }
+		    //if (Repo.District.SyncAcademicSessions)
+		    //{
+			   // await applier.ApplyLines<CsvAcademicSession>();
+		    //}
 
-		    if (Repo.District.SyncClasses)
-		    {
-			    await applier.ApplyLines<CsvClass>();
-		    }
+		    //if (Repo.District.SyncClasses)
+		    //{
+			   // await applier.ApplyLines<CsvClass>();
+		    //}
 
 		    if (Repo.District.SyncUsers)
 		    {
 			    await applier.ApplyLines<CsvUser>();
 		    }
 
-		    if (Repo.District.SyncEnrollment)
-		    {
-			    await applier.ApplyLines<CsvEnrollment>();
-		    }
+		    //if (Repo.District.SyncEnrollment)
+		    //{
+			   // await applier.ApplyLines<CsvEnrollment>();
+		    //}
 	    }
     }
 }
