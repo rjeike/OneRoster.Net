@@ -94,13 +94,13 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> LoadFiles()
+        public async Task LoadFiles(ILogger logger)
         {
             try
             {
                 string Host = "sftp.summitk12.com", Message = string.Empty;
 
-                var districts = db.Districts.Where(w => w.NightlySyncEnabled && w.LastSyncedOn == null).ToList();
+                var districts = db.Districts.Where(w => w.NightlySyncEnabled).ToList();
                 foreach (var district in districts)
                 {
                     if (string.IsNullOrEmpty(district.FTPUsername) || string.IsNullOrEmpty(district.FTPPassword) || string.IsNullOrEmpty(district.FTPPath))
@@ -144,22 +144,15 @@ namespace OneRosterSync.Net.Controllers
                     catch (Exception ex)
                     {
                         Message += $"FTP fetch failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
-                        Logger.Here().LogError(ex, ex.Message);
+                        logger.Here().LogError(ex, Message + ".\n" + ex.Message);
                     }
                 }
                 db.SaveChanges();
-
-                TempData["SuccessFlag"] = true;
-                TempData["Message"] = string.IsNullOrEmpty(Message) ? $"All districts are synced. Please load for each district manually for manual sync." : Message;
             }
             catch (Exception ex)
             {
-                TempData["SuccessFlag"] = false;
-                TempData["Message"] = ex.Message;
                 Logger.Here().LogError(ex, ex.Message);
             }
-
-            return RedirectToAction("DistrictList");
         }
 
         [HttpGet]
@@ -325,6 +318,7 @@ namespace OneRosterSync.Net.Controllers
             clonedDistrict.ProcessingAction = ProcessingAction.None;
             clonedDistrict.Created = DateTime.Now;
             clonedDistrict.Modified = DateTime.Now;
+            clonedDistrict.LastSyncedOn = null;
 
             db.Add(clonedDistrict);
             db.SaveChanges();
@@ -560,9 +554,6 @@ namespace OneRosterSync.Net.Controllers
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> Apply(int districtId) => await Process(districtId, ProcessingAction.Apply);
         [HttpPost, ValidateAntiForgeryToken] public async Task<IActionResult> FullProcess(int districtId) => await Process(districtId, ProcessingAction.FullProcess);
 
-
-
-
         private static async Task<DataSyncLineReportLine> ReportLine<T>(DistrictRepo repo) where T : CsvBaseObject
         {
             var lines = repo.Lines<T>().AsNoTracking();
@@ -673,7 +664,7 @@ namespace OneRosterSync.Net.Controllers
                 CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(usrLine.RawData);
                 DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == usrLine.SourcedId);
                 DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
-                
+
                 if (org.IncludeInSync || AppliedFlag)
                 {
                     var usrCsv = JsonConvert.DeserializeObject<CsvUser>(usr.RawData);

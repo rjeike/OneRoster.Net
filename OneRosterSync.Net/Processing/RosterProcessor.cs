@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Authentication;
@@ -22,6 +24,8 @@ namespace OneRosterSync.Net.Processing
         private IServiceScope ServiceScope;
         private ApplicationDbContext Db;
         private DistrictRepo Repo;
+
+        private ProcessingAction CurrentProcessingAction = ProcessingAction.None;
 
         public RosterProcessor(
             IServiceProvider services,
@@ -68,6 +72,7 @@ namespace OneRosterSync.Net.Processing
         /// </summary>
         public async Task Process(ProcessingAction action)
         {
+            CurrentProcessingAction = action;
             switch (action)
             {
                 default:
@@ -108,6 +113,7 @@ namespace OneRosterSync.Net.Processing
             {
                 Repo.RecordProcessingStart(processingStage);
                 await Repo.Committer.Invoke();
+                var action = Repo.District.ProcessingAction;
 
                 switch (processingStage)
                 {
@@ -153,6 +159,10 @@ namespace OneRosterSync.Net.Processing
                 //await loader.LoadFile<CsvClass>(@"classes.csv");
                 await loader.LoadFile<CsvUser>(@"users.csv");
                 //await loader.LoadFile<CsvEnrollment>(@"enrollments.csv"); // Enrollments csv is not available
+                if (CurrentProcessingAction == ProcessingAction.FullProcess)
+                {
+                    await IncludeInSyncOrgsNightlySync(Repo.DistrictId);
+                }
             }
             catch (Exception ex)
             {
@@ -223,5 +233,15 @@ namespace OneRosterSync.Net.Processing
 			   // await applier.ApplyLines<CsvEnrollment>();
 		    //}
 	    }
+
+        public async Task IncludeInSyncOrgsNightlySync(int districtId)
+        {
+            District district = await Db.Districts.FindAsync(districtId);
+            district.StopCurrentAction = false;
+            var lines = await Db.DataSyncLines.Where(w => w.DistrictId == districtId && !w.IncludeInSync && w.Table == nameof(CsvOrg)).ToListAsync();
+            lines.ForEach(i => i.IncludeInSync = true);
+            await Db.SaveChangesAsync();
+        }
+
     }
 }

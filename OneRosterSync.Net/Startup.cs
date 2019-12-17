@@ -14,6 +14,7 @@ using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Processing;
 using ReflectionIT.Mvc.Paging;
 using Swashbuckle.AspNetCore.Swagger;
+using Hangfire;
 
 namespace OneRosterSync.Net
 {
@@ -44,10 +45,15 @@ namespace OneRosterSync.Net
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlServerOptions => sqlServerOptions.CommandTimeout(300)));
             //options.UseSqlServer(connString));
 
+            services.AddHangfire(x => x.UseSqlServerStorage(
+                Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddDefaultIdentity<IdentityUser>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddScoped<INightlyFtpSyncService, NightlyFtpSyncService>();
 
             services.AddPaging(options =>
             {
@@ -100,6 +106,10 @@ namespace OneRosterSync.Net
             //DbSeeder.SeedDb(app);
 
             app.UseAuthentication();
+
+            app.UseHangfireDashboard("/hangfire");
+            app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
+            HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"));
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
