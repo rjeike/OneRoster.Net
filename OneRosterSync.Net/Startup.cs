@@ -15,6 +15,7 @@ using OneRosterSync.Net.Processing;
 using ReflectionIT.Mvc.Paging;
 using Swashbuckle.AspNetCore.Swagger;
 using Hangfire;
+using Hangfire.Dashboard;
 
 namespace OneRosterSync.Net
 {
@@ -107,7 +108,7 @@ namespace OneRosterSync.Net
 
             app.UseAuthentication();
 
-            app.UseHangfireDashboard("/hangfire");
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions { IsReadOnlyFunc = (DashboardContext context) => true });
             app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
             HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"));
 
