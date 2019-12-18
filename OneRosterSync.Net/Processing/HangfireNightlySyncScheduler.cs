@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using TimeZoneConverter;
 
@@ -23,4 +24,12 @@ namespace OneRosterSync.Net.Processing
         }
     }
 
+    public class HangfireDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+    {
+        public bool Authorize(DashboardContext context)
+        {
+            //var httpContext = context.GetHttpContext();
+            return true;
+        }
+    }
 }

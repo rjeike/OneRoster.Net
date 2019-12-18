@@ -108,7 +108,7 @@ namespace OneRosterSync.Net
 
             app.UseAuthentication();
 
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions { IsReadOnlyFunc = (DashboardContext context) => true });
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
             app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
             HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"));
 
