@@ -1,13 +1,6 @@
 ﻿using Hangfire;
-using Hangfire.Annotations;
-using Hangfire.Dashboard;
 using Hangfire.SqlServer;
-using OneRosterSync.Net.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+using TimeZoneConverter;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -16,7 +9,7 @@ namespace OneRosterSync.Net.Processing
         public static void ScheduleNightlySync(string conString)
         {
             JobStorage.Current = new SqlServerStorage(conString);
-            var CSTZone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+            var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
             if (CSTZone != null)
             {
                 RecurringJob.RemoveIfExists(nameof(NightlyFtpSyncService));
