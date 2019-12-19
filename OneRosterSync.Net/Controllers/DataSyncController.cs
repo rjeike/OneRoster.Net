@@ -710,13 +710,6 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ApplyEnrollmentSyncDetails(int districtId)
-        {
-            await Process(districtId, ProcessingAction.Apply);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
-        }
-
-        [HttpPost]
         public async Task<IActionResult> StopCurrentAction(int districtId)
         {
             District district = await db.Districts.FindAsync(districtId);
@@ -735,14 +728,21 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> LoadEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Load);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Load has been queued."); ;
         }
 
         [HttpPost]
         public async Task<IActionResult> AnalyzeEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Analyze);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Analyze has been queued."); ;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApplyEnrollmentSyncDetails(int districtId)
+        {
+            await Process(districtId, ProcessingAction.Apply);
+            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Apply has been queued.");
         }
 
         [HttpPost]
