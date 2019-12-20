@@ -90,7 +90,7 @@ namespace OneRosterSync.Net.Processing
                                         throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                                     }
                                 }
-                                await Repo.Committer.InvokeIfChunk(5000);
+                                //await Repo.Committer.InvokeIfChunk(5000); // Takes more time to load all
                             }
                             catch (Exception ex)
                             {
@@ -101,7 +101,8 @@ namespace OneRosterSync.Net.Processing
                                 throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
                             }
                         }
-                       
+                        await Repo.Committer.InvokeIfChunk();
+
                         // commit any last changes
                         await Repo.Committer.InvokeIfAny();
                         GC.Collect();
