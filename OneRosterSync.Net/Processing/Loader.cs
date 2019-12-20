@@ -45,44 +45,13 @@ namespace OneRosterSync.Net.Processing
 
                         csv.Read();
                         csv.ReadHeader();
-                        //for (int i = 0; await csv.ReadAsync(); i++)
-                        //{
-                        //    T record = null;
-                        //    try
-                        //    {
-                        //        record = csv.GetRecord<T>();
-                        //        await ProcessRecord(record, table, now);
-                        //        if (i > 2 && i % 2000 == 0)
-                        //            GC.Collect();
-                        //        if (i > 2 && i % 100 == 0)
-                        //        {
-                        //            if (Repo.GetStopFlag(Repo.DistrictId))
-                        //            {
-                        //                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                        //            }
-                        //        }
-                        //        await Repo.Committer.InvokeIfChunk();
-                        //    }
-                        //    catch (Exception ex)
-                        //    {
-                        //        if (ex is ProcessingException)
-                        //            throw;
-
-                        //        string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
-                        //        throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
-                        //    }
-
-                        //    await Repo.Committer.InvokeIfChunk();
-                        //}
-
-                        var records = csv.GetRecords<T>();
-                        int i = 0;
-                        foreach (var rec in records)
+                        for (int i = 0; await csv.ReadAsync(); i++)
                         {
+                            T record = null;
                             try
                             {
-                                i++;
-                                await ProcessRecord(rec, table, now);
+                                record = csv.GetRecord<T>();
+                                await ProcessRecord(record, table, now);
                                 if (i > 2 && i % 100 == 0)
                                 {
                                     if (Repo.GetStopFlag(Repo.DistrictId))
@@ -90,18 +59,47 @@ namespace OneRosterSync.Net.Processing
                                         throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                                     }
                                 }
-                                //await Repo.Committer.InvokeIfChunk(5000); // Takes more time to load all
+                                //await Repo.Committer.InvokeIfChunk(5000);
                             }
                             catch (Exception ex)
                             {
                                 if (ex is ProcessingException)
                                     throw;
 
-                                string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
+                                string o = record == null ? "(null)" : JsonConvert.SerializeObject(record);
                                 throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
                             }
                         }
+
                         await Repo.Committer.InvokeIfChunk();
+
+                        //var records = csv.GetRecords<T>();
+                        //int i = 0;
+                        //foreach (var rec in records)
+                        //{
+                        //    try
+                        //    {
+                        //        i++;
+                        //        await ProcessRecord(rec, table, now);
+                        //        if (i > 2 && i % 100 == 0)
+                        //        {
+                        //            if (Repo.GetStopFlag(Repo.DistrictId))
+                        //            {
+                        //                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                        //            }
+                        //        }
+                        //        //await Repo.Committer.InvokeIfChunk(5000); // Takes more time to load all
+                        //    }
+                        //    catch (Exception ex)
+                        //    {
+                        //        if (ex is ProcessingException)
+                        //            throw;
+
+                        //        string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
+                        //        throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                        //    }
+                        //}
+                        //await Repo.Committer.InvokeIfChunk();
 
                         // commit any last changes
                         await Repo.Committer.InvokeIfAny();
