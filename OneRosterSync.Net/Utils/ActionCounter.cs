@@ -37,7 +37,10 @@ namespace OneRosterSync.Net.Utils
         {
             int size = NewChunkSize > 0 ? NewChunkSize : ChunkSize;
             if (++Count >= size)
+            {
                 await Invoke();
+                GC.Collect();
+            }
         }
 
         /// <summary>
