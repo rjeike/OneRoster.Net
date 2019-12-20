@@ -29,7 +29,7 @@ namespace OneRosterSync.Net.Processing
             foreach (var line in await Repo.Lines().Where(l => l.LastSeen < start).ToListAsync())
             {
                 line.LoadStatus = LoadStatus.Deleted;
-                await Repo.Committer.InvokeIfChunk();
+                await Repo.Committer.InvokeIfChunk(500);
             }
             await Repo.Committer.InvokeIfAny();
         }

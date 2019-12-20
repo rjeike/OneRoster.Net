@@ -204,15 +204,16 @@ namespace OneRosterSync.Net.Controllers
                             district.LastSyncedOn = DateTime.Now;
                             db.Entry(district).State = EntityState.Modified;
                             db.SaveChanges();
+                            TempData["SuccessFlag"] = true;
                         }
                         catch (Exception ex)
                         {
+                            TempData["SuccessFlag"] = false;
                             Message += $"FTP fetch failed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                             Logger.Here().LogError(ex, ex.Message);
                         }
                     }
 
-                    TempData["SuccessFlag"] = true;
                     TempData["Message"] = string.IsNullOrEmpty(Message) ? $"Files loaded successfully for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}." : Message;
                 }
                 else

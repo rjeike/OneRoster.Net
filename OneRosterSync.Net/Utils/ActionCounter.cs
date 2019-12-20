@@ -33,9 +33,10 @@ namespace OneRosterSync.Net.Utils
         /// <summary>
         /// Increment counter, then Invoke Action and reset counter if we have reached ChunkSize 
         /// </summary>
-        public async Task InvokeIfChunk()
+        public async Task InvokeIfChunk(int NewChunkSize = 0)
         {
-            if (++Count >= ChunkSize)
+            int size = NewChunkSize > 0 ? NewChunkSize : ChunkSize;
+            if (++Count >= size)
                 await Invoke();
         }
 

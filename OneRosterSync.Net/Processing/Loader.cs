@@ -61,6 +61,7 @@ namespace OneRosterSync.Net.Processing
                         //                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                         //            }
                         //        }
+                        //        await Repo.Committer.InvokeIfChunk();
                         //    }
                         //    catch (Exception ex)
                         //    {
@@ -74,15 +75,14 @@ namespace OneRosterSync.Net.Processing
                         //    await Repo.Committer.InvokeIfChunk();
                         //}
 
-                        T rec = null;
-                        try
+                        var records = csv.GetRecords<T>();
+                        int i = 0;
+                        foreach (var rec in records)
                         {
-                            var records = csv.GetRecords<T>();
-                            int i = 0;
-                            foreach (var r in records)
+                            try
                             {
-                                rec = r; i++;
-                                await ProcessRecord(r, table, now);
+                                i++;
+                                await ProcessRecord(rec, table, now);
                                 if (i > 2 && i % 100 == 0)
                                 {
                                     if (Repo.GetStopFlag(Repo.DistrictId))
@@ -90,18 +90,18 @@ namespace OneRosterSync.Net.Processing
                                         throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                                     }
                                 }
+                                await Repo.Committer.InvokeIfChunk(5000);
                             }
-                            await Repo.Committer.InvokeIfChunk();
-                        }
-                        catch (Exception ex)
-                        {
-                            if (ex is ProcessingException)
-                                throw;
+                            catch (Exception ex)
+                            {
+                                if (ex is ProcessingException)
+                                    throw;
 
-                            string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
-                            throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                                string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
+                                throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
+                            }
                         }
-
+                       
                         // commit any last changes
                         await Repo.Committer.InvokeIfAny();
                         GC.Collect();
