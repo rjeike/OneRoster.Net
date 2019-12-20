@@ -68,7 +68,7 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> DistrictSyncLineErrors(int districtId)
         {
-            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
+            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && w.SyncStatus != SyncStatus.Applied && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
             {
                 DistrictId = d.DistrictId,
                 Created = d.Created,
