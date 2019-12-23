@@ -144,7 +144,7 @@ namespace OneRosterSync.Net.Processing
                 {
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
-                    var users = await Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && !w.IncludeInSync).ToListAsync();
+                    var users = await Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && (!w.IncludeInSync || w.SyncStatus == SyncStatus.ApplyFailed)).ToListAsync();
                     //int count = 0, total = users.Count;
                     await users.AsQueryable().ForEachInChunksAsync(chunkSize: 200,
                         action: async (user) =>
@@ -170,12 +170,12 @@ namespace OneRosterSync.Net.Processing
                 });
 
             //GC.Collect();
-            /*
+
             // now process any user changes we may have missed
             await Repo.Lines<CsvUser>()
-                //.Where(u => u.IncludeInSync // Commented for enrollment process changes
-                //&& u.LoadStatus != LoadStatus.NoChange
-                //&& u.SyncStatus != SyncStatus.ReadyToApply)
+                .Where(u => u.IncludeInSync
+                && u.LoadStatus != LoadStatus.NoChange
+                && u.SyncStatus != SyncStatus.ReadyToApply)
                 .ForEachInChunksAsync(chunkSize: 200,
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
                     action: async (user) =>
@@ -205,7 +205,7 @@ namespace OneRosterSync.Net.Processing
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
                     onChunkComplete: async () => await Repo.Committer.Invoke());
 
-    */
+
             await Repo.Committer.Invoke();
             GC.Collect();
         }

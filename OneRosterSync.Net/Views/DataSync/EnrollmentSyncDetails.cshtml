@@ -1,100 +1,100 @@
 ﻿@using OneRosterSync.Net.Components
 @model IEnumerable<OneRosterSync.Net.Models.EnrollmentSyncLineViewModel>
-    @addTagHelper *, OneRosterSync.Net
-    @{
+@addTagHelper *, OneRosterSync.Net
+@{
     ViewData["Title"] = "EnrollmentSyncDetails";
     var count = Model.Where(w => w.IncludeInSync).Count();
     var headChecked = Model.Count() > 0 && count == Model.Count();
+}
+
+<h2>Enrollment Sync Details - @ViewBag.CurrentDistrict.Name</h2>
+<style>
+    .form-esd form {
+        display: inline-block;
     }
 
-    <h2>Enrollment Sync Details - @ViewBag.CurrentDistrict.Name</h2>
-    <style>
-        .form-esd form {
-            display: inline-block;
+    .form-esd.lft div,
+    .form-esd.rht div {
+        padding: 0 7.5px;
+    }
+
+        .form-esd.lft div:nth-child(1),
+        .form-esd.rht div:nth-child(1) {
+            padding-left: 0;
         }
 
-        .form-esd.lft div,
-        .form-esd.rht div {
-            padding: 0 7.5px;
+        .form-esd.lft div:last-child,
+        .form-esd.rht div:last-child {
+            padding-right: 0;
         }
 
-            .form-esd.lft div:nth-child(1),
-            .form-esd.rht div:nth-child(1) {
-                padding-left: 0;
-            }
+    .form-esd.lft {
+        display: -webkit-box !important;
+        display: -ms-flexbox !important;
+        display: flex !important;
+        -webkit-box-pack: start !important;
+        -ms-flex-pack: start !important;
+        justify-content: flex-start !important;
+    }
 
-            .form-esd.lft div:last-child,
-            .form-esd.rht div:last-child {
-                padding-right: 0;
-            }
-
-        .form-esd.lft {
-            display: -webkit-box !important;
-            display: -ms-flexbox !important;
-            display: flex !important;
-            -webkit-box-pack: start !important;
-            -ms-flex-pack: start !important;
-            justify-content: flex-start !important;
-        }
-
-        .form-esd.rht {
-            display: -webkit-box !important;
-            display: -ms-flexbox !important;
-            display: flex !important;
-            -webkit-box-pack: end !important;
-            -ms-flex-pack: end !important;
-            justify-content: flex-end !important;
-        }
-    </style>
-    <div class="row">
-        <div class="col-md-7 form-esd lft">
-            <div>
-                <form asp-action="LoadEnrollmentSyncDetails">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="submit" value="1. Load" class="btn btn-primary" />
-                </form>
-            </div>
-            <div>
-                <form asp-action="SelectOrgs" method="get">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
-                </form>
-            </div>
-            <div>
-                <form asp-action="AnalyzeEnrollmentSyncDetails">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="submit" value="3. Analyze" class="btn btn-primary" />
-                </form>
-            </div>
-            @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
-            ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
-            {
+    .form-esd.rht {
+        display: -webkit-box !important;
+        display: -ms-flexbox !important;
+        display: flex !important;
+        -webkit-box-pack: end !important;
+        -ms-flex-pack: end !important;
+        justify-content: flex-end !important;
+    }
+</style>
+<div class="row">
+    <div class="col-md-7 form-esd lft">
+        <div>
+            <form asp-action="LoadEnrollmentSyncDetails">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="1. Load" class="btn btn-primary" />
+            </form>
+        </div>
+        <div>
+            <form asp-action="SelectOrgs" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
+            </form>
+        </div>
+        <div>
+            <form asp-action="AnalyzeEnrollmentSyncDetails">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="3. Analyze" class="btn btn-primary" />
+            </form>
+        </div>
+        @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
+       ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
+        {
             <form asp-action="StopCurrentAction" method="post">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
                 <input type="submit" value="Stop current action" class="btn btn-primary" />
             </form>
-            }
-        </div>
-
-        <div class="col-md-5 form-esd rht">
-            <div>
-                <form asp-action="ViewAllAppliedEnrollmentSyncDetails" method="get">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="submit" value="View all applied" class="btn btn-primary" />
-                </form>
-            </div>
-            <div>
-                <form asp-action="EnrollmentSyncDetails" method="get">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="submit" value="View all Ready to Apply" class="btn btn-primary" />
-                </form>
-            </div>
-        </div>
-
+        }
     </div>
 
-    @if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.None)
-    {
+    <div class="col-md-5 form-esd rht">
+        <div>
+            <form asp-action="ViewAllAppliedEnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="View all applied" class="btn btn-primary" />
+            </form>
+        </div>
+        <div>
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="View all Ready to Apply" class="btn btn-primary" />
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.None)
+{
     <div class="row">
         <div class="col-md-6">
             <vc:data-sync-histories district-id="@ViewBag.districtId" current="true" sync-detail="true" />
@@ -103,28 +103,28 @@
             <vc:data-sync-stats district-id="@ViewBag.districtId" sync-details="true" />
         </div>
     </div>
-    }
+}
 
-    <div class="row">
-        <div class="col-md-2">
-            Processing Status
-        </div>
-        <div class="col-md-10">
-            @ViewBag.CurrentDistrict.ProcessingStatus
-
-        </div>
+<div class="row">
+    <div class="col-md-2">
+        Processing Status
     </div>
-    <div class="row">
-        <div class="col-md-2">
-            Total:
-        </div>
-        <div class="col-md-10">
-            @ViewBag.TotalEnrollmentsToSyncCount
-        </div>
-    </div>
+    <div class="col-md-10">
+        @ViewBag.CurrentDistrict.ProcessingStatus
 
-    @if (!string.IsNullOrEmpty(ViewBag.SyncLoadError))
-    {
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-2">
+        Total:
+    </div>
+    <div class="col-md-10">
+        @ViewBag.TotalEnrollmentsToSyncCount
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(ViewBag.SyncLoadError))
+{
     <div class="row">
         <div class="col-md-2">
             Last Load Error
@@ -133,9 +133,9 @@
             @ViewBag.SyncLoadError
         </div>
     </div>
-    }
-    @if (!string.IsNullOrEmpty(ViewBag.SyncAnalyzeError))
-    {
+}
+@if (!string.IsNullOrEmpty(ViewBag.SyncAnalyzeError))
+{
     <div class="row">
         <div class="col-md-2">
             Last Analyze Error
@@ -144,9 +144,9 @@
             @ViewBag.SyncAnalyzeError
         </div>
     </div>
-    }
-    @if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
-    {
+}
+@if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
+{
     <div class="row">
         <div class="col-md-2">
             Last Apply Error
@@ -160,45 +160,45 @@
             <a asp-action="DistrictSyncLineErrors" asp-route-districtId="@ViewBag.districtId">View More</a>
         </div>
     </div>
-    }
+}
 
-    <div class="row">
-        <table class="table table-condensed table-hover">
-            <thead>
-                <tr>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Table)
-                    </th>
-                    <th>
-                        @if (ViewBag.AppliedFlag == null || !ViewBag.AppliedFlag)
-                        {
+<div class="row">
+    <table class="table table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Table)
+                </th>
+                <th>
+                    @if (ViewBag.AppliedFlag == null || !ViewBag.AppliedFlag)
+                    {
                         <input type="checkbox" checked="@headChecked" onchange="toggleIncludeInSyncAll(this)" />
-                        }
-                        @Html.DisplayNameFor(model => model.IncludeInSync)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Name)
-                    </th>
-                    <th>
-                        Username / @Html.DisplayNameFor(model => model.Email)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Password)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.SchoolName)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.SyncStatus)
-                    </th>
-                    <th>
-                        @Html.DisplayNameFor(model => model.Error)
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+                    }
+                    @Html.DisplayNameFor(model => model.IncludeInSync)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Name)
+                </th>
+                <th>
+                    Username / @Html.DisplayNameFor(model => model.Email)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Password)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SchoolName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.SyncStatus)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Error)
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
 
                 <tr>
                     <td>
@@ -207,21 +207,21 @@
                     <td style="text-align: center;">
                         @if (ViewBag.AppliedFlag != null)
                         {
-                        @if (ViewBag.AppliedFlag)
-                        {
-                        if (item.IncludeInSync)
-                        {
-                        <i class="fas fa-check" title="Sync Enabled"></i>
-                        }
-                        else
-                        {
-                        <i class="fas fa-close" title="Sync Disabled"></i>
-                        }
-                        }
-                        else
-                        {
-                        <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
-                        }
+                            @if (ViewBag.AppliedFlag)
+                            {
+                                if (item.IncludeInSync)
+                                {
+                                    <i class="fas fa-check" title="Sync Enabled"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-close" title="Sync Disabled"></i>
+                                }
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                            }
                         }
                     </td>
                     <td>
@@ -242,73 +242,73 @@
                     <td>
                         @if (item.SyncStatus == SyncStatus.Applied || item.SyncStatus == SyncStatus.ApplyFailed)
                         {
-                        if (!string.IsNullOrEmpty(item.Error))
-                        {
-                        <div><i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i> @item.Error</div>
-                        }
-                        else
-                        {
-                        <i class="fas fa-check-circle" style="color: green" title="No error"></i>
-                        }
+                            if (!string.IsNullOrEmpty(item.Error))
+                            {
+                                <div><i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i> @item.Error</div>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check-circle" style="color: green" title="No error"></i>
+                            }
                         }
                     </td>
                 </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    <div class="row">
-        <div class="col-md-8">
-            <form asp-action="ApplyEnrollmentSyncDetails">
-                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                <div class="form-group">
-                    @*@if (disabledApply.Length > 0)
+            }
+        </tbody>
+    </table>
+</div>
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="ApplyEnrollmentSyncDetails">
+            <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+            <div class="form-group">
+                @*@if (disabledApply.Length > 0)
                     {
                     <input type="submit" value="Apply" class="btn btn-primary" disabled="disabled" />
                     }
                     else
                     {*@
-                    <input type="submit" value="4. Apply" class="btn btn-primary" />
-                    @*}*@
-                </div>
-            </form>
-        </div>
-        <div class="col-md-4 form-esd rht">
-            <div class="form-group">
-                @*@if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag)*@
-
-                <form asp-action="EnrollmentSyncDetails" method="get">
-                    <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    <input type="hidden" name="currentPage" value="@ViewBag.CurrentPage" />
-                    <input type="hidden" id="hdnAction" name="paginationAction" value="0" />
-                    @if (ViewBag.AppliedFlag)
-                    {
-                    <input type="hidden" name="appliedFlag" value="@ViewBag.AppliedFlag.ToString()" />
-                    }
-
-                    @if (ViewBag.CurrentPage > 0)
-                    {
-                    <input type="submit" value="Previous" class="btn btn-primary" onclick="setAction(0)" />
-                    }
-                    else
-                    {
-                    <input type="submit" value="Previous" class="btn btn-primary" disabled="disabled" />
-                    }
-                    @if (ViewBag.EnrollmentsToSyncCount > ViewBag.RecordsPerPage)
-                    {
-                    <input type="submit" value="Next" class="btn btn-primary" onclick="setAction(1)" />
-                    }
-                    else
-                    {
-                    <input type="submit" value="Next" class="btn btn-primary" disabled="disabled" />
-                    }
-                </form>
-
+                <input type="submit" value="4. Apply" class="btn btn-primary" />
+                @*}*@
             </div>
+        </form>
+    </div>
+    <div class="col-md-4 form-esd rht">
+        <div class="form-group">
+            @*@if (ViewBag.AppliedFlag != null && !ViewBag.AppliedFlag)*@
+
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="currentPage" value="@ViewBag.CurrentPage" />
+                <input type="hidden" id="hdnAction" name="paginationAction" value="0" />
+                @if (ViewBag.AppliedFlag)
+                {
+                    <input type="hidden" name="appliedFlag" value="@ViewBag.AppliedFlag.ToString()" />
+                }
+
+                @if (ViewBag.CurrentPage > 0)
+                {
+                    <input type="submit" value="Previous" class="btn btn-primary" onclick="setAction(0)" />
+                }
+                else
+                {
+                    <input type="submit" value="Previous" class="btn btn-primary" disabled="disabled" />
+                }
+                @if (ViewBag.EnrollmentsToSyncCount > ViewBag.RecordsPerPage)
+                {
+                    <input type="submit" value="Next" class="btn btn-primary" onclick="setAction(1)" />
+                }
+                else
+                {
+                    <input type="submit" value="Next" class="btn btn-primary" disabled="disabled" />
+                }
+            </form>
+
         </div>
     </div>
+</div>
 
-    <script type="text/javascript">
+<script type="text/javascript">
         function toggleIncludeInSync(control, lineId) {
 
             /**/
@@ -337,4 +337,4 @@
     function setAction(val) {
         $('[Id=hdnAction]').val(val);
     }
-    </script>
+</script>

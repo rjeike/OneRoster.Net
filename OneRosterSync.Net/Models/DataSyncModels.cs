@@ -203,6 +203,8 @@ namespace OneRosterSync.Net.Models
         public bool NightlySyncEnabled { get; set; } = true;
         public DateTime? LastSyncedOn { get; set; }
         public bool StopCurrentAction { get; set; } = false;
+        public DateTime? FTPFilesLastLoadedOn { get; set; }
+        public bool ReadyForNightlySync { get; set; } = false;
 
         public District ShallowCopy()
         {
