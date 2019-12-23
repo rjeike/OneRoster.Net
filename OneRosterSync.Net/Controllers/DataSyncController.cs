@@ -701,7 +701,7 @@ namespace OneRosterSync.Net.Controllers
             }
 
             ViewBag.TotalEnrollmentsToSyncCount = EnrollmentLines.Count;
-            EnrollmentLines = EnrollmentLines.Skip(RecordsPerPage * currentPage).Take(RecordsPerPage + 1).ToList();
+            EnrollmentLines = EnrollmentLines.Skip(RecordsPerPage * currentPage).Take(RecordsPerPage + 1).OrderBy(o => o.SchoolName).ToList();
             ViewBag.EnrollmentsToSyncCount = EnrollmentLines.Count;
             EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
 
