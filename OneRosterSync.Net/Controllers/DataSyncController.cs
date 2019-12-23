@@ -199,7 +199,7 @@ namespace OneRosterSync.Net.Controllers
                         if (sftp.Exists(FTPFilePath))
                         {
                             var dtFtpFile = sftp.GetLastWriteTime(FTPFilePath);
-                            if (district.FTPFilesLastLoadedOn != null && dtFtpFile.Date.CompareTo(district.FTPFilesLastLoadedOn.Value.Date) == 0)
+                            if (district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0)
                             {
                                 sftp.Disconnect();
                                 district.ReadyForNightlySync = false;
