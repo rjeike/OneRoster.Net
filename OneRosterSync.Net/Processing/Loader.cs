@@ -110,6 +110,8 @@ namespace OneRosterSync.Net.Processing
             }
             else
             {
+                Repo.District.FTPFilesLastLoadedOn = null;
+                await Repo.Committer.Invoke();
                 Logger.Here().LogInformation($"Csv file for {LastEntity} not found {filePath}");
                 throw new ProcessingException(Logger.Here(), $"Csv file for {LastEntity} not found {filePath}");
             }
