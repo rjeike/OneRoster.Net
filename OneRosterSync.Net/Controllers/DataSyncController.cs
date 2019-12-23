@@ -676,7 +676,7 @@ namespace OneRosterSync.Net.Controllers
                     obj.DataSyncLineId = usrLine.DataSyncLineId;
                     obj.DistrictId = usrLine.DistrictId;
                     obj.Email = usrCsv.email;
-                    obj.Username = usrCsv.username;
+                    obj.Password = (string.IsNullOrEmpty(usrCsv.password) ? usrCsv.sourcedId : usrCsv.password);
                     obj.Name = $"{usrCsv.givenName} {usrCsv.familyName}";
                     obj.Version = usrLine.Version;
                     obj.SyncStatus = usrLine.SyncStatus;

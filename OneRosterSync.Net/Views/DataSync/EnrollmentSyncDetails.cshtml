@@ -5,33 +5,6 @@
     ViewData["Title"] = "EnrollmentSyncDetails";
     var count = Model.Where(w => w.IncludeInSync).Count();
     var headChecked = Model.Count() > 0 && count == Model.Count();
-    //string disabledLoad = "disabled", disabledAnalyze = "disabled", disabledApply = "disabled", disabledSelectOrgs = "disabled";
-    //if (ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Loading && ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Analyzing &&
-    //    ViewBag.CurrentDistrict.ProcessingStatus != ProcessingStatus.Applying)
-    //{
-    //    if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.None || (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() < 1))
-    //    {
-    //        disabledLoad = string.Empty;
-    //    }
-    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.LoadingDone)
-    //    {
-    //        disabledSelectOrgs = string.Empty;
-    //        disabledAnalyze = string.Empty;
-    //    }
-    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.AnalyzingDone && Model.Count() > 0)
-    //    {
-    //        disabledApply = string.Empty;
-    //    }
-    //    else if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.ApplyingDone)
-    //    {
-    //        disabledLoad = string.Empty;
-    //    }
-    //}
-    //if (!string.IsNullOrEmpty(ViewBag.SyncApplyError))
-    //{
-    //    disabledSelectOrgs = string.Empty;
-    //    disabledAnalyze = string.Empty;
-    //}
     }
 
     <h2>Enrollment Sync Details - @ViewBag.CurrentDistrict.Name</h2>
@@ -78,40 +51,19 @@
             <div>
                 <form asp-action="LoadEnrollmentSyncDetails">
                     <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    @*@if (disabledLoad.Length > 0)
-                    {
-                    <input type="submit" value="1. Load" class="btn btn-primary" disabled="@disabledLoad" />
-                    }
-                    else
-                    {*@
                     <input type="submit" value="1. Load" class="btn btn-primary" />
-                    @*}*@
                 </form>
             </div>
             <div>
                 <form asp-action="SelectOrgs" method="get">
                     <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    @*@if (disabledSelectOrgs.Length > 0)
-                    {
-                    <input type="submit" value="2. Select Orgs" class="btn btn-primary" disabled="@disabledSelectOrgs" />
-                    }
-                    else
-                    {*@
                     <input type="submit" value="2. Select Orgs" class="btn btn-primary" />
-                    @*}*@
                 </form>
             </div>
             <div>
                 <form asp-action="AnalyzeEnrollmentSyncDetails">
                     <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                    @*@if (disabledAnalyze.Length > 0)
-                    {
-                    <input type="submit" value="3. Analyze" class="btn btn-primary" disabled="@disabledAnalyze" />
-                    }
-                    else
-                    {*@
                     <input type="submit" value="3. Analyze" class="btn btn-primary" />
-                    @*}*@
                 </form>
             </div>
             @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
@@ -228,10 +180,10 @@
                         @Html.DisplayNameFor(model => model.Name)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Username)
+                        Username / @Html.DisplayNameFor(model => model.Email)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(model => model.Email)
+                        @Html.DisplayNameFor(model => model.Password)
                     </th>
                     <th>
                         @Html.DisplayNameFor(model => model.SchoolName)
@@ -276,10 +228,10 @@
                         @Html.DisplayFor(modelItem => item.Name)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Username)
+                        @Html.DisplayFor(modelItem => item.Email)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Email)
+                        @Html.DisplayFor(modelItem => item.Password)
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.SchoolName)

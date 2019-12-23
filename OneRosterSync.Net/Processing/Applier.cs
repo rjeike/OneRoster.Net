@@ -242,7 +242,7 @@ namespace OneRosterSync.Net.Processing
                 if (string.IsNullOrEmpty(line.TargetId))
                 {
                     userCsv.email = userCsv.email.ToLower();
-                    userCsv.username = userCsv.username.ToLower();
+                    userCsv.username = userCsv.email.ToLower();
                     if (string.IsNullOrEmpty(userCsv.password))
                     {
                         userCsv.password = line.SourcedId;
