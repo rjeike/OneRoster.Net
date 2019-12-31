@@ -68,25 +68,26 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> DistrictSyncLineErrors(int districtId)
         {
-            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && w.SyncStatus != SyncStatus.Applied && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
-            {
-                DistrictId = d.DistrictId,
-                Created = d.Created,
-                Data = d.Data,
-                DataSyncLineId = d.DataSyncLineId,
-                EnrollmentMap = d.EnrollmentMap,
-                Error = d.Error,
-                IncludeInSync = d.IncludeInSync,
-                LastSeen = d.LastSeen,
-                LoadStatus = d.LoadStatus,
-                Modified = d.Modified,
-                RawData = d.RawData,
-                SourcedId = d.SourcedId,
-                SyncStatus = d.SyncStatus,
-                Table = d.Table,
-                TargetId = d.TargetId,
-                Version = d.Version
-            })
+            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && (w.SyncStatus == SyncStatus.Applied || w.SyncStatus == SyncStatus.ApplyFailed)
+                && !string.IsNullOrEmpty(w.Error) && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
+                {
+                    DistrictId = d.DistrictId,
+                    Created = d.Created,
+                    Data = d.Data,
+                    DataSyncLineId = d.DataSyncLineId,
+                    EnrollmentMap = d.EnrollmentMap,
+                    Error = d.Error,
+                    IncludeInSync = d.IncludeInSync,
+                    LastSeen = d.LastSeen,
+                    LoadStatus = d.LoadStatus,
+                    Modified = d.Modified,
+                    RawData = d.RawData,
+                    SourcedId = d.SourcedId,
+                    SyncStatus = d.SyncStatus,
+                    Table = d.Table,
+                    TargetId = d.TargetId,
+                    Version = d.Version
+                })
             .OrderBy(d => d.Version)
             .ToListAsync();
 

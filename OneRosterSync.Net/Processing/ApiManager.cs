@@ -81,6 +81,10 @@ namespace OneRosterSync.Net.Processing
 
                 // parse response
                 ApiResponse result = JsonConvert.DeserializeObject<ApiResponse>(responseBody);
+                if (!result.Success && string.IsNullOrEmpty(result.ErrorMessage))
+                {
+                    result.ErrorMessage = responseBody;
+                }
                 return result;
             }
             catch (Exception ex)
