@@ -647,70 +647,17 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int currentPage = -1, int paginationAction = 1, bool AppliedFlag = false)
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false)
         {
             var repo = new DistrictRepo(db, districtId);
+            if (repo.District == null)
+                return NotFound($"District {districtId} not found");
+
             ViewBag.districtId = districtId;
             ViewBag.AppliedFlag = AppliedFlag;
+            ViewBag.CurrentDistrict = repo.District;
 
-            int RecordsPerPage = 100;
-            if (paginationAction == 0)
-                currentPage--;
-            else
-                currentPage++;
-
-            var EnrollmentsToSync = repo.Lines<CsvUser>().AsNoTracking()
-                .Where(w => w.DistrictId == districtId
-                    && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
-                        || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
-                        || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                .Select(s => GetDataSyncLineViewModel<CsvUser>(s)).ToList();
-
-            ViewBag.CurrentPage = currentPage;
-            ViewBag.RecordsPerPage = RecordsPerPage;
-
-            List<EnrollmentSyncLineViewModel> EnrollmentLines = new List<EnrollmentSyncLineViewModel>();
-            for (int i = 0; i < EnrollmentsToSync.Count; i++)
-            {
-                var usrLine = EnrollmentsToSync[i];
-                //CsvEnrollment csvEnrollment = JsonConvert.DeserializeObject<CsvEnrollment>(enrLine.RawData);
-                CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(usrLine.RawData);
-                DataSyncLine usr = repo.Lines<CsvUser>().SingleOrDefault(l => l.SourcedId == usrLine.SourcedId);
-                DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
-
-                if (org.IncludeInSync || AppliedFlag)
-                {
-                    var usrCsv = JsonConvert.DeserializeObject<CsvUser>(usr.RawData);
-                    var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
-
-                    EnrollmentSyncLineViewModel obj = new EnrollmentSyncLineViewModel();
-                    obj.Created = usrLine.Created;
-                    obj.DataSyncLineId = usrLine.DataSyncLineId;
-                    obj.DistrictId = usrLine.DistrictId;
-                    obj.Email = usrCsv.email;
-                    obj.Password = (string.IsNullOrEmpty(usrCsv.password) ? usrCsv.sourcedId : usrCsv.password);
-                    obj.Name = $"{usrCsv.givenName} {usrCsv.familyName}";
-                    obj.Version = usrLine.Version;
-                    obj.SyncStatus = usrLine.SyncStatus;
-                    obj.Error = usrLine.Error;
-                    obj.IncludeInSync = usrLine.IncludeInSync;
-                    obj.Table = usrLine.Table;
-                    obj.SchoolName = orgCsv.name;
-
-                    EnrollmentLines.Add(obj);
-                }
-            }
-
-            ViewBag.TotalEnrollmentsToSyncCount = EnrollmentLines.Count;
-            EnrollmentLines = EnrollmentLines.Skip(RecordsPerPage * currentPage).Take(RecordsPerPage + 1).OrderBy(o => o.SchoolName).ToList();
-            ViewBag.EnrollmentsToSyncCount = EnrollmentLines.Count;
-            EnrollmentsToSync = EnrollmentsToSync.Take(RecordsPerPage).ToList();
-
-            var district = await db.Districts.FirstOrDefaultAsync(w => w.DistrictId == districtId);
-            ViewBag.CurrentDistrict = district;
-
-            var SyncHistory = await db.DataSyncHistories
-                    .Where(w => w.DistrictId == districtId)
+            var SyncHistory = await repo.DataSyncHistories.Where(w => w.DistrictId == districtId)
                     .OrderByDescending(o => o.DataSyncHistoryId)
                     .FirstOrDefaultAsync();
 
@@ -718,8 +665,47 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.SyncAnalyzeError = SyncHistory?.AnalyzeError;
             ViewBag.SyncApplyError = SyncHistory?.ApplyError;
 
+            var orgs = repo.Lines<CsvOrg>().AsNoTracking().Where(w => w.IncludeInSync).ToList();
+            var orgsIds = orgs.Select(s => s.SourcedId).ToList();
+
+            var query = repo.Lines<CsvUser>().AsNoTracking()
+                .Where(w => w.DistrictId == districtId && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
+                   && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
+                       || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
+                       || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
+                       .Select(s => new
+                       {
+                           line = s,
+                           user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+                           org = JsonConvert.DeserializeObject<CsvOrg>
+                            (orgs.SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).RawData)
+                       }).Select(s => new EnrollmentSyncLineViewModel
+                       {
+                           Created = s.line.Created,
+                           DataSyncLineId = s.line.DataSyncLineId,
+                           DistrictId = s.line.DistrictId,
+                           Email = s.user.email,
+                           Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
+                           Name = $"{s.user.givenName} {s.user.familyName}",
+                           Version = s.line.Version,
+                           SyncStatus = s.line.SyncStatus,
+                           Error = s.line.Error,
+                           IncludeInSync = s.line.IncludeInSync,
+                           Table = s.line.Table,
+                           SchoolName = s.org.name,
+                       });
+
+            var orderedQuery = query.OrderByDescending(l => l.SchoolName);
+            var model = await PagingList.CreateAsync(orderedQuery, 100, page);
+            model.Action = nameof(EnrollmentSyncDetails);
+            model.RouteValue = new RouteValueDictionary
+            {
+                { "districtId", districtId },
+                { "AppliedFlag", AppliedFlag }
+            };
+
             GC.Collect();
-            return View(EnrollmentLines);
+            return View(model);
         }
 
         [HttpPost]
