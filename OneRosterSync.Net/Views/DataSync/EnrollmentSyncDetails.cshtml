@@ -3,7 +3,7 @@
     @addTagHelper *, OneRosterSync.Net
     @{
     ViewData["Title"] = "EnrollmentSyncDetails";
-   
+
     }*@
 
 @model ReflectionIT.Mvc.Paging.PagingList<OneRosterSync.Net.Models.EnrollmentSyncLineViewModel>
@@ -77,7 +77,7 @@
             </form>
         </div>
         @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
-     ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
+   ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
         {
             <form asp-action="StopCurrentAction" method="post">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
@@ -201,7 +201,10 @@
                     @Html.DisplayNameFor(model => model.SyncStatus)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.Error)
+                    @if (ViewBag.AppliedFlag != null && ViewBag.AppliedFlag)
+                    {
+                        @Html.DisplayNameFor(model => model.Error)
+                    }
                 </th>
             </tr>
         </thead>
@@ -249,15 +252,18 @@
                         @Html.DisplayFor(modelItem => item.SyncStatus)
                     </td>
                     <td>
-                        @if (item.SyncStatus == SyncStatus.Applied || item.SyncStatus == SyncStatus.ApplyFailed)
+                        @if (ViewBag.AppliedFlag != null && ViewBag.AppliedFlag)
                         {
-                            if (!string.IsNullOrEmpty(item.Error))
+                            if (item.SyncStatus == SyncStatus.Applied || item.SyncStatus == SyncStatus.ApplyFailed)
                             {
-                                <div><i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i> @item.Error</div>
-                            }
-                            if (item.SyncStatus == SyncStatus.Applied && string.IsNullOrEmpty(item.Error))
-                            {
-                                <i class="fas fa-check-circle" style="color: green" title="No error"></i>
+                                if (!string.IsNullOrEmpty(item.Error))
+                                {
+                                    <div><i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i> @item.Error</div>
+                                }
+                                if (item.SyncStatus == SyncStatus.Applied && string.IsNullOrEmpty(item.Error))
+                                {
+                                    <i class="fas fa-check-circle" style="color: green" title="No error"></i>
+                                }
                             }
                         }
                     </td>
