@@ -51,17 +51,16 @@ namespace OneRosterSync.Net.Processing
                     {
                         var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).Select(s => s.SourcedId).ToList();
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync
-                           && orgsIds.Any(a => l.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
-
+                        
                         var InvalidSchoolIDsLines = lines.Where(w => w.Error.Contains("Invalid school id provided."))
                             .Select(s => JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).Distinct().ToList();
-
-                        if (orgsIds.Count != InvalidSchoolIDsLines.Count)
+                        if (InvalidSchoolIDsLines.Count > 0 && orgsIds.Count != InvalidSchoolIDsLines.Count)
                         {
-                            InvalidSchoolIDsLines.Any(a => orgsIds.Remove(a));
-                            lines = lines.Where(w => orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
+                            InvalidSchoolIDsLines.All(a => orgsIds.Remove(a));
                         }
+
+                        lines = lines.Where(w => orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
                     }
                     else
                     {
