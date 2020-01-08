@@ -1,11 +1,11 @@
-﻿@model IEnumerable<OneRosterSync.Net.Models.DataSyncLineViewModel>
+﻿@model ReflectionIT.Mvc.Paging.PagingList<OneRosterSync.Net.Models.DataSyncLineViewModel>
+@using ReflectionIT.Mvc.Paging
+@addTagHelper *, ReflectionIT.Mvc.Paging
 @{
     ViewData["Title"] = "DistrictSyncLineErrors";
 }
 
 <h2>District Sync Line Errors</h2>
-
-
 <div class="row">
     <table class="table table-condensed table-hover">
         <thead>
@@ -68,4 +68,7 @@
             }
         </tbody>
     </table>
+</div>
+<div class="row pull-right">
+    <vc:pager paging-list="@Model" />
 </div>

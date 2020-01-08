@@ -66,10 +66,10 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DistrictSyncLineErrors(int districtId)
+        public async Task<IActionResult> DistrictSyncLineErrors(int districtId, int page = 1)
         {
-            var model = await db.DataSyncLines.Where(w => w.DistrictId == districtId && (w.SyncStatus == SyncStatus.Applied || w.SyncStatus == SyncStatus.ApplyFailed)
-                && !string.IsNullOrEmpty(w.Error) && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
+            var query = db.DataSyncLines.Where(w => w.DistrictId == districtId && (w.SyncStatus == SyncStatus.Applied || w.SyncStatus == SyncStatus.ApplyFailed)
+                && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
                 {
                     DistrictId = d.DistrictId,
                     Created = d.Created,
@@ -87,10 +87,18 @@ namespace OneRosterSync.Net.Controllers
                     Table = d.Table,
                     TargetId = d.TargetId,
                     Version = d.Version
-                })
-            .OrderBy(d => d.Version)
-            .ToListAsync();
+                });
 
+            var orderedQuery = query.OrderByDescending(l => l.Version);
+
+            var model = await PagingList.CreateAsync(orderedQuery, 100, page);
+            model.Action = nameof(DistrictSyncLineErrors);
+            model.RouteValue = new RouteValueDictionary
+            {
+                { "districtId", districtId },
+            };
+
+            GC.Collect();
             return View(model);
         }
 
