@@ -47,38 +47,21 @@ namespace OneRosterSync.Net.Processing
 
                     // filter on all lines that are included and ready to be applied or apply was failed
                     IQueryable<DataSyncLine> lines;
-
-                    //if(typeof(T) == typeof(CsvUser))
-                    //{
-                    //    lines = lines.Where(l => l.TargetId == null); // Target ID check for fetching records that need to be created, not updated
-                    //}
-
                     if (typeof(T) == typeof(CsvUser))
                     {
-                        //var lineIDs = new List<int>();
                         var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).Select(s => s.SourcedId).ToList();
-
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync
                            && orgsIds.Any(a => l.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
-                        //lines = lines.Where(w => w.DataSyncLineId == 516196);
-                        //await lines.ForEachAsync(line =>
-                        //{
-                        //    var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-                        //    var org = orgs.SingleOrDefault(o => o.SourcedId == userCsv.orgSourcedIds);
-                        //    if (org != null && org.IncludeInSync)
-                        //    {
-                        //        lineIDs.Add(line.DataSyncLineId);
-                        //    }
-                        //});
-                        //if (lineIDs.Count > 0)
-                        //{
-                        //    lines = lines.Where(w => lineIDs.Any(a => a == w.DataSyncLineId));
-                        //}
-                        //else
-                        //{
-                        //    break;
-                        //}
+
+                        var InvalidSchoolIDsLines = lines.Where(w => w.Error.Contains("Invalid school id provided."))
+                            .Select(s => JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).Distinct().ToList();
+
+                        if (orgsIds.Count != InvalidSchoolIDsLines.Count)
+                        {
+                            InvalidSchoolIDsLines.Any(a => orgsIds.Remove(a));
+                            lines = lines.Where(w => orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
+                        }
                     }
                     else
                     {
@@ -98,22 +81,6 @@ namespace OneRosterSync.Net.Processing
                         throw new ProcessingException(Logger, "Apply failed to update SyncStatus of applied record. This indicates that some apply calls are failing and hence the apply process was aborted.");
                     last = curr;
 
-                    //List<Task> tasks = new List<Task>();
-                    //var task = lines.ForEachInChunksAsync(chunkSize: ParallelChunkSize,
-                    //    action: async (line) =>
-                    //    {
-                    //        await Task.Yield();
-                    //        //count++;
-                    //        ApplyLineParallel<T>(line).Wait();
-                    //    },
-                    //    onChunkComplete: async () =>
-                    //    {
-                    //        //await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
-                    //        //{
-                    //        //    throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                    //        //}
-                    //    });
-                    //tasks.Add(task);
                     // process chunks of lines in parallel
                     IEnumerable<Task> tasks = await lines
                         .AsNoTracking()
@@ -122,7 +89,6 @@ namespace OneRosterSync.Net.Processing
                         .ToListAsync();
 
                     await Task.WhenAll(tasks);
-                    //await Task.WhenAll(tasks);
                 }
             }
         }
