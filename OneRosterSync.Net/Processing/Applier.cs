@@ -46,8 +46,7 @@ namespace OneRosterSync.Net.Processing
                     var repo = new DistrictRepo(db, DistrictId);
 
                     // filter on all lines that are included and ready to be applied or apply was failed
-                    var lines = repo.Lines<T>().Where(
-                        l => l.IncludeInSync && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
+                    IQueryable<DataSyncLine> lines;
 
                     //if(typeof(T) == typeof(CsvUser))
                     //{
@@ -56,26 +55,35 @@ namespace OneRosterSync.Net.Processing
 
                     if (typeof(T) == typeof(CsvUser))
                     {
-                        var lineIDs = new List<int>();
-                        var orgs = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync);
+                        //var lineIDs = new List<int>();
+                        var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).Select(s => s.SourcedId).ToList();
+
+                        lines = repo.Lines<T>().Where(l => l.IncludeInSync
+                           && orgsIds.Any(a => l.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
+                           && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                         //lines = lines.Where(w => w.DataSyncLineId == 516196);
-                        await lines.ForEachAsync(line =>
-                        {
-                            var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-                            var org = orgs.SingleOrDefault(o => o.SourcedId == userCsv.orgSourcedIds);
-                            if (org != null && org.IncludeInSync)
-                            {
-                                lineIDs.Add(line.DataSyncLineId);
-                            }
-                        });
-                        if (lineIDs.Count > 0)
-                        {
-                            lines = lines.Where(w => lineIDs.Any(a => a == w.DataSyncLineId));
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        //await lines.ForEachAsync(line =>
+                        //{
+                        //    var userCsv = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+                        //    var org = orgs.SingleOrDefault(o => o.SourcedId == userCsv.orgSourcedIds);
+                        //    if (org != null && org.IncludeInSync)
+                        //    {
+                        //        lineIDs.Add(line.DataSyncLineId);
+                        //    }
+                        //});
+                        //if (lineIDs.Count > 0)
+                        //{
+                        //    lines = lines.Where(w => lineIDs.Any(a => a == w.DataSyncLineId));
+                        //}
+                        //else
+                        //{
+                        //    break;
+                        //}
+                    }
+                    else
+                    {
+                        lines = repo.Lines<T>().Where(l => l.IncludeInSync 
+                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
 
                     // how many records are remaining to process?
