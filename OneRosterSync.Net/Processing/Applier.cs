@@ -20,6 +20,7 @@ namespace OneRosterSync.Net.Processing
 
         private readonly IServiceProvider Services;
         private readonly int DistrictId;
+        private List<string> listInvalidSchoolIDs;
 
         /// <summary>
         /// How many APIs should we call in parallel?
@@ -31,6 +32,7 @@ namespace OneRosterSync.Net.Processing
         {
             Services = services;
             DistrictId = districtId;
+            listInvalidSchoolIDs = new List<string>();
         }
 
         /// <summary>
@@ -52,7 +54,7 @@ namespace OneRosterSync.Net.Processing
                         var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).Select(s => s.SourcedId).ToList();
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
-                        
+
                         var InvalidSchoolIDsLines = lines.Where(w => w.Error.Contains("Invalid school id provided."))
                             .Select(s => JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).Distinct().ToList();
                         if (InvalidSchoolIDsLines.Count > 0 && orgsIds.Count != InvalidSchoolIDsLines.Count)
@@ -64,7 +66,7 @@ namespace OneRosterSync.Net.Processing
                     }
                     else
                     {
-                        lines = repo.Lines<T>().Where(l => l.IncludeInSync 
+                        lines = repo.Lines<T>().Where(l => l.IncludeInSync
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
 
@@ -305,7 +307,6 @@ namespace OneRosterSync.Net.Processing
         {
             var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
             DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
-
             if (org == null || !org.IncludeInSync)
             {
                 return;
@@ -351,11 +352,14 @@ namespace OneRosterSync.Net.Processing
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
 
-            var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
-            ReadResponse(line, repo, response, true);
+            if (!listInvalidSchoolIDs.Contains(ncesId))
+            {
+                var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
+                ReadResponse(line, repo, response, true, enrollment);
+            }
         }
 
-        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response, bool fromEnrollment)
+        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response, bool fromEnrollment, CsvEnrollment enrollment = null)
         {
             if (response.Success)
             {
@@ -372,6 +376,12 @@ namespace OneRosterSync.Net.Processing
                 // The Lms can send false success if the entity already exist. In such a case we read the targetId
                 if (!string.IsNullOrEmpty(response.TargetId))
                     line.TargetId = response.TargetId;
+
+                response.ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
+                if (fromEnrollment && response.ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(enrollment.nces_schoolid))
+                {
+                    listInvalidSchoolIDs.Add(enrollment.nces_schoolid);
+                }
             }
 
             line.Touch();
