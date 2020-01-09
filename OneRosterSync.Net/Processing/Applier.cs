@@ -55,11 +55,9 @@ namespace OneRosterSync.Net.Processing
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
-                        var InvalidSchoolIDsLines = lines.Where(w => w.Error.Contains("Invalid school id provided."))
-                            .Select(s => JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).Distinct().ToList();
-                        if (InvalidSchoolIDsLines.Count > 0 && orgsIds.Count != InvalidSchoolIDsLines.Count)
+                        if (listInvalidSchoolIDs.Count > 0 && orgsIds.Count != listInvalidSchoolIDs.Count)
                         {
-                            InvalidSchoolIDsLines.All(a => orgsIds.Remove(a));
+                            listInvalidSchoolIDs.All(a => orgsIds.Remove(a));
                         }
 
                         lines = lines.Where(w => orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
@@ -352,14 +350,14 @@ namespace OneRosterSync.Net.Processing
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
 
-            if (!listInvalidSchoolIDs.Contains(ncesId))
+            if (!listInvalidSchoolIDs.Contains(csvUser.orgSourcedIds))
             {
                 var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
-                ReadResponse(line, repo, response, true, enrollment);
+                ReadResponse(line, repo, response, true, csvUser.orgSourcedIds);
             }
         }
 
-        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response, bool fromEnrollment, CsvEnrollment enrollment = null)
+        private void ReadResponse(DataSyncLine line, DistrictRepo repo, ApiResponse response, bool fromEnrollment, string orgSourcedId = null)
         {
             if (response.Success)
             {
@@ -378,9 +376,9 @@ namespace OneRosterSync.Net.Processing
                     line.TargetId = response.TargetId;
 
                 response.ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
-                if (fromEnrollment && response.ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(enrollment.nces_schoolid))
+                if (fromEnrollment && response.ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(orgSourcedId))
                 {
-                    listInvalidSchoolIDs.Add(enrollment.nces_schoolid);
+                    listInvalidSchoolIDs.Add(orgSourcedId);
                 }
             }
 

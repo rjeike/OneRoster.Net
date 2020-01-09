@@ -979,7 +979,7 @@ namespace OneRosterSync.Net.Controllers
             await db.SaveChangesAsync();
 
             //return RedirectToDistrict(district.DistrictId);
-            return RedirectToAction("DistrictList", new { district.DistrictId });
+            return RedirectToAction("DistrictList");
         }
 
         [HttpPost]
