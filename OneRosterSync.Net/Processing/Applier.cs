@@ -212,21 +212,21 @@ namespace OneRosterSync.Net.Processing
                 {
                     return;
                 }
-                if (string.IsNullOrEmpty(line.TargetId))
+                //if (string.IsNullOrEmpty(line.TargetId))
+                //{
+                userCsv.email = userCsv.email.ToLower();
+                userCsv.username = userCsv.email.ToLower();
+                if (string.IsNullOrEmpty(userCsv.password))
                 {
-                    userCsv.email = userCsv.email.ToLower();
-                    userCsv.username = userCsv.email.ToLower();
-                    if (string.IsNullOrEmpty(userCsv.password))
-                    {
-                        userCsv.password = line.SourcedId;
-                    }
-                    data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
+                    userCsv.password = line.SourcedId;
                 }
-                else
-                {
-                    await ApplyEnrollment(line, repo, apiManager);
-                    return;
-                }
+                data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
+                //}
+                //else
+                //{
+                //    await ApplyEnrollment(line, repo, apiManager);
+                //    return;
+                //}
             }
             else
             {
