@@ -144,13 +144,12 @@ namespace OneRosterSync.Net.Processing
                 {
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
-                    var users = await Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && (!w.IncludeInSync || w.SyncStatus == SyncStatus.ApplyFailed)).ToListAsync();
-                    //int count = 0, total = users.Count;
-                    await users.AsQueryable().ForEachInChunksAsync(chunkSize: 200,
+
+                    var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && (!w.IncludeInSync || w.SyncStatus == SyncStatus.ApplyFailed));
+                    await users.ForEachInChunksAsync(chunkSize: 200,
                         action: async (user) =>
                         {
                             await Task.Yield();
-                            //count++;
                             IncludeReadyTouch(user);
                         },
                         onChunkComplete: async () =>
