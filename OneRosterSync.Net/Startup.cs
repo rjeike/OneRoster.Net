@@ -126,7 +126,7 @@ namespace OneRosterSync.Net
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=DataSync}/{action=DistrictList}/{id?}");
             });
         }
     }

@@ -26,7 +26,7 @@ namespace OneRosterSync.Net.Components
         {
             var repo = new DistrictRepo(db, districtId);
 
-            var model = await OneRosterSync.Net.Controllers.DataSyncController.ReportLine(repo.Lines(), "");
+            var model = await OneRosterSync.Net.Controllers.DataSyncController.ReportLine(repo.Lines().Where(w => w.LoadStatus != LoadStatus.Deleted), "");
             string view = syncDetails ? "StatsSyncDetails" : "Stats";
             return View(viewName: view, model: model);
         }

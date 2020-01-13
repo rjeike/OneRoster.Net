@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OneRosterSync.Net.Controllers;
 using OneRosterSync.Net.Data;
@@ -50,6 +51,8 @@ namespace OneRosterSync.Net.Processing
                     try
                     {
                         await controller.FullProcess(district.DistrictId);
+                        district.ReadyForNightlySync = false;
+                        _db.Entry(district).State = EntityState.Modified;
                     }
                     catch (Exception ex)
                     {
@@ -61,6 +64,10 @@ namespace OneRosterSync.Net.Processing
             catch (Exception ex)
             {
                 throw ex;
+            }
+            finally
+            {
+                _db.SaveChanges();
             }
         }
     }

@@ -176,6 +176,7 @@ namespace OneRosterSync.Net.Processing
                 {
                     Repo.CurrentHistory.NumDeleted++;
                     line.LoadStatus = LoadStatus.Deleted;
+                    line.IncludeInSync = false;
                 }
                 else if (line.SyncStatus == SyncStatus.Loaded && line.LoadStatus == LoadStatus.Added)
                 {
