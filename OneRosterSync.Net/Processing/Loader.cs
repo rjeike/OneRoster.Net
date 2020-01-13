@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using OneRosterSync.Net.DAL;
-using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 
@@ -42,6 +39,14 @@ namespace OneRosterSync.Net.Processing
                     {
                         csv.Configuration.MissingFieldFound = null;
                         csv.Configuration.HasHeaderRecord = true;
+                        if (typeof(T) == typeof(CsvOrg))
+                        {
+                            csv.Configuration.RegisterClassMap<CsvOrgClassMap>();
+                        }
+                        else if (typeof(T) == typeof(CsvUser))
+                        {
+                            csv.Configuration.RegisterClassMap<CsvUserClassMap>();
+                        }
 
                         csv.Read();
                         csv.ReadHeader();
@@ -72,34 +77,6 @@ namespace OneRosterSync.Net.Processing
                         }
 
                         await Repo.Committer.InvokeIfChunk();
-
-                        //var records = csv.GetRecords<T>();
-                        //int i = 0;
-                        //foreach (var rec in records)
-                        //{
-                        //    try
-                        //    {
-                        //        i++;
-                        //        await ProcessRecord(rec, table, now);
-                        //        if (i > 2 && i % 100 == 0)
-                        //        {
-                        //            if (Repo.GetStopFlag(Repo.DistrictId))
-                        //            {
-                        //                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                        //            }
-                        //        }
-                        //        //await Repo.Committer.InvokeIfChunk(5000); // Takes more time to load all
-                        //    }
-                        //    catch (Exception ex)
-                        //    {
-                        //        if (ex is ProcessingException)
-                        //            throw;
-
-                        //        string o = rec == null ? "(null)" : JsonConvert.SerializeObject(rec);
-                        //        throw new ProcessingException(Logger.Here(), $"Unhandled error processing {typeof(T).Name}: {o}", ex);
-                        //    }
-                        //}
-                        //await Repo.Committer.InvokeIfChunk();
 
                         // commit any last changes
                         await Repo.Committer.InvokeIfAny();
