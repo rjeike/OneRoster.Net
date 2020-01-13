@@ -271,9 +271,9 @@ namespace OneRosterSync.Net.Controllers
                                     SuccessFlag = true;
 
                                     if (isZipFile)
-                                        Message += $"FTP fetch successfull for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                                        Message += $"FTP fetch successful for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     else
-                                        Message += $"FTP file '{ftpFile}' fetch for district '{district.Name}' successfull.{Environment.NewLine}";
+                                        Message += $"FTP file '{ftpFile}' fetch for district '{district.Name}' successful.{Environment.NewLine}";
                                 }
                             }
                             else
@@ -1020,7 +1020,7 @@ namespace OneRosterSync.Net.Controllers
             await db.SaveChangesAsync();
 
             //return RedirectToDistrict(district.DistrictId);
-            return RedirectToAction("DistrictList");
+            return RedirectToAction("DistrictList").WithSuccess("District updated successfully.");
         }
 
         [HttpPost]
