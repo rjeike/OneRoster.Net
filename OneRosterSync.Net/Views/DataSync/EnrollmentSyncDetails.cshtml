@@ -9,7 +9,7 @@
     var headChecked = Model.Count() > 0 && count >= Model.Count() - 10;
 }
 
-<h2>Enrollment Sync Details - @ViewBag.CurrentDistrict.Name</h2>
+<h2>Enrollment Sync Details - @ViewBag.CurrentDistrict?.Name</h2>
 <style>
     .form-esd form {
         display: inline-block;

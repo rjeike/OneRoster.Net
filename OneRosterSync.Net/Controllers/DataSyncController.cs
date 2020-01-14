@@ -98,6 +98,8 @@ namespace OneRosterSync.Net.Controllers
                 { "districtId", districtId },
             };
 
+            ViewBag.CurrentDistrict = db.Districts.FirstOrDefault(w => w.DistrictId == districtId);
+
             GC.Collect();
             return View(model);
         }
