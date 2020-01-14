@@ -211,24 +211,35 @@ namespace OneRosterSync.Net.Controllers
                         bool isZipFile = false;
                         if (FTPFilePath.ToLower().EndsWith(".zip"))
                         {
-                            isZipFile = true;
-                            csvFiles = new string[1] { FTPFilePath };
+                            if (sftp.Exists(FTPFilePath))
+                            {
+                                isZipFile = true;
+                                csvFiles = new string[1] { FTPFilePath };
+                            }
+                            else
+                            {
+                                FTPFilePath = FTPFilePath.Substring(0, FTPFilePath.LastIndexOf("/") + 1);
+                                csvFiles = new string[2] { "users.csv", "orgs.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                            }
                         }
                         else
                         {
                             if (!FTPFilePath.EndsWith("/"))
                                 FTPFilePath = FTPFilePath + "/";
 
-                            csvFiles = new string[2] { "users.csv", "orgs.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                            csvFiles = new string[2] { "orgs.csv", "users.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                         }
 
                         foreach (var csvFile in csvFiles)
                         {
-                            string ftpFile = isZipFile ? FTPFilePath : $"{FTPFilePath}{csvFile}";
+                            string localFile = isZipFile ? "csv_files.zip" : csvFile,
+                                localFilePath = Path.GetFullPath($@"{Path.Combine(FullPath, localFile)}"),
+                                ftpFile = isZipFile ? FTPFilePath : $"{FTPFilePath}{csvFile}";
+
                             if (sftp.Exists(ftpFile))
                             {
                                 var dtFtpFile = sftp.GetLastWriteTime(ftpFile);
-                                if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0)
+                                if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && Directory.Exists(Path.GetFullPath($@"{localFilePath}")))
                                 {
                                     if (isZipFile)
                                     {
@@ -237,7 +248,7 @@ namespace OneRosterSync.Net.Controllers
                                     }
                                     Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                 }
-                                else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0)
+                                else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && Directory.Exists(Path.GetFullPath($@"{localFilePath}")))
                                 {
                                     Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                 }
@@ -246,13 +257,9 @@ namespace OneRosterSync.Net.Controllers
                                     MemoryStream outputSteam = new MemoryStream();
                                     sftp.DownloadFile($"{ftpFile}", outputSteam);
 
-                                    if (isZipFile)
-                                    {
-                                        CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")));
-                                    }
+                                    CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")), isZipFile);
 
-                                    string localFile = isZipFile ? "csv_files.zip" : csvFile;
-                                    using (var fileStream = new FileStream(Path.GetFullPath($@"{Path.Combine(FullPath, localFile)}"), FileMode.Create))
+                                    using (var fileStream = new FileStream(localFilePath, FileMode.Create))
                                     {
                                         outputSteam.Seek(0, SeekOrigin.Begin);
                                         await outputSteam.CopyToAsync(fileStream);
@@ -294,13 +301,16 @@ namespace OneRosterSync.Net.Controllers
 
             return new Tuple<string, bool>(Message, SuccessFlag);
         }
-        public void CreateCSVDirectory(string FolderName, bool Exists)
+        public void CreateCSVDirectory(string FolderName, bool Exists, bool isZipFile = false)
         {
             if (Exists)
             {
-                Directory.Delete(FolderName, true);
-                Thread.Sleep(1500);
-                CreateCSVDirectory(FolderName, false);
+                if (isZipFile)
+                {
+                    Directory.Delete(FolderName, true);
+                    Thread.Sleep(1500);
+                    CreateCSVDirectory(FolderName, false, isZipFile);
+                }
             }
             else
             {
