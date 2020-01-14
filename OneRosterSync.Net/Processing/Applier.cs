@@ -304,27 +304,27 @@ namespace OneRosterSync.Net.Processing
         private async Task ApplyEnrollment(DataSyncLine line, DistrictRepo repo, ApiManager apiManager)
         {
             var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-            DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
-            if (org == null || !org.IncludeInSync)
-            {
-                return;
-            }
+            //DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
+            //if (org == null || !org.IncludeInSync)
+            //{
+            //    return;
+            //}
 
-            var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+            //var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
             string ncesId = string.Empty;
             // Is NCES school ID given?
-            if (orgCsv != null && !string.IsNullOrEmpty(orgCsv.identifier))
-            {
-                ncesId = orgCsv.identifier;
-            }
-            else
-            {
+            //if (orgCsv != null && !string.IsNullOrEmpty(orgCsv.identifier))
+            //{
+            //    ncesId = orgCsv.identifier;
+            //}
+            //else
+            //{
                 var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
                 if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
                 {
                     ncesId = ncesMapping.ncesId;
                 }
-            }
+            //}
             //else if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
             if (string.IsNullOrEmpty(ncesId))
             {
