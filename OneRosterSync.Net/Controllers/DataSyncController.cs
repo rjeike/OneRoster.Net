@@ -240,7 +240,7 @@ namespace OneRosterSync.Net.Controllers
                             if (sftp.Exists(ftpFile))
                             {
                                 var dtFtpFile = sftp.GetLastWriteTime(ftpFile);
-                                if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && Directory.Exists(Path.GetFullPath($@"{localFilePath}")))
+                                if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                 {
                                     if (isZipFile)
                                     {
@@ -249,7 +249,7 @@ namespace OneRosterSync.Net.Controllers
                                     }
                                     Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                 }
-                                else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && Directory.Exists(Path.GetFullPath($@"{localFilePath}")))
+                                else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                 {
                                     Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                 }
