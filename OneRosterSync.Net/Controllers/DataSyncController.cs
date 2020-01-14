@@ -218,6 +218,7 @@ namespace OneRosterSync.Net.Controllers
                             }
                             else
                             {
+                                logger.Here().LogInformation($"FTP file path '{FTPFilePath}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}. Looking for csv files in this folder.{Environment.NewLine}");
                                 FTPFilePath = FTPFilePath.Substring(0, FTPFilePath.LastIndexOf("/") + 1);
                                 csvFiles = new string[2] { "users.csv", "orgs.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                             }
