@@ -140,32 +140,40 @@ namespace OneRosterSync.Net.Processing
             //    },
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
 
-            await Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted).ForEachInChunksAsync(chunkSize: 200,
+            var orgs = Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted);
+            await orgs.ForEachInChunksAsync(chunkSize: 200,
                 action: async (org) =>
                 {
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
+                    var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId)
+                        && w.SyncStatus != SyncStatus.Applied && w.SyncStatus != SyncStatus.ReadyToApply);
 
-                    var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && !w.IncludeInSync
-                        && w.LoadStatus != LoadStatus.Deleted && w.SyncStatus != SyncStatus.Applied);
-                    await users.ForEachInChunksAsync(chunkSize: 200,
-                        action: async (user) =>
-                        {
-                            IncludeReadyTouch(user);
-                            await Task.Yield();
-                        },
-                        onChunkComplete: async () =>
-                        {
-                            await Repo.Committer.Invoke();
-                            if (Repo.GetStopFlag(Repo.DistrictId))
-                            {
-                                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                            }
-                        });
+                    await users.ForEachAsync(action: async (user) =>
+                    {
+                        IncludeReadyTouch(user);
+                        await Task.Yield();
+                    });
+                    await Repo.Committer.Invoke();
+                    //await users.ForEachInChunksAsync(chunkSize: 200,
+                    //    action: async (user) =>
+                    //    {
+                    //        IncludeReadyTouch(user);
+                    //        await Task.Yield();
+                    //    },
+                    //    onChunkComplete: async () =>
+                    //    {
+                    //        await Repo.Committer.Invoke();
+                    //        if (Repo.GetStopFlag(Repo.DistrictId))
+                    //        {
+                    //            throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                    //        }
+                    //    });
                 },
                 onChunkComplete: async () =>
                 {
-                    await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
+                    await Repo.Committer.Invoke();
+                    if (Repo.GetStopFlag(Repo.DistrictId))
                     {
                         throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                     }
@@ -189,7 +197,8 @@ namespace OneRosterSync.Net.Processing
                         }
 
                         CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(user.RawData);
-                        var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvUser.orgSourcedIds);
+                        //var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvUser.orgSourcedIds);
+                        var org = orgs.FirstOrDefault(w => w.SourcedId == csvUser.orgSourcedIds);
                         if (org == null) // should never happen
                         {
                             user.Error = $"Missing org for {csvUser.orgSourcedIds}";
