@@ -140,22 +140,24 @@ namespace OneRosterSync.Net.Processing
             //    },
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
 
-            await Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).ForEachInChunksAsync(chunkSize: 200,
+            await Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted).ForEachInChunksAsync(chunkSize: 200,
                 action: async (org) =>
                 {
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
 
-                    var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && (!w.IncludeInSync || w.SyncStatus == SyncStatus.ApplyFailed));
+                    var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId) && !w.IncludeInSync
+                        && w.LoadStatus != LoadStatus.Deleted && w.SyncStatus != SyncStatus.Applied);
                     await users.ForEachInChunksAsync(chunkSize: 200,
                         action: async (user) =>
                         {
-                            await Task.Yield();
                             IncludeReadyTouch(user);
+                            await Task.Yield();
                         },
                         onChunkComplete: async () =>
                         {
-                            await Repo.Committer.Invoke(); if (Repo.GetStopFlag(Repo.DistrictId))
+                            await Repo.Committer.Invoke();
+                            if (Repo.GetStopFlag(Repo.DistrictId))
                             {
                                 throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                             }
@@ -174,8 +176,9 @@ namespace OneRosterSync.Net.Processing
             // now process any user changes we may have missed
             await Repo.Lines<CsvUser>()
                 .Where(u => u.IncludeInSync
-                && u.LoadStatus != LoadStatus.NoChange
-                && u.SyncStatus != SyncStatus.ReadyToApply)
+                && u.LoadStatus != LoadStatus.NoChange && u.LoadStatus != LoadStatus.Deleted
+                && u.SyncStatus != SyncStatus.ReadyToApply
+                && u.SyncStatus != SyncStatus.Applied)
                 .ForEachInChunksAsync(chunkSize: 200,
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
                     action: async (user) =>
