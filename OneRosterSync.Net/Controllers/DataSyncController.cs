@@ -731,10 +731,11 @@ namespace OneRosterSync.Net.Controllers
             var orgsIds = orgs.Select(s => s.SourcedId).ToList();
 
             var query = repo.Lines<CsvUser>().AsNoTracking()
-                .Where(w => w.DistrictId == districtId && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
-                   && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
-                       || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
-                       || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
+                .Where(w => w.DistrictId == districtId && w.LoadStatus != LoadStatus.Deleted
+                        && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
+                        && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
+                           || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
+                           || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
                        .Select(s => new
                        {
                            line = s,
