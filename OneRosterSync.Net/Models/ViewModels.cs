@@ -45,6 +45,10 @@ namespace OneRosterSync.Net.Models
         public int Applied { get; set; }
         [DisplayName("Apply: Failed")]
         public int AppliedFailed { get; set; }
+        [DisplayName("Transfers")]
+        public int Transferred { get; set; }
+        [DisplayName("New Enrollments")]
+        public int NewEnrollments { get; set; }
 
         public int TotalRecords { get; set; }
     }
@@ -79,6 +83,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Sync Status")]
         public SyncStatus SyncStatus { get; set; }
         public string Error { get; set; }
+        public string ErrorCode { get; set; }
 
         [DisplayName("Last Seen")]
         public DateTime LastSeen { get; set; }

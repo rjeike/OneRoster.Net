@@ -241,6 +241,7 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Sync Status")]
         public SyncStatus SyncStatus { get; set; }
         public string Error { get; set; }
+        public string ErrorCode { get; set; }
 
         [DisplayName("Last Seen")]
         public DateTime LastSeen { get; set; }

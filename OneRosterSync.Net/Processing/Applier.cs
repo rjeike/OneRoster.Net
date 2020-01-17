@@ -247,12 +247,9 @@ namespace OneRosterSync.Net.Processing
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
             ReadResponse(line, repo, response, false);
-            if (response.Success)
+            if (response.Success && line.Table == nameof(CsvUser))
             {
-                if (line.Table == nameof(CsvUser))
-                {
-                    await ApplyEnrollment(line, repo, apiManager);
-                }
+                await ApplyEnrollment(line, repo, apiManager);
             }
             //if (response.Success)
             //{
@@ -319,11 +316,11 @@ namespace OneRosterSync.Net.Processing
             //}
             //else
             //{
-                var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
-                if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
-                {
-                    ncesId = ncesMapping.ncesId;
-                }
+            var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+            if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
+            {
+                ncesId = ncesMapping.ncesId;
+            }
             //}
             //else if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
             if (string.IsNullOrEmpty(ncesId))
@@ -362,25 +359,22 @@ namespace OneRosterSync.Net.Processing
             if (response.Success)
             {
                 line.SyncStatus = SyncStatus.Applied;
-                if (!string.IsNullOrEmpty(response.TargetId) && !fromEnrollment)
-                    line.TargetId = response.TargetId;
-                line.Error = response.ErrorMessage;
             }
             else
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
-                line.Error = response.ErrorMessage;
-
-                // The Lms can send false success if the entity already exist. In such a case we read the targetId
-                if (!string.IsNullOrEmpty(response.TargetId))
-                    line.TargetId = response.TargetId;
-
-                response.ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
-                if (fromEnrollment && response.ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(orgSourcedId))
+                var ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
+                if (fromEnrollment && ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(orgSourcedId))
                 {
                     listInvalidSchoolIDs.Add(orgSourcedId);
                 }
             }
+
+            line.Error = response.ErrorMessage;
+            line.ErrorCode = response.ErrorCode;
+            // The Lms can send false success if the entity already exist. In such a case we read the targetId
+            if (!string.IsNullOrEmpty(response.TargetId) && !fromEnrollment)
+                line.TargetId = response.TargetId;
 
             line.Touch();
             repo.PushLineHistory(line, isNewData: false);

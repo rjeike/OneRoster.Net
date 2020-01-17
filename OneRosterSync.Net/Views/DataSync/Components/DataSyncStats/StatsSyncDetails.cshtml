@@ -1,28 +1,28 @@
 ﻿@model OneRosterSync.Net.Models.DataSyncLineReportLine
 
-<div>
+<div class="col-md-6 col-sm-12">
     <dl class="dl-horizontal">
         @*@if (!string.IsNullOrEmpty(Model.Entity))
-        {
-            <dt>
-                @Html.DisplayNameFor(model => model.Entity)
+            {
+                <dt>
+                    @Html.DisplayNameFor(model => model.Entity)
+                </dt>
+                <dd>
+                    @Html.DisplayFor(model => model.Entity)
+                </dd>
+            }*@
+        @*<dt>
+                @Html.DisplayNameFor(model => model.TotalRecords)
             </dt>
             <dd>
-                @Html.DisplayFor(model => model.Entity)
-            </dd>
-        }*@
+                @Html.DisplayFor(model => model.TotalRecords)
+            </dd>*@
         @*<dt>
-            @Html.DisplayNameFor(model => model.TotalRecords)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.TotalRecords)
-        </dd>*@
-        @*<dt>
-            @Html.DisplayNameFor(model => model.IncludeInSync)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.IncludeInSync)
-        </dd>*@
+                @Html.DisplayNameFor(model => model.IncludeInSync)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.IncludeInSync)
+            </dd>*@
         <dt>
             Added in Database
         </dt>
@@ -30,23 +30,23 @@
             @Html.DisplayFor(model => model.Added)
         </dd>
         @*<dt>
-            @Html.DisplayNameFor(model => model.Modified)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Modified)
-        </dd>*@
+                @Html.DisplayNameFor(model => model.Modified)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.Modified)
+            </dd>*@
         @*<dt>
-            @Html.DisplayNameFor(model => model.NoChange)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.NoChange)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Deleted)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Deleted)
-        </dd>*@
+                @Html.DisplayNameFor(model => model.NoChange)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.NoChange)
+            </dd>
+            <dt>
+                @Html.DisplayNameFor(model => model.Deleted)
+            </dt>
+            <dd>
+                @Html.DisplayFor(model => model.Deleted)
+            </dd>*@
         <dt>
             Loaded for Apply
         </dt>
@@ -59,6 +59,10 @@
         <dd>
             @Html.DisplayFor(model => model.ReadyToApply)
         </dd>
+    </dl>
+</div>
+<div class="col-md-6 col-sm-12">
+    <dl class="dl-horizontal">
         <dt>
             Last Apply Successfull
         </dt>
@@ -70,6 +74,20 @@
         </dt>
         <dd>
             @Html.DisplayFor(model => model.AppliedFailed)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Transferred)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.Transferred)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.NewEnrollments)
+        </dt>
+        <dd>
+            @Html.DisplayFor(model => model.NewEnrollments)
         </dd>
     </dl>
 </div>

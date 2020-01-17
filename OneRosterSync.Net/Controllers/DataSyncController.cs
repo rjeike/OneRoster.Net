@@ -77,6 +77,7 @@ namespace OneRosterSync.Net.Controllers
                     DataSyncLineId = d.DataSyncLineId,
                     EnrollmentMap = d.EnrollmentMap,
                     Error = d.Error,
+                    ErrorCode = d.ErrorCode,
                     IncludeInSync = d.IncludeInSync,
                     LastSeen = d.LastSeen,
                     LoadStatus = d.LoadStatus,
@@ -647,7 +648,10 @@ namespace OneRosterSync.Net.Controllers
                 .Select(g => new { SyncStatus = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.SyncStatus, x => x.Count);
 
-            return new DataSyncLineReportLine
+            int NewEnrollments = await lines.Where(w => w.ErrorCode == "129").CountAsync();
+            int Transfers = await lines.Where(w => w.ErrorCode == "128").CountAsync();
+
+            var result = new DataSyncLineReportLine
             {
                 Entity = entity,
 
@@ -663,8 +667,13 @@ namespace OneRosterSync.Net.Controllers
                 Applied = syncStatusStats.GetValueOrDefault(SyncStatus.Applied),
                 AppliedFailed = syncStatusStats.GetValueOrDefault(SyncStatus.ApplyFailed),
 
+                NewEnrollments = NewEnrollments,
+                Transferred = Transfers,
                 TotalRecords = await lines.CountAsync(),
             };
+
+            result.Added = result.Added + result.Modified + result.NoChange;
+            return result;
         }
 
         [HttpGet]
@@ -837,6 +846,7 @@ namespace OneRosterSync.Net.Controllers
                 EnrollmentMap = Data.EnrollmentMap,
                 DistrictId = Data.DistrictId,
                 Error = Data.Error,
+                ErrorCode = Data.ErrorCode,
                 IncludeInSync = Data.IncludeInSync,
                 LastSeen = Data.LastSeen,
                 LoadStatus = Data.LoadStatus,
