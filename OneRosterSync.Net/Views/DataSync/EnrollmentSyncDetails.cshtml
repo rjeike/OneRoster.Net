@@ -246,21 +246,22 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                     <td>
                         @if (ViewBag.AppliedFlag != null && ViewBag.AppliedFlag)
                         {
-                            if (item.SyncStatus == SyncStatus.Applied || item.SyncStatus == SyncStatus.ApplyFailed)
-                            {
-                                <div>
-                                    @if (item.SyncStatus == SyncStatus.ApplyFailed && !string.IsNullOrEmpty(item.Error))
-                                    {
-                                        <i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i>
+                            <div>
+                                @if (item.SyncStatus == SyncStatus.Applied && string.IsNullOrEmpty(item.Error))
+                                {
+                                    <i class="fas fa-check-circle" style="color: green" title="@item.Error"></i>
 
-                                    }
-                                    else
-                                    {
-                                        <i class="fas fa-check-circle" style="color: green" title="@item.Error"></i>
-                                    }
-                                    @item.Error
-                                </div>
-                            }
+                                }
+                                @if (item.SyncStatus == SyncStatus.ApplyFailed && !string.IsNullOrEmpty(item.Error))
+                                {
+                                    <i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-exclamation-triangle" style="color: dimgray" title="Warning"></i>
+                                }
+                                @item.Error
+                            </div>
                         }
                     </td>
                 </tr>
