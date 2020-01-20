@@ -54,7 +54,7 @@ namespace OneRosterSync.Net.Controllers
                 DistrictId = d.DistrictId,
                 Name = d.Name,
                 NumRecords = db.DataSyncLines.Count(l => l.DistrictId == d.DistrictId && l.LoadStatus != LoadStatus.Deleted),
-                TimeOfDay = d.DailyProcessingTime.ToString(),
+                //TimeOfDay = d.DailyProcessingTime.ToString(),
                 ProcessingStatus = d.ProcessingStatus.ToString(),
                 Modified = d.Modified.ToLocalTime().ToString(),
                 NightlySyncEnabled = d.NightlySyncEnabled
@@ -671,8 +671,7 @@ namespace OneRosterSync.Net.Controllers
                 Transferred = Transfers,
                 TotalRecords = await lines.CountAsync(),
             };
-
-            result.Added = result.Added + result.Modified + result.NoChange;
+            
             return result;
         }
 

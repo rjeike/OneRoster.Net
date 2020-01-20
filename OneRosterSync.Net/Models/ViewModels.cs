@@ -24,7 +24,7 @@ namespace OneRosterSync.Net.Models
 
         public string Entity { get; set; }
         public int IncludeInSync { get; set; }
-		public bool SyncEnabled { get; set; }
+        public bool SyncEnabled { get; set; }
 
         // LoadStatus
         [DisplayName("Load: Added")]
@@ -49,8 +49,11 @@ namespace OneRosterSync.Net.Models
         public int Transferred { get; set; }
         [DisplayName("New Enrollments")]
         public int NewEnrollments { get; set; }
-
         public int TotalRecords { get; set; }
+        public int TotalLoadedRecords
+        {
+            get { return Added + Modified + NoChange - Deleted; }
+        }
     }
 
     public class DataSyncLineViewModel : DataObject
