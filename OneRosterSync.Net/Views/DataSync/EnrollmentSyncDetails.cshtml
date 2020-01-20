@@ -249,16 +249,16 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                             <div>
                                 @if (item.SyncStatus == SyncStatus.Applied && string.IsNullOrEmpty(item.Error))
                                 {
-                                    <i class="fas fa-check-circle" style="color: green" title="@item.Error"></i>
+                                    <i class="fas fa-check-circle" style="color: green" title="No error"></i>
 
                                 }
-                                @if (item.SyncStatus == SyncStatus.ApplyFailed && !string.IsNullOrEmpty(item.Error))
+                                else if (item.SyncStatus == SyncStatus.ApplyFailed && !string.IsNullOrEmpty(item.Error))
                                 {
                                     <i class="fas fa-exclamation-triangle" style="color: red" title="@item.Error"></i>
                                 }
                                 else
                                 {
-                                    <i class="fas fa-check-circle" style="color: #5f925f" title="No error"></i>
+                                    <i class="fas fa-check-circle" style="color: #5f925f" title="@item.Error"></i>
                                 }
                                 @item.Error
                             </div>
