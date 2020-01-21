@@ -210,20 +210,20 @@ namespace OneRosterSync.Net.Controllers
                     using (var sftp = new SftpClient(connectionInfo))
                     {
                         sftp.Connect();
-                        string[] csvFiles;
+                        string[][] csvFiles;
                         bool isZipFile = false;
                         if (FTPFilePath.ToLower().EndsWith(".zip"))
                         {
                             if (sftp.Exists(FTPFilePath))
                             {
                                 isZipFile = true;
-                                csvFiles = new string[1] { FTPFilePath };
+                                csvFiles = new string[][] { new string[1] { FTPFilePath } };
                             }
                             else
                             {
                                 logger.Here().LogInformation($"FTP file path '{FTPFilePath}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}. Looking for csv files in this folder.{Environment.NewLine}");
                                 FTPFilePath = FTPFilePath.Substring(0, FTPFilePath.LastIndexOf("/") + 1);
-                                csvFiles = new string[2] { "users.csv", "orgs.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                                csvFiles = new string[][] { new string[2] { "orgs.csv", "Orgs.csv" }, new string[2] { "users.csv", "Users.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                             }
                         }
                         else
@@ -231,65 +231,71 @@ namespace OneRosterSync.Net.Controllers
                             if (!FTPFilePath.EndsWith("/"))
                                 FTPFilePath = FTPFilePath + "/";
 
-                            csvFiles = new string[2] { "orgs.csv", "users.csv" }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                            csvFiles = new string[][] { new string[2] { "orgs.csv", "Orgs.csv" }, new string[2] { "users.csv", "Users.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                         }
 
                         foreach (var csvFile in csvFiles)
                         {
-                            string localFile = isZipFile ? "csv_files.zip" : csvFile,
-                                localFilePath = Path.GetFullPath($@"{Path.Combine(FullPath, localFile)}"),
-                                ftpFile = isZipFile ? FTPFilePath : $"{FTPFilePath}{csvFile}";
-
-                            if (sftp.Exists(ftpFile))
+                            bool existsFlag = false;
+                            foreach (var file in csvFile)
                             {
-                                var dtFtpFile = sftp.GetLastWriteTime(ftpFile);
-                                if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
+                                string localFile = isZipFile ? "csv_files.zip" : csvFile[0],
+                                    localFilePath = Path.GetFullPath($@"{Path.Combine(FullPath, localFile)}"),
+                                    ftpFile = isZipFile ? FTPFilePath : $"{FTPFilePath}{file}";
+
+                                if (sftp.Exists(ftpFile))
                                 {
-                                    if (isZipFile)
+                                    var dtFtpFile = sftp.GetLastWriteTime(ftpFile);
+                                    if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                     {
-                                        sftp.Disconnect();
-                                        district.ReadyForNightlySync = false;
+                                        if (isZipFile)
+                                        {
+                                            sftp.Disconnect();
+                                            district.ReadyForNightlySync = false;
+                                        }
+                                        Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     }
-                                    Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
-                                }
-                                else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
-                                {
-                                    Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
-                                }
-                                else
-                                {
-                                    MemoryStream outputSteam = new MemoryStream();
-                                    sftp.DownloadFile($"{ftpFile}", outputSteam);
-
-                                    CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")), isZipFile);
-
-                                    using (var fileStream = new FileStream(localFilePath, FileMode.Create))
+                                    else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                     {
-                                        outputSteam.Seek(0, SeekOrigin.Begin);
-                                        await outputSteam.CopyToAsync(fileStream);
+                                        Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     }
-
-                                    if (isZipFile)
-                                    {
-                                        sftp.Disconnect();
-                                        ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
-                                    }
-
-                                    district.LastSyncedOn = DateTime.Now;
-                                    if (district.FTPFilesLastLoadedOn == null || dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) > 0)
-                                        district.FTPFilesLastLoadedOn = dtFtpFile;
-                                    district.ReadyForNightlySync = true;
-                                    SuccessFlag = true;
-
-                                    if (isZipFile)
-                                        Message += $"FTP fetch successful for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     else
-                                        Message += $"FTP file '{ftpFile}' fetch for district '{district.Name}' successful.{Environment.NewLine}";
+                                    {
+                                        MemoryStream outputSteam = new MemoryStream();
+                                        sftp.DownloadFile($"{ftpFile}", outputSteam);
+
+                                        CreateCSVDirectory(Path.GetFullPath($@"{FullPath}"), Directory.Exists(Path.GetFullPath($@"{FullPath}")), isZipFile);
+
+                                        using (var fileStream = new FileStream(localFilePath, FileMode.Create))
+                                        {
+                                            outputSteam.Seek(0, SeekOrigin.Begin);
+                                            await outputSteam.CopyToAsync(fileStream);
+                                        }
+
+                                        if (isZipFile)
+                                        {
+                                            sftp.Disconnect();
+                                            ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                                        }
+
+                                        district.LastSyncedOn = DateTime.Now;
+                                        if (district.FTPFilesLastLoadedOn == null || dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) > 0)
+                                            district.FTPFilesLastLoadedOn = dtFtpFile;
+                                        district.ReadyForNightlySync = true;
+                                        SuccessFlag = true;
+
+                                        if (isZipFile)
+                                            Message += $"FTP fetch successful for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                                        else
+                                            Message += $"FTP file '{ftpFile}' fetch for district '{district.Name}' successful.{Environment.NewLine}";
+                                    }
+                                    existsFlag = true;
+                                    break;
                                 }
                             }
-                            else
+                            if (!existsFlag)
                             {
-                                Message += $"FTP file path '{ftpFile}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                                Message += $"FTP file path '{csvFile[0]}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                             }
                         }
 
@@ -305,6 +311,7 @@ namespace OneRosterSync.Net.Controllers
 
             return new Tuple<string, bool>(Message, SuccessFlag);
         }
+
         public void CreateCSVDirectory(string FolderName, bool Exists, bool isZipFile = false)
         {
             if (Exists)
@@ -671,7 +678,7 @@ namespace OneRosterSync.Net.Controllers
                 Transferred = Transfers,
                 TotalRecords = await lines.CountAsync(),
             };
-            
+
             return result;
         }
 

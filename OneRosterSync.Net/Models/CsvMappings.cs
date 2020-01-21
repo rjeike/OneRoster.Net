@@ -6,7 +6,7 @@ namespace OneRosterSync.Net.Models
     {
         public CsvUserClassMap()
         {
-            Map(m => m.sourcedId).Name("sourcedId", "sourcedid", "SOURCEDID", "sourceId");
+            Map(m => m.sourcedId).Name("sourcedId", "sourcedID", "sourcedid", "SOURCEDID", "sourceId", "sourceID");
             Map(m => m.orgSourcedIds).Name("orgSourcedIds", "ORGSOURCEDIDS", "orgSourceIds", "orgsourceids", "orgsourcedids");
             Map(m => m.status).Name("status", "STATUS");
             Map(m => m.dateLastModified).Name("dateLastModified", "DATELASTMODIFIED");
@@ -26,7 +26,7 @@ namespace OneRosterSync.Net.Models
     {
         public CsvOrgClassMap()
         {
-            Map(m => m.sourcedId).Name("sourcedId", "sourcedid", "SOURCEDID", "sourceId");
+            Map(m => m.sourcedId).Name("sourcedId", "sourcedID", "sourcedid", "SOURCEDID", "sourceId", "sourceID");
             Map(m => m.name).Name("name", "NAME", "school", "SCHOOL");
             Map(m => m.status).Name("status", "STATUS", "Development");
             Map(m => m.dateLastModified).Name("dateLastModified", "DATELASTMODIFIED");
