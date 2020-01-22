@@ -76,7 +76,7 @@ namespace OneRosterSync.Net.Data
                     outputSteam.CopyTo(fileStream);
                 }
 
-                ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(BaseFolder, "csv_nces.zip")}"), Path.GetFullPath($@"{BaseFolder}"));
+                ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(BaseFolder, "csv_nces.zip")}"), Path.GetFullPath($@"{BaseFolder}"), true);
             }
         }
 
