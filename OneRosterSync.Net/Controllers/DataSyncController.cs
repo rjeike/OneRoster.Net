@@ -68,7 +68,8 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> DistrictSyncLineErrors(int districtId, int page = 1)
         {
-            var query = db.DataSyncLines.Where(w => w.DistrictId == districtId && (w.SyncStatus == SyncStatus.Applied || w.SyncStatus == SyncStatus.ApplyFailed)
+            var query = db.DataSyncLines.Where(w => w.DistrictId == districtId && w.SyncStatus == SyncStatus.ApplyFailed
+                && w.LoadStatus != LoadStatus.Deleted
                 && !string.IsNullOrEmpty(w.Error)).Select(d => new DataSyncLineViewModel
                 {
                     DistrictId = d.DistrictId,
