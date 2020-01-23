@@ -282,7 +282,7 @@ namespace OneRosterSync.Net.Controllers
                                                     orgsPath = Path.GetFullPath($@"{Path.Combine(FullPath, "Orgs.csv")}");
 
                                                 if (System.IO.File.Exists(usersPath))
-                                                    System.IO.File.Move(usersPath, Path.GetFullPath($@"{Path.Combine(FullPath, "user.csv")}"));
+                                                    System.IO.File.Move(usersPath, Path.GetFullPath($@"{Path.Combine(FullPath, "users.csv")}"));
                                                 if (System.IO.File.Exists(orgsPath))
                                                     System.IO.File.Move(orgsPath, Path.GetFullPath($@"{Path.Combine(FullPath, "orgs.csv")}"));
                                             }
