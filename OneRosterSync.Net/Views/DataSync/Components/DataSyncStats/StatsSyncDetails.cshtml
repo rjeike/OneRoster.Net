@@ -67,27 +67,42 @@
             Last Apply Successfull
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Applied)
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="AppliedFlag" value="true" />
+                <input type="submit" value="@Html.DisplayFor(model => model.Applied)" class="btn btn-link" style="padding: 0;" />
+            </form>
         </dd>
         <dt>
             Last Apply Failed
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.AppliedFailed)
+            <form asp-action="DistrictSyncLineErrors" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="@Html.DisplayFor(model => model.AppliedFailed)" class="btn btn-link" style="padding: 0;" />
+            </form>
         </dd>
 
         <dt>
             @Html.DisplayNameFor(model => model.Transferred)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.Transferred)
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="Transfers" value="true" />
+                <input type="submit" value="@Html.DisplayFor(model => model.Transferred)" class="btn btn-link" style="padding: 0;" />
+            </form>
         </dd>
 
         <dt>
             @Html.DisplayNameFor(model => model.NewEnrollments)
         </dt>
         <dd>
-            @Html.DisplayFor(model => model.NewEnrollments)
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="NewEnrollments" value="true" />
+                <input type="submit" value="@Html.DisplayFor(model => model.NewEnrollments)" class="btn btn-link" style="padding: 0;" />
+            </form>
         </dd>
     </dl>
 </div>

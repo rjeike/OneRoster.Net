@@ -80,8 +80,9 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
 
     <div class="col-md-5 form-esd rht">
         <div>
-            <form asp-action="ViewAllAppliedEnrollmentSyncDetails" method="get">
+            <form asp-action="EnrollmentSyncDetails" method="get">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="AppliedFlag" value="true" />
                 <input type="submit" value="View all applied" class="btn btn-primary" />
             </form>
         </div>

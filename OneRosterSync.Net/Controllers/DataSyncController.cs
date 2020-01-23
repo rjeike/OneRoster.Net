@@ -1,24 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OneRosterSync.Net.Data;
-using OneRosterSync.Net.Models;
 using OneRosterSync.Net.DAL;
+using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
+using OneRosterSync.Net.Models;
 using ReflectionIT.Mvc.Paging;
 using Renci.SshNet;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
-using System.Reflection;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -277,6 +276,17 @@ namespace OneRosterSync.Net.Controllers
                                         {
                                             sftp.Disconnect();
                                             ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                                            try
+                                            {
+                                                string usersPath = Path.GetFullPath($@"{Path.Combine(FullPath, "Users.csv")}"),
+                                                    orgsPath = Path.GetFullPath($@"{Path.Combine(FullPath, "Orgs.csv")}");
+
+                                                if (System.IO.File.Exists(usersPath))
+                                                    System.IO.File.Move(usersPath, Path.GetFullPath($@"{Path.Combine(FullPath, "user.csv")}"));
+                                                if (System.IO.File.Exists(orgsPath))
+                                                    System.IO.File.Move(orgsPath, Path.GetFullPath($@"{Path.Combine(FullPath, "orgs.csv")}"));
+                                            }
+                                            catch { } // Just renaming the files so that files can load without handling case
                                         }
 
                                         district.LastSyncedOn = DateTime.Now;
@@ -296,7 +306,8 @@ namespace OneRosterSync.Net.Controllers
                             }
                             if (!existsFlag)
                             {
-                                Message += $"FTP file path '{csvFile[0]}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
+                                string filePath = isZipFile ? FTPFilePath : $"{FTPFilePath}{csvFile[0]}";
+                                Message += $"FTP file path '{filePath}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                             }
                         }
 
@@ -725,7 +736,8 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false)
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false, 
+                bool Transfers = false, bool NewEnrollments = false)
         {
             var repo = new DistrictRepo(db, districtId);
             if (repo.District == null)
@@ -743,44 +755,59 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.SyncAnalyzeError = SyncHistory?.AnalyzeError;
             ViewBag.SyncApplyError = SyncHistory?.ApplyError;
 
-            var orgs = repo.Lines<CsvOrg>().AsNoTracking().Where(w => w.IncludeInSync).ToList();
+            var orgs = repo.Lines<CsvOrg>().AsNoTracking().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted).ToList();
             var orgsIds = orgs.Select(s => s.SourcedId).ToList();
 
             var query = repo.Lines<CsvUser>().AsNoTracking()
                 .Where(w => w.DistrictId == districtId && w.LoadStatus != LoadStatus.Deleted
-                        && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\""))
-                        && ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
-                           || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
-                           || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)))
-                       .Select(s => new
-                       {
-                           line = s,
-                           user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
-                           org = JsonConvert.DeserializeObject<CsvOrg>
-                            (orgs.SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).RawData)
-                       }).Select(s => new EnrollmentSyncLineViewModel
-                       {
-                           Created = s.line.Created,
-                           DataSyncLineId = s.line.DataSyncLineId,
-                           DistrictId = s.line.DistrictId,
-                           Email = s.user.email,
-                           Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
-                           Name = $"{s.user.givenName} {s.user.familyName}",
-                           Version = s.line.Version,
-                           SyncStatus = s.line.SyncStatus,
-                           Error = s.line.Error,
-                           IncludeInSync = s.line.IncludeInSync,
-                           Table = s.line.Table,
-                           SchoolName = s.org.name,
-                       });
+                        && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
 
-            var orderedQuery = query.OrderByDescending(l => l.SchoolName);
+            if (Transfers)
+            {
+                query = query.Where(w => w.ErrorCode == "128");
+            }
+            else if (NewEnrollments)
+            {
+                query = query.Where(w => w.ErrorCode == "129");
+            }
+            else
+            {
+                query = query.Where(w => ((!AppliedFlag && w.SyncStatus == SyncStatus.ReadyToApply)
+                              || (AppliedFlag && w.SyncStatus == SyncStatus.ApplyFailed)
+                              || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)));
+            }
+
+            var selectQuery = query.Select(s => new
+            {
+                line = s,
+                user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+                org = JsonConvert.DeserializeObject<CsvOrg>
+                         (orgs.SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).RawData)
+            }).Select(s => new EnrollmentSyncLineViewModel
+            {
+                Created = s.line.Created,
+                DataSyncLineId = s.line.DataSyncLineId,
+                DistrictId = s.line.DistrictId,
+                Email = s.user.email,
+                Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
+                Name = $"{s.user.givenName} {s.user.familyName}",
+                Version = s.line.Version,
+                SyncStatus = s.line.SyncStatus,
+                Error = s.line.Error,
+                IncludeInSync = s.line.IncludeInSync,
+                Table = s.line.Table,
+                SchoolName = s.org.name,
+            });
+
+            var orderedQuery = selectQuery.OrderByDescending(l => l.SchoolName);
             var model = await PagingList.CreateAsync(orderedQuery, 100, page);
             model.Action = nameof(EnrollmentSyncDetails);
             model.RouteValue = new RouteValueDictionary
             {
                 { "districtId", districtId },
-                { "AppliedFlag", AppliedFlag }
+                { "AppliedFlag", AppliedFlag },
+                { "Transfers", Transfers },
+                { "NewEnrollments",NewEnrollments }
             };
 
             GC.Collect();
@@ -794,12 +821,6 @@ namespace OneRosterSync.Net.Controllers
             district.StopCurrentAction = true;
             await db.SaveChangesAsync();
             return RedirectToAction("EnrollmentSyncDetails", new { districtId });
-        }
-
-        [HttpGet]
-        public IActionResult ViewAllAppliedEnrollmentSyncDetails(int districtId)
-        {
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId = districtId, AppliedFlag = true });
         }
 
         [HttpPost]
@@ -875,7 +896,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> DistrictEntityMapping(int districtId)
+        public IActionResult DistrictEntityMapping(int districtId)
         {
             var repo = new DistrictRepo(db, districtId);
             return View(repo.District);

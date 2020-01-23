@@ -51,8 +51,10 @@ namespace OneRosterSync.Net.Processing
                     IQueryable<DataSyncLine> lines;
                     if (typeof(T) == typeof(CsvUser))
                     {
-                        var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).Select(s => s.SourcedId).ToList();
-                        lines = repo.Lines<T>().Where(l => l.IncludeInSync
+                        var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted)
+                            .Select(s => s.SourcedId).ToList();
+
+                        lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
                         if (listInvalidSchoolIDs.Count > 0 && orgsIds.Count != listInvalidSchoolIDs.Count)
@@ -64,15 +66,15 @@ namespace OneRosterSync.Net.Processing
                     }
                     else
                     {
-                        lines = repo.Lines<T>().Where(l => l.IncludeInSync
+                        lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
-
+                    var abc = lines.ToList();
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
                     if (curr == 0)
                         break;
-
+                    
                     // after each process, the remaining record count should go down
                     // this avoids and infinite loop in case there is an problem processing
                     // basically, we bail if no progress is made at all
