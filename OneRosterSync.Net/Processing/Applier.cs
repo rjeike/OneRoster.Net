@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -11,6 +7,10 @@ using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -57,7 +57,7 @@ namespace OneRosterSync.Net.Processing
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
                            && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
 
-                        if (listInvalidSchoolIDs.Count > 0 && orgsIds.Count != listInvalidSchoolIDs.Count)
+                        if (listInvalidSchoolIDs.Count > 0 && listInvalidSchoolIDs.Count < orgsIds.Count)
                         {
                             listInvalidSchoolIDs.All(a => orgsIds.Remove(a));
                         }
@@ -69,12 +69,12 @@ namespace OneRosterSync.Net.Processing
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
-                    
+
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
                     if (curr == 0)
                         break;
-                    
+
                     // after each process, the remaining record count should go down
                     // this avoids and infinite loop in case there is an problem processing
                     // basically, we bail if no progress is made at all
@@ -253,30 +253,6 @@ namespace OneRosterSync.Net.Processing
             {
                 await ApplyEnrollment(line, repo, apiManager);
             }
-            //if (response.Success)
-            //{
-            //    line.SyncStatus = SyncStatus.Applied;
-            //    if (!string.IsNullOrEmpty(response.TargetId))
-            //        line.TargetId = response.TargetId;
-            //    line.Error = response.ErrorMessage;
-
-            //    if (line.Table == nameof(CsvUser))
-            //    {
-            //        await ApplyEnrollment(line, repo, apiManager);
-            //    }
-            //}
-            //else
-            //{
-            //    line.SyncStatus = SyncStatus.ApplyFailed;
-            //    line.Error = response.ErrorMessage;
-
-            //    // The Lms can send false success if the entity already exist. In such a case we read the targetId
-            //    if (!string.IsNullOrEmpty(response.TargetId))
-            //        line.TargetId = response.TargetId;
-            //}
-
-            //line.Touch();
-            //repo.PushLineHistory(line, isNewData: false);
         }
 
         private string GetEntityEndpoint(string entityType, DistrictRepo repo)
@@ -302,42 +278,64 @@ namespace OneRosterSync.Net.Processing
 
         private async Task ApplyEnrollment(DataSyncLine line, DistrictRepo repo, ApiManager apiManager)
         {
-            var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
-            //DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
-            //if (org == null || !org.IncludeInSync)
-            //{
-            //    return;
-            //}
-
-            //var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
-            string ncesId = string.Empty;
-            // Is NCES school ID given?
-            //if (orgCsv != null && !string.IsNullOrEmpty(orgCsv.identifier))
-            //{
-            //    ncesId = orgCsv.identifier;
-            //}
-            //else
-            //{
-            var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
-            if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
+            if (string.IsNullOrEmpty(repo.District.NCESDistrictID))
             {
-                ncesId = ncesMapping.ncesId;
+                line.SyncStatus = SyncStatus.ApplyFailed;
+                line.Error = $"NCES District ID is not provided.";
+                line.Touch();
+                repo.PushLineHistory(line, isNewData: false);
+                throw new ProcessingException(Logger, $"NCES District ID is not provided. Force stopping current action.");
             }
-            //}
-            //else if (ncesMapping == null || string.IsNullOrEmpty(ncesMapping.ncesId))
+
+            var currentDistrict = repo.District;
+            var csvUser = JsonConvert.DeserializeObject<CsvUser>(line.RawData);
+            DataSyncLine org = repo.Lines<CsvOrg>().SingleOrDefault(l => l.SourcedId == csvUser.orgSourcedIds);
+            if (org == null || !org.IncludeInSync)
+            {
+                return;
+            }
+
+            var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+            string ncesId = orgCsv.identifier;
+            // Is NCES school ID given?
+            if (string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID))
+            {
+                var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+                if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
+                {
+                    ncesId = ncesMapping.ncesId;
+                }
+            }
+        
             if (string.IsNullOrEmpty(ncesId))
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
                 line.Error = "NCES school ID not found";
                 line.Touch();
                 repo.PushLineHistory(line, isNewData: false);
+                if (!listInvalidSchoolIDs.Contains(org.SourcedId))
+                {
+                    listInvalidSchoolIDs.Add(org.SourcedId);
+                }
+                return;
+            }
+            else if (!ncesId.StartsWith(currentDistrict.NCESDistrictID))
+            {
+                line.SyncStatus = SyncStatus.ApplyFailed;
+                line.Error = $"NCES school ID {ncesId} is invalid as it does not start with NCES District ID {currentDistrict.NCESDistrictID}";
+                line.Touch();
+                repo.PushLineHistory(line, isNewData: false);
+                if (!listInvalidSchoolIDs.Contains(org.SourcedId))
+                {
+                    listInvalidSchoolIDs.Add(org.SourcedId);
+                }
                 return;
             }
 
             var enrollment = new CsvEnrollment
             {
                 user_id = line.TargetId,
-                nces_schoolid = ncesId // ncesMapping?.ncesId
+                nces_schoolid = ncesId
             };
 
             var data = new ApiPost<CsvEnrollment>(JsonConvert.SerializeObject(enrollment));

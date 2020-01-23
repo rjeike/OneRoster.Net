@@ -1060,6 +1060,7 @@ namespace OneRosterSync.Net.Controllers
             district.SyncOrgs = postedDistrict.SyncOrgs;
             district.SyncUsers = postedDistrict.SyncUsers;
 
+            district.NCESDistrictID = postedDistrict.NCESDistrictID;
             district.FTPUsername = postedDistrict.FTPUsername;
             district.FTPPassword = postedDistrict.FTPPassword;
             district.FTPPath = postedDistrict.FTPPath;

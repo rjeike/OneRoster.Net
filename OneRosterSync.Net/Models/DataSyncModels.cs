@@ -189,6 +189,11 @@ namespace OneRosterSync.Net.Models
         [DisplayName("Sync Enrollments")]
         public bool SyncEnrollment { get; set; }
 
+        [DisplayName("NCES District ID")]
+        [MinLength(7), MaxLength(7)]
+        [Required]
+        public string NCESDistrictID { get; set; }
+
         [DisplayName("FTP Username")]
         [Required]
         public string FTPUsername { get; set; }

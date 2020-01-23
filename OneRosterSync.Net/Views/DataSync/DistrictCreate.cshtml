@@ -66,6 +66,12 @@
             </div>
 
             <div class="form-group">
+                <label asp-for="NCESDistrictID" class="control-label"></label>
+                <input asp-for="NCESDistrictID" class="form-control" maxlength="7" />
+                <span asp-validation-for="NCESDistrictID" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
                 <label asp-for="FTPUsername" class="control-label"></label>
                 <input asp-for="FTPUsername" class="form-control" />
                 <span asp-validation-for="FTPUsername" class="text-danger"></span>
