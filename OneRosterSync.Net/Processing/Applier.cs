@@ -69,7 +69,7 @@ namespace OneRosterSync.Net.Processing
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
-                    var abc = lines.ToList();
+                    
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
                     if (curr == 0)
