@@ -70,6 +70,8 @@ namespace OneRosterSync.Net.Processing
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
 
+                    lines = lines.OrderBy(o => o.ErrorCode);
+
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
                     if (curr == 0)
