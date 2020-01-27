@@ -70,7 +70,7 @@ namespace OneRosterSync.Net.Processing
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
 
-                    lines = lines.OrderBy(o => o.ErrorCode);
+                    lines = lines.OrderBy(o => o.SyncStatus).ThenByDescending(o => o.ErrorCode);
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
@@ -308,7 +308,7 @@ namespace OneRosterSync.Net.Processing
                     ncesId = ncesMapping.ncesId;
                 }
             }
-        
+
             if (string.IsNullOrEmpty(ncesId))
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
