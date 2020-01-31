@@ -81,6 +81,11 @@ namespace OneRosterSync.Net.Models
         /// Failures also tracked
         /// </summary>
         ApplyFailed = 4,
+
+        /// <summary>
+        /// User created, ready for enrollment call
+        /// </summary>
+        ReadyToEnroll = 5,
     }
 
     public enum ProcessingStatus

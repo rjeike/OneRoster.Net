@@ -55,7 +55,7 @@ namespace OneRosterSync.Net.Processing
                             .Select(s => s.SourcedId).ToList();
 
                         lines = repo.Lines<T>().Where(l => l.IncludeInSync && l.LoadStatus != LoadStatus.Deleted
-                           && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
+                           && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed || l.SyncStatus == SyncStatus.ReadyToEnroll));
 
                         if (listInvalidSchoolIDs.Count > 0 && listInvalidSchoolIDs.Count < orgsIds.Count)
                         {
@@ -360,13 +360,20 @@ namespace OneRosterSync.Net.Processing
         {
             if (response.Success)
             {
-                line.SyncStatus = SyncStatus.Applied;
+                if (!fromEnrollment && line.Table == nameof(CsvUser))
+                {
+                    line.SyncStatus = SyncStatus.ReadyToEnroll;
+                }
+                else
+                {
+                    line.SyncStatus = SyncStatus.Applied;
+                }
             }
             else
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
                 var ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
-                if (fromEnrollment && ErrorCode.Equals("106") && !listInvalidSchoolIDs.Contains(orgSourcedId))
+                if (fromEnrollment && ErrorCode.Equals("106") && orgSourcedId != null && !listInvalidSchoolIDs.Contains(orgSourcedId))
                 {
                     listInvalidSchoolIDs.Add(orgSourcedId);
                 }
