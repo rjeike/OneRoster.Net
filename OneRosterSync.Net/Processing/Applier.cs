@@ -219,7 +219,15 @@ namespace OneRosterSync.Net.Processing
                 //if (string.IsNullOrEmpty(line.TargetId))
                 //{
                 userCsv.email = userCsv.email.ToLower();
-                userCsv.username = userCsv.email.ToLower();
+                if (repo.District.EmailFieldNameForUserAPI.Equals(nameof(userCsv.email)))
+                {
+                    userCsv.username = userCsv.email.ToLower();
+                }
+                else if (repo.District.EmailFieldNameForUserAPI.Equals(nameof(userCsv.username)))
+                {
+                    userCsv.username = userCsv.username.ToLower();
+                }
+
                 if (string.IsNullOrEmpty(userCsv.password))
                 {
                     userCsv.password = line.SourcedId;

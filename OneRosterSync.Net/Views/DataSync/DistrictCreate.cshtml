@@ -90,6 +90,14 @@
             </div>
 
             <div class="form-group">
+                <label asp-for="EmailFieldNameForUserAPI" class="control-label"></label>
+                <select class="form-control" asp-for="EmailFieldNameForUserAPI">
+                    <option value="email">Email</option>
+                    <option value="username">Username</option>
+                </select>
+            </div>
+
+            <div class=" form-group">
                 <div class="checkbox">
                     <label>
                         <input asp-for="NightlySyncEnabled" /> @Html.DisplayNameFor(model => model.NightlySyncEnabled)

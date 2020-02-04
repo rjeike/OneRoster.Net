@@ -1065,6 +1065,7 @@ namespace OneRosterSync.Net.Controllers
             district.FTPPassword = postedDistrict.FTPPassword;
             district.FTPPath = postedDistrict.FTPPath;
             district.NightlySyncEnabled = postedDistrict.NightlySyncEnabled;
+            district.EmailFieldNameForUserAPI = postedDistrict.EmailFieldNameForUserAPI;
 
             DistrictRepo.UpdateNextProcessingTime(district);
 

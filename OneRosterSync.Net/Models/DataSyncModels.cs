@@ -215,6 +215,8 @@ namespace OneRosterSync.Net.Models
         public bool StopCurrentAction { get; set; } = false;
         public DateTime? FTPFilesLastLoadedOn { get; set; }
         public bool ReadyForNightlySync { get; set; } = false;
+        [DisplayName("Email field for user")]
+        public string EmailFieldNameForUserAPI { get; set; } = "email";
 
         public District ShallowCopy()
         {
