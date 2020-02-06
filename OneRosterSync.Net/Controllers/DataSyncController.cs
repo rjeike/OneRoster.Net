@@ -736,7 +736,7 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false, 
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false,
                 bool Transfers = false, bool NewEnrollments = false)
         {
             var repo = new DistrictRepo(db, districtId);
@@ -777,6 +777,9 @@ namespace OneRosterSync.Net.Controllers
                               || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)));
             }
 
+            string nameOfUsername = nameof(CsvUser.username);
+            string nameOfEmail = nameof(CsvUser.email);
+            string EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI;
             var selectQuery = query.Select(s => new
             {
                 line = s,
@@ -788,7 +791,8 @@ namespace OneRosterSync.Net.Controllers
                 Created = s.line.Created,
                 DataSyncLineId = s.line.DataSyncLineId,
                 DistrictId = s.line.DistrictId,
-                Email = s.user.email,
+                Email = EmailFieldNameForUserAPI.Equals(nameOfUsername) ? s.user.username :
+                    (EmailFieldNameForUserAPI.Equals(nameOfEmail) ? s.user.email : s.user.email),
                 Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
                 Name = $"{s.user.givenName} {s.user.familyName}",
                 Version = s.line.Version,
