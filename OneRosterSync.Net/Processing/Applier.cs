@@ -226,6 +226,10 @@ namespace OneRosterSync.Net.Processing
                 else if (repo.District.EmailFieldNameForUserAPI.Equals(nameof(userCsv.username)))
                 {
                     userCsv.username = userCsv.username.ToLower();
+                    if (string.IsNullOrEmpty(userCsv.email))
+                    {
+                        userCsv.email = userCsv.username.ToLower();
+                    }
                 }
 
                 if (string.IsNullOrEmpty(userCsv.password))
