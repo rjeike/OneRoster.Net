@@ -745,6 +745,8 @@ namespace OneRosterSync.Net.Controllers
 
             ViewBag.districtId = districtId;
             ViewBag.AppliedFlag = AppliedFlag;
+            ViewBag.Transfers = Transfers;
+            ViewBag.NewEnrollments = NewEnrollments;
             ViewBag.CurrentDistrict = repo.District;
 
             var SyncHistory = await repo.DataSyncHistories.Where(w => w.DistrictId == districtId)

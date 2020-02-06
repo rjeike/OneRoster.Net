@@ -172,7 +172,7 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                     @Html.DisplayNameFor(model => model.Table)
                 </th>
                 <th>
-                    @if (ViewBag.AppliedFlag == null || !ViewBag.AppliedFlag)
+                    @if (ViewBag.AppliedFlag == false && ViewBag.NewEnrollments == false && ViewBag.Transfers == false)
                     {
                         <input type="checkbox" checked="@headChecked" onchange="toggleIncludeInSyncAll(this)" />
                     }
@@ -210,23 +210,20 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                         @Html.DisplayFor(modelItem => item.Table)
                     </td>
                     <td style="text-align: center;">
-                        @if (ViewBag.AppliedFlag != null)
+                        @if (ViewBag.AppliedFlag == false || ViewBag.NewEnrollments == false || ViewBag.Transfers == false)
                         {
-                            @if (ViewBag.AppliedFlag)
+                            if (item.IncludeInSync)
                             {
-                                if (item.IncludeInSync)
-                                {
-                                    <i class="fas fa-check" title="Sync Enabled"></i>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-close" title="Sync Disabled"></i>
-                                }
+                                <i class="fas fa-check" title="Sync Enabled"></i>
                             }
                             else
                             {
-                                <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                                <i class="fas fa-close" title="Sync Disabled"></i>
                             }
+                        }
+                        else
+                        {
+                            <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
                         }
                     </td>
                     <td>
