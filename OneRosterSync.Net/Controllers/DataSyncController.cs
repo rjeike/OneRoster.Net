@@ -223,7 +223,8 @@ namespace OneRosterSync.Net.Controllers
                             {
                                 logger.Here().LogInformation($"FTP file path '{FTPFilePath}' is incorrect for district '{district.Name}' with district ID {district.DistrictId}. Looking for csv files in this folder.{Environment.NewLine}");
                                 FTPFilePath = FTPFilePath.Substring(0, FTPFilePath.LastIndexOf("/") + 1);
-                                csvFiles = new string[][] { new string[2] { "orgs.csv", "Orgs.csv" }, new string[2] { "users.csv", "Users.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                                csvFiles = new string[][] { new string[4] { "orgs.csv", "Orgs.csv", "org.csv", "Org.csv" },
+                                    new string[4] { "users.csv", "Users.csv", "user.csv", "User.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                             }
                         }
                         else
@@ -231,7 +232,8 @@ namespace OneRosterSync.Net.Controllers
                             if (!FTPFilePath.EndsWith("/"))
                                 FTPFilePath = FTPFilePath + "/";
 
-                            csvFiles = new string[][] { new string[2] { "orgs.csv", "Orgs.csv" }, new string[2] { "users.csv", "Users.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
+                            csvFiles = new string[][] { new string[4] { "orgs.csv", "Orgs.csv", "org.csv", "Org.csv" },
+                                new string[4] { "users.csv", "Users.csv", "user.csv", "User.csv" } }; //"courses.csv", "academicSessions.csv", "classes.csv", "enrollments.csv"
                         }
 
                         foreach (var csvFile in csvFiles)
@@ -246,6 +248,7 @@ namespace OneRosterSync.Net.Controllers
                                 if (sftp.Exists(ftpFile))
                                 {
                                     var dtFtpFile = sftp.GetLastWriteTime(ftpFile);
+                                    // Check if zip file exists and is updated
                                     if (isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) == 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                     {
                                         if (isZipFile)
@@ -255,10 +258,12 @@ namespace OneRosterSync.Net.Controllers
                                         }
                                         Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     }
+                                    // Check if csv files exist and are updated
                                     else if (!isZipFile && district.FTPFilesLastLoadedOn != null && dtFtpFile.CompareTo(district.FTPFilesLastLoadedOn.Value) <= 0 && System.IO.File.Exists(Path.GetFullPath($@"{localFilePath}")))
                                     {
                                         Message += $"FTP file '{ftpFile}' is not changed for district '{district.Name}' with district ID {district.DistrictId}.{Environment.NewLine}";
                                     }
+                                    // else download then=m
                                     else
                                     {
                                         MemoryStream outputSteam = new MemoryStream();
@@ -276,6 +281,7 @@ namespace OneRosterSync.Net.Controllers
                                         {
                                             sftp.Disconnect();
                                             ZipFile.ExtractToDirectory(Path.GetFullPath($@"{Path.Combine(FullPath, "csv_files.zip")}"), Path.GetFullPath($@"{FullPath}"));
+                                            // Rename files from User.csv and Orgs.csv to users.csv and orgs.csv
                                             try
                                             {
                                                 string usersPath = Path.GetFullPath($@"{Path.Combine(FullPath, "Users.csv")}"),
