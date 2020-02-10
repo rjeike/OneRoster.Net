@@ -10,7 +10,7 @@ namespace OneRosterSync.Net.Models
             Map(m => m.orgSourcedIds).Name("orgSourcedIds", "ORGSOURCEDIDS", "orgSourceIds", "orgsourceids", "orgsourcedids");
             Map(m => m.status).Name("status", "STATUS");
             Map(m => m.dateLastModified).Name("dateLastModified", "DATELASTMODIFIED");
-            Map(m => m.enabledUser).Name("enabledUser", "enableduser", "ENABLEDUSER");
+            Map(m => m.enabledUser).Name("enabledUser", "EnabledUser", "enableduser", "ENABLEDUSER");
             Map(m => m.role).Name("role", "ROLE");
             Map(m => m.username).Name("username", "USERNAME");
             Map(m => m.givenName).Name("givenName", "givenname", "GIVENNAME", "name", "NAME");

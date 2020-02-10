@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ namespace OneRosterSync.Net.Processing
         private readonly ILogger Logger = ApplicationLogging.Factory.CreateLogger<Loader>();
         private readonly DistrictRepo Repo;
         private readonly string BasePath;
+        private readonly TextInfo textInfo;
 
         public string LastEntity { get; private set; }
 
@@ -22,6 +24,7 @@ namespace OneRosterSync.Net.Processing
         {
             Repo = repo;
             BasePath = basePath;
+            textInfo = new CultureInfo("en-US", false).TextInfo;
         }
 
         public async Task LoadFile<T>(string filename) where T : CsvBaseObject
@@ -100,17 +103,34 @@ namespace OneRosterSync.Net.Processing
                 throw new ProcessingException(Logger.Here(),
                     $"Record of type {typeof(T).Name} contains no SourcedId: {JsonConvert.SerializeObject(record)}");
 
+            DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
+            bool isNewRecord = line == null;
+
             if (typeof(T) == typeof(CsvUser))
             {
-                if (string.IsNullOrEmpty((record as CsvUser).orgSourcedIds))
+                CsvUser rec = record as CsvUser;
+                if (string.IsNullOrEmpty(rec.orgSourcedIds))
                 {
                     throw new ProcessingException(Logger, $"orgSourcedIds cannot be empty in CsvUser for sourcedId {record.sourcedId}");
                 }
+
+                if (string.IsNullOrEmpty(rec.enabledUser))
+                    rec.enabledUser = "true";
+                if (string.IsNullOrEmpty(rec.familyName))
+                    rec.familyName = string.Empty;
+
+                if (isNewRecord && !Convert.ToBoolean(rec.enabledUser))
+                    return false;
+
+                rec.familyName = textInfo.ToTitleCase(rec.familyName.Trim().ToLower());
+                rec.givenName = textInfo.ToTitleCase(rec.givenName.Trim().ToLower());
+                rec.middleName = textInfo.ToTitleCase(rec.middleName.Trim().ToLower());
+                rec.password = rec.password.Trim();
+                rec.email = rec.email.Trim();
+                rec.username = rec.username.Trim();
+
+                record = rec as T;
             }
-
-            DataSyncLine line = await Repo.Lines<T>().SingleOrDefaultAsync(l => l.SourcedId == record.sourcedId);
-
-            bool isNewRecord = line == null;
 
             Repo.CurrentHistory.NumRows++;
             string data = JsonConvert.SerializeObject(record);
@@ -148,8 +168,14 @@ namespace OneRosterSync.Net.Processing
                     return false;
                 }
 
+                bool enabledUser = true;
+                if (typeof(T) == typeof(CsvUser)) // if enabled false, do nothing
+                {
+                    enabledUser = Convert.ToBoolean((record as CsvUser).enabledUser);
+                }
+
                 // status should be deleted
-                if (record.isDeleted)
+                if (record.isDeleted || !enabledUser)
                 {
                     Repo.CurrentHistory.NumDeleted++;
                     line.LoadStatus = LoadStatus.Deleted;

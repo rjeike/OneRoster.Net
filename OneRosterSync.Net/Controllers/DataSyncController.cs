@@ -827,12 +827,12 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> StopCurrentAction(int districtId)
+        public async Task<IActionResult> StopCurrentAction(int districtId, string ViewName = "EnrollmentSyncDetails")
         {
             District district = await db.Districts.FindAsync(districtId);
             district.StopCurrentAction = true;
             await db.SaveChangesAsync();
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId });
+            return RedirectToAction(ViewName, new { districtId });
         }
 
         [HttpPost]
