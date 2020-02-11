@@ -15,11 +15,13 @@ namespace OneRosterSync.Net.Processing
             if (CSTZone != null)
             {
                 RecurringJob.RemoveIfExists(nameof(NightlyFtpSyncService));
+                int i = 0;
                 cronExpressions.ForEach((cronExp) =>
                 {
                     try
                     {
-                        RecurringJob.AddOrUpdate<NightlyFtpSyncService>(nameof(NightlyFtpSyncService), job => job.Run(cronExp, JobCancellationToken.Null),
+                        i++;
+                        RecurringJob.AddOrUpdate<NightlyFtpSyncService>($"{nameof(NightlyFtpSyncService)}_{i}", job => job.Run(cronExp, JobCancellationToken.Null),
                             cronExp, CSTZone);
                     }
                     catch { }
