@@ -1,6 +1,7 @@
 ﻿using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
+using System;
 using System.Collections.Generic;
 using TimeZoneConverter;
 
@@ -21,10 +22,13 @@ namespace OneRosterSync.Net.Processing
                     try
                     {
                         i++;
+                        RecurringJob.RemoveIfExists($"{nameof(NightlyFtpSyncService)}_{i}");
                         RecurringJob.AddOrUpdate<NightlyFtpSyncService>($"{nameof(NightlyFtpSyncService)}_{i}", job => job.Run(cronExp, JobCancellationToken.Null),
                             cronExp, CSTZone);
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                    }
                 });
 
                 //RecurringJob.AddOrUpdate<NightlyFtpSyncService>(nameof(NightlyFtpSyncService), job => job.Run(JobCancellationToken.Null),
