@@ -217,6 +217,8 @@ namespace OneRosterSync.Net.Models
         public bool ReadyForNightlySync { get; set; } = false;
         [DisplayName("Email field for user")]
         public string EmailFieldNameForUserAPI { get; set; } = "email";
+        [Required, MaxLength(50)]
+        public string CronExpression { get; set; } = "0 1 * * *";
 
         public District ShallowCopy()
         {

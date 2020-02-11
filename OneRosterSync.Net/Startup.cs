@@ -15,7 +15,7 @@ using OneRosterSync.Net.Processing;
 using ReflectionIT.Mvc.Paging;
 using Swashbuckle.AspNetCore.Swagger;
 using Hangfire;
-using Hangfire.Dashboard;
+using System.Linq;
 
 namespace OneRosterSync.Net
 {
@@ -108,9 +108,11 @@ namespace OneRosterSync.Net
 
             app.UseAuthentication();
 
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
+            app.UseHangfireDashboard("/sk12_hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
             app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
-            HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"));
+
+           var cronExpressions = dbContext.Districts.Where(w => !string.IsNullOrEmpty(w.CronExpression)).Select(s => s.CronExpression).Distinct().ToList();
+            HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"), cronExpressions);
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

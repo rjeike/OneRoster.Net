@@ -14,7 +14,7 @@ namespace OneRosterSync.Net.Processing
 {
     public interface INightlyFtpSyncService
     {
-        Task RunNightlyFtpSync();
+        Task RunNightlyFtpSync(string cronExp);
     }
     public class NightlyFtpSyncService : INightlyFtpSyncService
     {
@@ -26,12 +26,12 @@ namespace OneRosterSync.Net.Processing
             _db = db; _logger = logger; _hostingEnvironment = hostingEnvironment;
         }
 
-        public async Task Run(IJobCancellationToken token)
+        public async Task Run(string cronExp, IJobCancellationToken token)
         {
             try
             {
                 token.ThrowIfCancellationRequested();
-                await RunNightlyFtpSync();
+                await RunNightlyFtpSync(cronExp);
             }
             catch (Exception ex)
             {
@@ -39,13 +39,13 @@ namespace OneRosterSync.Net.Processing
             }
         }
 
-        public async Task RunNightlyFtpSync()
+        public async Task RunNightlyFtpSync(string cronExp)
         {
             try
             {
                 DataSyncController controller = new DataSyncController(_db, _logger, _hostingEnvironment);
                 await controller.LoadFiles(_logger);
-                var districts = _db.Districts.Where(w => w.NightlySyncEnabled && w.ReadyForNightlySync).ToList();
+                var districts = _db.Districts.Where(w => w.NightlySyncEnabled && w.ReadyForNightlySync && w.CronExpression.Equals(cronExp)).ToList();
                 foreach (var district in districts)
                 {
                     try
