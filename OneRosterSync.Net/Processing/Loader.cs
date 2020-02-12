@@ -160,6 +160,20 @@ namespace OneRosterSync.Net.Processing
                 line.LastSeen = now;
                 line.Touch();
 
+                if (typeof(T) == typeof(CsvUser)) // if enabled false, do nothing
+                {
+                    bool enabledUser = Convert.ToBoolean((record as CsvUser).enabledUser);
+                    if (!enabledUser)
+                    {
+                        Repo.CurrentHistory.NumDeleted++;
+                        line.LoadStatus = LoadStatus.Deleted;
+                        line.IncludeInSync = false;
+                        line.Error = null;
+                        line.ErrorCode = null;
+                        return false;
+                    }
+                }
+
                 // no change to the data, skip!
                 if (line.RawData == data)
                 {
@@ -168,18 +182,14 @@ namespace OneRosterSync.Net.Processing
                     return false;
                 }
 
-                bool enabledUser = true;
-                if (typeof(T) == typeof(CsvUser)) // if enabled false, do nothing
-                {
-                    enabledUser = Convert.ToBoolean((record as CsvUser).enabledUser);
-                }
-
                 // status should be deleted
-                if (record.isDeleted || !enabledUser)
+                if (record.isDeleted)
                 {
                     Repo.CurrentHistory.NumDeleted++;
                     line.LoadStatus = LoadStatus.Deleted;
                     line.IncludeInSync = false;
+                    line.Error = null;
+                    line.ErrorCode = null;
                 }
                 else if (line.SyncStatus == SyncStatus.Loaded && line.LoadStatus == LoadStatus.Added)
                 {
@@ -190,6 +200,8 @@ namespace OneRosterSync.Net.Processing
                 {
                     Repo.CurrentHistory.NumModified++;
                     line.LoadStatus = LoadStatus.Modified;
+                    line.Error = null;
+                    line.ErrorCode = null;
                 }
             }
 
