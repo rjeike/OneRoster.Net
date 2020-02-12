@@ -210,7 +210,11 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                         @Html.DisplayFor(modelItem => item.Table)
                     </td>
                     <td style="text-align: center;">
-                        @if (ViewBag.AppliedFlag == false || ViewBag.NewEnrollments == false || ViewBag.Transfers == false)
+                        @if (ViewBag.AppliedFlag == false && ViewBag.NewEnrollments == false && ViewBag.Transfers == false)
+                        {
+                            <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
+                        }
+                        else
                         {
                             if (item.IncludeInSync)
                             {
@@ -220,10 +224,6 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
                             {
                                 <i class="fas fa-close" title="Sync Disabled"></i>
                             }
-                        }
-                        else
-                        {
-                            <input type="checkbox" class="chkToggle" checked="@item.IncludeInSync" onchange="toggleIncludeInSync(this, @item.DataSyncLineId)" />
                         }
                     </td>
                     <td>
