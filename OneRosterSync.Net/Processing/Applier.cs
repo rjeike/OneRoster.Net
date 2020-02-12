@@ -232,10 +232,18 @@ namespace OneRosterSync.Net.Processing
                     }
                 }
 
-                if (string.IsNullOrEmpty(userCsv.password))
+                if (repo.District.PasswordFieldNameForUserAPI.Equals(nameof(userCsv.sourcedId)))
                 {
                     userCsv.password = line.SourcedId;
                 }
+                else if (repo.District.PasswordFieldNameForUserAPI.Equals(nameof(userCsv.password)))
+                {
+                    userCsv.password = userCsv.password;
+                }
+                //if (string.IsNullOrEmpty(userCsv.password))
+                //{
+                //    userCsv.password = line.SourcedId;
+                //}
                 data = new ApiPost<T>(JsonConvert.SerializeObject(userCsv));
                 //}
                 //else

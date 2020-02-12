@@ -785,9 +785,13 @@ namespace OneRosterSync.Net.Controllers
                               || (AppliedFlag && w.SyncStatus == SyncStatus.Applied)));
             }
 
-            string nameOfUsername = nameof(CsvUser.username);
-            string nameOfEmail = nameof(CsvUser.email);
-            string EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI;
+            string nameOfUsername = nameof(CsvUser.username),
+                nameOfEmail = nameof(CsvUser.email),
+                nameOfPassword = nameof(CsvUser.password),
+                nameOfSourcedId = nameof(CsvUser.sourcedId),
+                EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI,
+                PasswordFieldNameForUserAPI = repo.District.PasswordFieldNameForUserAPI;
+
             var selectQuery = query.Select(s => new
             {
                 line = s,
@@ -801,7 +805,9 @@ namespace OneRosterSync.Net.Controllers
                 DistrictId = s.line.DistrictId,
                 Email = EmailFieldNameForUserAPI.Equals(nameOfUsername) ? s.user.username :
                     (EmailFieldNameForUserAPI.Equals(nameOfEmail) ? s.user.email : s.user.email),
-                Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
+                Password = PasswordFieldNameForUserAPI.Equals(nameOfPassword) ? s.user.password :
+                    (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.orgSourcedIds : s.user.orgSourcedIds),
+                //Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
                 Name = $"{s.user.givenName} {s.user.familyName}",
                 Version = s.line.Version,
                 SyncStatus = s.line.SyncStatus,
@@ -1078,6 +1084,7 @@ namespace OneRosterSync.Net.Controllers
             district.FTPPath = postedDistrict.FTPPath;
             district.NightlySyncEnabled = postedDistrict.NightlySyncEnabled;
             district.EmailFieldNameForUserAPI = postedDistrict.EmailFieldNameForUserAPI;
+            district.PasswordFieldNameForUserAPI = postedDistrict.PasswordFieldNameForUserAPI;
 
             DistrictRepo.UpdateNextProcessingTime(district);
 

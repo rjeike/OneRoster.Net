@@ -216,9 +216,11 @@ namespace OneRosterSync.Net.Models
         public DateTime? FTPFilesLastLoadedOn { get; set; }
         public bool ReadyForNightlySync { get; set; } = false;
         [DisplayName("Email field for user")]
-        public string EmailFieldNameForUserAPI { get; set; } = "email";
+        public string EmailFieldNameForUserAPI { get; set; } = nameof(CsvUser.email);
         [Required, MaxLength(50)]
         public string CronExpression { get; set; } = "0 1 * * *";
+        [Required, DisplayName("Password field for user")]
+        public string PasswordFieldNameForUserAPI { get; set; } = nameof(CsvUser.password);
 
         public District ShallowCopy()
         {

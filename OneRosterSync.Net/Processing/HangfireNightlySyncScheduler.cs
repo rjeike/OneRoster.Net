@@ -1,6 +1,7 @@
 ﻿using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
+using Hangfire.Storage;
 using System;
 using System.Collections.Generic;
 using TimeZoneConverter;
@@ -15,14 +16,20 @@ namespace OneRosterSync.Net.Processing
             var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
             if (CSTZone != null)
             {
-                RecurringJob.RemoveIfExists(nameof(NightlyFtpSyncService));
+                // remove all existing jobs as new will be created
+                var recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+                foreach (var job in recurringJobs)
+                {
+                    RecurringJob.RemoveIfExists(job.Id);
+                }
+                //RecurringJob.RemoveIfExists(nameof(NightlyFtpSyncService));
                 int i = 0;
                 cronExpressions.ForEach((cronExp) =>
                 {
                     try
                     {
                         i++;
-                        RecurringJob.RemoveIfExists($"{nameof(NightlyFtpSyncService)}_{i}");
+                        //RecurringJob.RemoveIfExists($"{nameof(NightlyFtpSyncService)}_{i}");
                         RecurringJob.AddOrUpdate<NightlyFtpSyncService>($"{nameof(NightlyFtpSyncService)}_{i}", job => job.Run(cronExp, JobCancellationToken.Null),
                             cronExp, CSTZone);
                     }
