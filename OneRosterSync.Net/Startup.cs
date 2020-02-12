@@ -111,7 +111,7 @@ namespace OneRosterSync.Net
             app.UseHangfireDashboard("/sk12_hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
             app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
 
-           var cronExpressions = dbContext.Districts.Where(w => !string.IsNullOrEmpty(w.CronExpression)).Select(s => s.CronExpression).Distinct().ToList();
+            var cronExpressions = dbContext.Districts.Where(w => !string.IsNullOrEmpty(w.CronExpression)).Select(s => s.CronExpression).Distinct().ToList();
             HangfireNightlySyncScheduler.ScheduleNightlySync(Configuration.GetConnectionString("DefaultConnection"), cronExpressions);
 
             // Enable middleware to serve generated Swagger as a JSON endpoint.

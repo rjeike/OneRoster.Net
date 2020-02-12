@@ -806,7 +806,7 @@ namespace OneRosterSync.Net.Controllers
                 Email = EmailFieldNameForUserAPI.Equals(nameOfUsername) ? s.user.username :
                     (EmailFieldNameForUserAPI.Equals(nameOfEmail) ? s.user.email : s.user.email),
                 Password = PasswordFieldNameForUserAPI.Equals(nameOfPassword) ? s.user.password :
-                    (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.orgSourcedIds : s.user.orgSourcedIds),
+                    (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.sourcedId : s.user.sourcedId),
                 //Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
                 Name = $"{s.user.givenName} {s.user.familyName}",
                 Version = s.line.Version,
