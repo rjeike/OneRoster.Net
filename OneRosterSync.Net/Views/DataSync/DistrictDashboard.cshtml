@@ -94,8 +94,7 @@
                                         <div class="form-group"><input type="submit" value="Apply" class="btn btn-primary" /></div>
                                     </form>
                                 </td>
-                                @if (Model.ProcessingStatus == ProcessingStatus.Loading || 
-                                    Model.ProcessingStatus == ProcessingStatus.Analyzing || 
+                                @if (Model.ProcessingStatus == ProcessingStatus.Analyzing || 
                                     Model.ProcessingStatus == ProcessingStatus.Applying)
                                 {
                                     <td style="padding-right: 5px;">

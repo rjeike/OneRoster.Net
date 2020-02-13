@@ -68,7 +68,7 @@
                 <input type="submit" value="3. Analyze" class="btn btn-primary" />
             </form>
         </div>
-        @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Loading || ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
+        @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
 ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
         {
             <form asp-action="StopCurrentAction" method="post">
