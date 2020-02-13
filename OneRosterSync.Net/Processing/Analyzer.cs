@@ -155,6 +155,10 @@ namespace OneRosterSync.Net.Processing
                         await Task.Yield();
                     });
                     await Repo.Committer.Invoke();
+                    if (Repo.GetStopFlag(Repo.DistrictId))
+                    {
+                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                    }
                     //await users.ForEachInChunksAsync(chunkSize: 200,
                     //    action: async (user) =>
                     //    {

@@ -60,13 +60,15 @@ namespace OneRosterSync.Net.Processing
                             {
                                 record = csv.GetRecord<T>();
                                 await ProcessRecord(record, table, now);
-                                if (i > 2 && i % 100 == 0)
-                                {
-                                    if (Repo.GetStopFlag(Repo.DistrictId))
-                                    {
-                                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                                    }
-                                }
+                                //commenting because it might slow down load process, considering houston isd
+                                //if (i > 2 && i % 100 == 0)
+                                //{
+                                //    if (Repo.GetStopFlag(Repo.DistrictId))
+                                //    {
+                                //        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                                //    }
+                                //}
+                                //no need to invoke
                                 //await Repo.Committer.InvokeIfChunk(5000);
                             }
                             catch (Exception ex)
