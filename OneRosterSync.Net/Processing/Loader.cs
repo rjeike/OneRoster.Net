@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
+using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -121,7 +122,7 @@ namespace OneRosterSync.Net.Processing
                 if (string.IsNullOrEmpty(rec.familyName))
                     rec.familyName = string.Empty;
 
-                if (isNewRecord && !Convert.ToBoolean(rec.enabledUser))
+                if (isNewRecord && !Helper.ToBoolean(rec.enabledUser))
                     return false;
 
                 rec.familyName = textInfo.ToTitleCase(rec.familyName.Trim().ToLower());
@@ -164,7 +165,7 @@ namespace OneRosterSync.Net.Processing
 
                 if (typeof(T) == typeof(CsvUser)) // if enabled false, do nothing
                 {
-                    bool enabledUser = Convert.ToBoolean((record as CsvUser).enabledUser);
+                    bool enabledUser = !Helper.ToBoolean((record as CsvUser).enabledUser);
                     if (!enabledUser)
                     {
                         Repo.CurrentHistory.NumDeleted++;
