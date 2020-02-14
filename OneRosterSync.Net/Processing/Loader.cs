@@ -165,7 +165,7 @@ namespace OneRosterSync.Net.Processing
 
                 if (typeof(T) == typeof(CsvUser)) // if enabled false, do nothing
                 {
-                    bool enabledUser = !Helper.ToBoolean((record as CsvUser).enabledUser);
+                    bool enabledUser = Helper.ToBoolean((record as CsvUser).enabledUser);
                     if (!enabledUser)
                     {
                         Repo.CurrentHistory.NumDeleted++;
