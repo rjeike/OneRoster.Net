@@ -84,6 +84,11 @@ namespace OneRosterSync.Net.Processing
                         throw new ProcessingException(Logger, "Apply failed to update SyncStatus of applied record. This indicates that some apply calls are failing and hence the apply process was aborted.");
                     last = curr;
 
+                    if (repo.GetStopFlag(DistrictId))
+                    {
+                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                    }
+
                     // process chunks of lines in parallel
                     IEnumerable<Task> tasks = await lines
                         .AsNoTracking()
@@ -263,11 +268,6 @@ namespace OneRosterSync.Net.Processing
             data.SourcedId = line.SourcedId;
             data.TargetId = line.TargetId;
             data.Status = line.LoadStatus.ToString();
-
-            if (repo.GetStopFlag(DistrictId))
-            {
-                throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-            }
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
             ReadResponse(line, repo, response, false);

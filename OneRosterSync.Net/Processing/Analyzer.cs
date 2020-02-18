@@ -159,28 +159,10 @@ namespace OneRosterSync.Net.Processing
                     {
                         throw new ProcessingException(Logger, $"Current action is stopped by the user.");
                     }
-                    //await users.ForEachInChunksAsync(chunkSize: 200,
-                    //    action: async (user) =>
-                    //    {
-                    //        IncludeReadyTouch(user);
-                    //        await Task.Yield();
-                    //    },
-                    //    onChunkComplete: async () =>
-                    //    {
-                    //        await Repo.Committer.Invoke();
-                    //        if (Repo.GetStopFlag(Repo.DistrictId))
-                    //        {
-                    //            throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                    //        }
-                    //    });
                 },
                 onChunkComplete: async () =>
                 {
                     await Repo.Committer.Invoke();
-                    if (Repo.GetStopFlag(Repo.DistrictId))
-                    {
-                        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                    }
                 });
 
             //GC.Collect();
@@ -195,11 +177,6 @@ namespace OneRosterSync.Net.Processing
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
                     action: async (user) =>
                     {
-                        if (Repo.GetStopFlag(user.DistrictId))
-                        {
-                            throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                        }
-
                         CsvUser csvUser = JsonConvert.DeserializeObject<CsvUser>(user.RawData);
                         //var org = await Repo.Lines<CsvOrg>().FirstOrDefaultAsync(w => w.SourcedId == csvUser.orgSourcedIds);
                         var org = orgs.FirstOrDefault(w => w.SourcedId == csvUser.orgSourcedIds);
@@ -219,7 +196,14 @@ namespace OneRosterSync.Net.Processing
                         IncludeReadyTouch(user);
                     },
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
-                    onChunkComplete: async () => await Repo.Committer.Invoke());
+                    onChunkComplete: async () =>
+                    {
+                        await Repo.Committer.Invoke();
+                        if (Repo.GetStopFlag(Repo.DistrictId))
+                        {
+                            throw new ProcessingException(Logger, $"Current action is stopped by the user.");
+                        }
+                    });
 
 
             await Repo.Committer.Invoke();
