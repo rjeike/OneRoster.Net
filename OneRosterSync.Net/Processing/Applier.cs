@@ -371,6 +371,7 @@ namespace OneRosterSync.Net.Processing
 
             if (!listInvalidSchoolIDs.Contains(csvUser.orgSourcedIds))
             {
+                line.EnrollmentMap = JsonConvert.SerializeObject(enrollment);
                 var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
                 ReadResponse(line, repo, response, true, csvUser.orgSourcedIds);
             }
