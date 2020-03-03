@@ -126,6 +126,7 @@ namespace OneRosterSync.Net.Models
         public string password { get; set; }
         public string email { get; set; }
         public string grades { get; set; }
+        public string identifier { get; set; }
     }
 
     public class EnrollmentMap

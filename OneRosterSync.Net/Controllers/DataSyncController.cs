@@ -789,6 +789,7 @@ namespace OneRosterSync.Net.Controllers
                 nameOfEmail = nameof(CsvUser.email),
                 nameOfPassword = nameof(CsvUser.password),
                 nameOfSourcedId = nameof(CsvUser.sourcedId),
+                nameOfIdentifier = nameof(CsvUser.identifier),
                 EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI,
                 PasswordFieldNameForUserAPI = repo.District.PasswordFieldNameForUserAPI;
 
@@ -806,8 +807,8 @@ namespace OneRosterSync.Net.Controllers
                 Email = EmailFieldNameForUserAPI.Equals(nameOfUsername) ? s.user.username :
                     (EmailFieldNameForUserAPI.Equals(nameOfEmail) ? s.user.email : s.user.email),
                 Password = PasswordFieldNameForUserAPI.Equals(nameOfPassword) ? s.user.password :
-                    (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.sourcedId : s.user.sourcedId),
-                //Password = (string.IsNullOrEmpty(s.user.password) ? s.user.sourcedId : s.user.password),
+                    (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.sourcedId :
+                    (PasswordFieldNameForUserAPI.Equals(nameOfIdentifier) ? s.user.identifier : s.user.identifier)),
                 Name = $"{s.user.givenName} {s.user.familyName}",
                 Version = s.line.Version,
                 SyncStatus = s.line.SyncStatus,
