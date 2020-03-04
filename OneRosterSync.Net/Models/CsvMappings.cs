@@ -19,6 +19,7 @@ namespace OneRosterSync.Net.Models
             Map(m => m.email).Name("email", "EMAIL");
             Map(m => m.grades).Name("grades", "GRADES");
             Map(m => m.password).Name("password", "PASSWORD", "Password");
+            Map(m => m.identifier).Name("identifier", "identifier", "Identifier", "IDENTIFIER");
         }
     }
 
