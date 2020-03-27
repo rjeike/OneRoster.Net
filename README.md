@@ -52,3 +52,6 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=1Roster.Net" -p 1433:1433 microsof
 dotnet ef database update
 dotnet run --environment="Development"
 ```
+
+# License
+[MIT](https://opensource.org/licenses/MIT)
