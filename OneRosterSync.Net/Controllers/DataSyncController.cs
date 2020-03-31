@@ -18,6 +18,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TimeZoneConverter;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -48,6 +49,7 @@ namespace OneRosterSync.Net.Controllers
         [HttpGet]
         public async Task<IActionResult> DistrictList()
         {
+            var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
             var model = await db.Districts.Select(d => new DistrictViewModel
             {
                 DistrictId = d.DistrictId,
@@ -55,7 +57,7 @@ namespace OneRosterSync.Net.Controllers
                 NumRecords = db.DataSyncLines.Count(l => l.DistrictId == d.DistrictId && l.LoadStatus != LoadStatus.Deleted),
                 //TimeOfDay = d.DailyProcessingTime.ToString(),
                 ProcessingStatus = d.ProcessingStatus.ToString(),
-                Modified = d.Modified.ToLocalTime().ToString(),
+                Modified = CSTZone == null ? d.Modified.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.Modified, CSTZone).ToString(),
                 NightlySyncEnabled = d.NightlySyncEnabled
             })
             .OrderByDescending(d => d.Modified)

@@ -1,26 +1,22 @@
 ﻿@model OneRosterSync.Net.Models.DataSyncHistory
 @using OneRosterSync.Net.Utils
+@{
+    var CSTZone = TimeZoneConverter.TZConvert.GetTimeZoneInfo("Central Standard Time");
+}
 
 <div>
     <dl class="dl-horizontal">
-
-        @*<dt>@Html.DisplayNameFor(model => model.LoadError)</dt>
-        <dd>@Html.DisplayFor(model => model.LoadError)</dd>
-        <dt>@Html.DisplayNameFor(model => model.AnalyzeError)</dt>
-        <dd>@Html.DisplayFor(model => model.AnalyzeError)</dd>
-        <dt>@Html.DisplayNameFor(model => model.ApplyError)</dt>
-        <dd>@Html.DisplayFor(model => model.ApplyError)</dd>*@
-
         <dt>
             @Html.DisplayNameFor(model => model.Started)
         </dt>
         <dd>
-            @(Model.Started.ToLocalTime())
+            @(CSTZone == null ? Model.Started.ToLocalTime() : TimeZoneInfo.ConvertTimeFromUtc(Model.Started, CSTZone))
         </dd>
-
-        <dt>Load Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.LoadStarted, Model.LoadCompleted)</dd>
-        <dt>Analyze Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.AnalyzeStarted, Model.AnalyzeCompleted)</dd>
-        <dt>Apply Time</dt><dd>@DateTimeUtilities.FormatTimespan(Model.ApplyStarted, Model.ApplyCompleted)</dd>
-
+        <dt>Load Time</dt>
+        <dd>@DateTimeUtilities.FormatTimespan(Model.LoadStarted, Model.LoadCompleted)</dd>
+        <dt>Analyze Time</dt>
+        <dd>@DateTimeUtilities.FormatTimespan(Model.AnalyzeStarted, Model.AnalyzeCompleted)</dd>
+        <dt>Apply Time</dt>
+        <dd>@DateTimeUtilities.FormatTimespan(Model.ApplyStarted, Model.ApplyCompleted)</dd>
     </dl>
 </div>
