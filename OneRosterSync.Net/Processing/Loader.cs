@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OAuth;
+using OneRosterSync.Net.Common;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
@@ -97,6 +101,82 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.Invoke();
                 Logger.Here().LogInformation($"Csv file for {LastEntity} not found {filePath}");
                 throw new ProcessingException(Logger.Here(), $"Csv file for {LastEntity} not found {filePath}");
+            }
+        }
+
+        public async Task LoadClassLinkData<T>() where T : CsvBaseObject
+        {
+            LastEntity = typeof(T).Name; // kludge
+            string table = typeof(T).Name;
+            DateTime now = DateTime.UtcNow;
+            int responseCount = 0;
+            int offset = 0, limit = 2000;
+
+            if (true) //(Repo.District.IsApiValidated)
+            {
+                do
+                {
+                    // Creating a new instance with a helper method
+                    //OAuthRequest client = OAuthRequest.ForRequestToken("d1340e80c0dc4f4cca468b2b", "74092de3a093a58f44767f78");
+                    OAuthRequest client = OAuthRequest.ForRequestToken(AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerKey),
+                        AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerSecret));
+
+                    if (typeof(T) == typeof(CsvUser))
+                    {
+                        //client.RequestUrl = $"https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users?offset={offset}&limit={limit}&sort=dateLastModified";
+                        client.RequestUrl = $"{Repo.District.ClassLinkUsersApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
+                        if (!string.IsNullOrEmpty(Repo.District.UsersLastDateModified))
+                            client.RequestUrl += $"&filter=dateLastModified>'{Repo.District.UsersLastDateModified}'";
+                    }
+                    else if (typeof(T) == typeof(CsvOrg))
+                    {
+                        //client.RequestUrl = $"https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/orgs?offset={offset}&limit={limit}&sort=dateLastModified";
+                        client.RequestUrl = $"{Repo.District.ClassLinkOrgsApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
+                    }
+                    // Using HTTP header authorization
+                    string auth = client.GetAuthorizationHeader();
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(client.RequestUrl);
+
+                    request.Headers.Add("Authorization", auth);
+                    HttpWebResponse httpWebResponse = (HttpWebResponse)await request.GetResponseAsync();
+                    using (Stream dataStream = httpWebResponse.GetResponseStream())
+                    {
+                        // Open the stream using a StreamReader for easy access.
+                        StreamReader reader = new StreamReader(dataStream);
+                        string strResponse = await reader.ReadToEndAsync();
+
+                        if (typeof(T) == typeof(CsvUser))
+                        {
+                            var classLinkUsers = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
+                            responseCount = classLinkUsers.users.Count;
+                            if (responseCount > 0 && responseCount < limit)
+                                Repo.District.UsersLastDateModified = classLinkUsers.users.Select(s => s.dateLastModified).LastOrDefault();
+
+                            foreach (var user in classLinkUsers.users)
+                            {
+                                var csvUser = user as CsvUser;
+                                csvUser.orgSourcedIds = user.orgs.Select(s => s.sourcedId).FirstOrDefault();
+                                await ProcessRecord(csvUser, table, now);
+                            }
+                        }
+                        else if (typeof(T) == typeof(CsvOrg))
+                        {
+                            var classLinkOrgs = JsonConvert.DeserializeObject<ClassLinkOrgs>(strResponse);
+                            responseCount = classLinkOrgs.orgs.Count;
+
+                            foreach (var org in classLinkOrgs.orgs)
+                            {
+                                var csvOrg = org as CsvOrg;
+                                await ProcessRecord(csvOrg, table, now);
+                            }
+                        }
+                    }
+
+                    offset += limit;
+                    await Repo.Committer.InvokeIfChunk();
+                    await Repo.Committer.InvokeIfAny(); // commit any last changes
+                } while (responseCount == limit);
+                GC.Collect();
             }
         }
 

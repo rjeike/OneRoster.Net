@@ -15,6 +15,8 @@ namespace OneRosterSync.Net.Models
         public string Modified { get; set; }
         public int NumRecords { get; set; }
         public bool NightlySyncEnabled { get; set; }
+        public bool IsCsvBased { get; set; }
+        public bool IsApiValidated { get; set; }
     }
 
     public class DataSyncLineReportLine
