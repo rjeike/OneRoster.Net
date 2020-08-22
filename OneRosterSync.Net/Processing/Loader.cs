@@ -117,20 +117,17 @@ namespace OneRosterSync.Net.Processing
                 do
                 {
                     // Creating a new instance with a helper method
-                    //OAuthRequest client = OAuthRequest.ForRequestToken("d1340e80c0dc4f4cca468b2b", "74092de3a093a58f44767f78");
                     OAuthRequest client = OAuthRequest.ForRequestToken(AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerKey),
                         AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerSecret));
 
                     if (typeof(T) == typeof(CsvUser))
                     {
-                        //client.RequestUrl = $"https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users?offset={offset}&limit={limit}&sort=dateLastModified";
                         client.RequestUrl = $"{Repo.District.ClassLinkUsersApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
                         if (!string.IsNullOrEmpty(Repo.District.UsersLastDateModified))
                             client.RequestUrl += $"&filter=dateLastModified>'{Repo.District.UsersLastDateModified}'";
                     }
                     else if (typeof(T) == typeof(CsvOrg))
                     {
-                        //client.RequestUrl = $"https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/orgs?offset={offset}&limit={limit}&sort=dateLastModified";
                         client.RequestUrl = $"{Repo.District.ClassLinkOrgsApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
                     }
                     // Using HTTP header authorization
@@ -154,8 +151,7 @@ namespace OneRosterSync.Net.Processing
 
                             foreach (var user in classLinkUsers.users)
                             {
-                                var csvUser = user as CsvUser;
-                                csvUser.orgSourcedIds = user.orgs.Select(s => s.sourcedId).FirstOrDefault();
+                                var csvUser = GetCsvUser(user);
                                 await ProcessRecord(csvUser, table, now);
                             }
                         }
@@ -166,8 +162,7 @@ namespace OneRosterSync.Net.Processing
 
                             foreach (var org in classLinkOrgs.orgs)
                             {
-                                var csvOrg = org as CsvOrg;
-                                await ProcessRecord(csvOrg, table, now);
+                                await ProcessRecord(org as CsvOrg, table, now);
                             }
                         }
                     }
@@ -295,6 +290,27 @@ namespace OneRosterSync.Net.Processing
             Repo.PushLineHistory(line, isNewData: true);
 
             return isNewRecord;
+        }
+
+        private CsvUser GetCsvUser(ClassLinkUser classLinkUser)
+        {
+            return new CsvUser()
+            {
+                sourcedId = classLinkUser.sourcedId,
+                dateLastModified = classLinkUser.dateLastModified,
+                status = classLinkUser.status,
+                enabledUser = classLinkUser.enabledUser,
+                orgSourcedIds = classLinkUser.orgs.Select(s => s.sourcedId).FirstOrDefault(),
+                role = classLinkUser.role,
+                username = classLinkUser.username,
+                givenName = classLinkUser.givenName,
+                familyName = classLinkUser.familyName,
+                middleName = classLinkUser.middleName,
+                password = classLinkUser.password,
+                email = classLinkUser.email,
+                grades = classLinkUser.grades.FirstOrDefault(),
+                identifier = classLinkUser.identifier,
+            };
         }
     }
 }

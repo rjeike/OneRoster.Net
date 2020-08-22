@@ -445,6 +445,8 @@ namespace OneRosterSync.Net.Controllers
                 LmsUserEndPoint = @"?wstoken=a88e84ca9005c28169a0c8dfa826166d&wsfunction=local_oneroster_user&moodlewsrestformat=json",
                 LmsEnrollmentEndPoint = @"?wstoken=a88e84ca9005c28169a0c8dfa826166d&wsfunction=local_oneroster_enrollment&moodlewsrestformat=json",
                 LmsAcademicSessionEndPoint = @"academicSession",
+                ClassLinkUsersApiUrl = "[base_url]/ims/oneroster/v1p1/users",
+                ClassLinkOrgsApiUrl = "[base_url]/ims/oneroster/v1p1/orgs",
                 SyncAcademicSessions = true,
                 SyncClasses = true,
                 SyncCourses = true,
