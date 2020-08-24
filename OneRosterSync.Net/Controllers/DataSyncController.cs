@@ -512,8 +512,16 @@ namespace OneRosterSync.Net.Controllers
             if (!ModelState.IsValid)
                 return View(district);
 
-            district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
-            district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+            if (!district.IsCsvBased)
+            {
+                district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
+                district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+            }
+            else
+            {
+                district.ClassLinkConsumerKey = null;
+                district.ClassLinkConsumerSecret = null;
+            }
 
             db.Add(district);
             await db.SaveChangesAsync();

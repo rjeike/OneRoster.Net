@@ -326,11 +326,11 @@ namespace OneRosterSync.Net.Processing
             // Is NCES school ID given?
             if (string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID))
             {
-                var ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
-                if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId))
-                {
-                    ncesId = ncesMapping.ncesId;
-                }
+                NCESMappingModel ncesMapping = null;
+                if (!repo.District.IsCsvBased) ncesMapping = repo.GetNCESMapping(orgCsv.identifier);
+                else ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+
+                if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId)) ncesId = ncesMapping.ncesId;
             }
 
             if (string.IsNullOrEmpty(ncesId))
