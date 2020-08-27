@@ -1,0 +1,26 @@
+﻿@model IEnumerable<DistrictFilter>
+@{
+    ViewData["Title"] = "SelectGrades";
+    int districtId = ViewBag.districtId;
+
+    var list = Model.Select(l => new SelectListItem(text: l.FilterValue, value: l.FilterValue, selected: l.ShouldBeApplied));
+    int a = 0;
+}
+
+<h2>Select Grades</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <h4>Available Grades</h4>
+        <form asp-action="SelectGrades">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @Html.Hidden("districtId", districtId)
+            <select name="SelectedGrades" asp-items="list" multiple size="20" class="form-control"></select>
+            <br /><br />
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@districtId" class="btn btn-default">Back to Details</a>
+            </div>
+        </form>
+    </div>
+</div>

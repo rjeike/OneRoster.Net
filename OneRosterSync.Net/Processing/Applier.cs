@@ -51,6 +51,7 @@ namespace OneRosterSync.Net.Processing
                     IQueryable<DataSyncLine> lines;
                     if (typeof(T) == typeof(CsvUser))
                     {
+                        var gradeFilters = repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades && w.ShouldBeApplied).ToList();
                         var orgsIds = repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted)
                             .Select(s => s.SourcedId).ToList();
 
@@ -63,6 +64,20 @@ namespace OneRosterSync.Net.Processing
                         }
 
                         lines = lines.Where(w => orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
+                        if (gradeFilters.Count > 0)
+                        {
+                            var linesData = lines.Select(s => new
+                            {
+                                line = s,
+                                user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+                            }).Select(s => new
+                            {
+                                s.line,
+                                s.user,
+                                grades = s.user.grades.Split(",", StringSplitOptions.None),
+                            });
+                            lines = linesData.Where(w => gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}"))).Select(s => s.line);
+                        }
                     }
                     else
                     {
@@ -327,7 +342,7 @@ namespace OneRosterSync.Net.Processing
             if (string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID))
             {
                 NCESMappingModel ncesMapping = null;
-                if (!repo.District.IsCsvBased) ncesMapping = repo.GetNCESMapping(orgCsv.identifier);
+                if (!repo.District.IsCsvBased && !string.IsNullOrEmpty(orgCsv.identifier)) ncesMapping = repo.GetNCESMapping(orgCsv.identifier);
                 else ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
 
                 if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId)) ncesId = ncesMapping.ncesId;

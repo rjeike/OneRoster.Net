@@ -82,6 +82,7 @@ namespace OneRosterSync.Net.Data
         public DbSet<DataSyncHistory> DataSyncHistories { get; set; }
         public DbSet<DataSyncHistoryDetail> DataSyncHistoryDetails { get; set; }
         public DbSet<NCESMapping> NCESMappings { get; set; }
+        public DbSet<DistrictFilter> DistrictFilters { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

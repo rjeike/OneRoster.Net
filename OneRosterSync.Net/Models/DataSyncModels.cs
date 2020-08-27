@@ -100,6 +100,11 @@ namespace OneRosterSync.Net.Models
         ApplyingDone = 8,
     }
 
+    public enum FilterType
+    {
+        Grades = 0,
+    }
+
     public class District : DataObject
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -237,7 +242,7 @@ namespace OneRosterSync.Net.Models
         public string ClassLinkOrgsApiUrl { get; set; }
 
         [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Key URL field is required.")]
-        [DisplayName("Class Link Consumer Key")]
+        [DisplayName("Class Link Client ID")]
         public string ClassLinkConsumerKey { get; set; }
 
         [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Secret field is required.")]
@@ -370,5 +375,22 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("State ID")]
         public string StateID { get; set; }
+    }
+
+    public class DistrictFilter : DataObject
+    {
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ID { get; set; }
+        [DisplayName("District ID")]
+        public int DistrictId { get; set; }
+
+        [DisplayName("Filter Type")]
+        public FilterType FilterType { get; set; }
+
+        [DisplayName("Filter Value")]
+        public string FilterValue { get; set; }
+
+        [DisplayName("Filter should be applied?")]
+        public bool ShouldBeApplied { get; set; } = false;
     }
 }

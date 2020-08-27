@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -144,6 +145,7 @@ namespace OneRosterSync.Net.Processing
 
                         if (typeof(T) == typeof(CsvUser))
                         {
+                            var hashSet = new HashSet<string>();
                             var classLinkUsers = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
                             responseCount = classLinkUsers.users.Count;
                             if (responseCount > 0 && responseCount < limit)
@@ -152,14 +154,21 @@ namespace OneRosterSync.Net.Processing
                             foreach (var user in classLinkUsers.users)
                             {
                                 var csvUser = GetCsvUser(user);
+                                if (user.grades.Length > 0) foreach (var grade in user.grades) hashSet.Add(grade);
+                                else
+                                    hashSet.Add(string.Empty);
                                 await ProcessRecord(csvUser, table, now);
                             }
+                            foreach (var grade in hashSet)
+                            {
+                                await Repo.PushFilterAsync(FilterType.Grades, grade);
+                            }
+
                         }
                         else if (typeof(T) == typeof(CsvOrg))
                         {
                             var classLinkOrgs = JsonConvert.DeserializeObject<ClassLinkOrgs>(strResponse);
                             responseCount = classLinkOrgs.orgs.Count;
-
                             foreach (var org in classLinkOrgs.orgs)
                             {
                                 await ProcessRecord(org as CsvOrg, table, now);
@@ -308,7 +317,7 @@ namespace OneRosterSync.Net.Processing
                 middleName = classLinkUser.middleName,
                 password = classLinkUser.password,
                 email = classLinkUser.email,
-                grades = classLinkUser.grades.FirstOrDefault(),
+                grades = string.Join(",", classLinkUser.grades),
                 identifier = classLinkUser.identifier,
             };
         }

@@ -722,6 +722,28 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> SelectGrades(int districtId)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            var grades = await repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades)
+                .OrderBy(o => o.FilterValue)
+                .ToListAsync();
+            ViewBag.districtId = districtId;
+            return View(grades);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SelectGrades(int districtId, IEnumerable<string> SelectedGrades)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            SelectedGrades = SelectedGrades.Select(s => s ?? string.Empty); // replace null with empty
+            await repo.UpdateFiltersAsync(FilterType.Grades, SelectedGrades);
+            await repo.Committer.Invoke();
+            return RedirectToAction(nameof(SelectGrades), new { districtId }).WithSuccess("Grades filter saved successfully");
+        }
+
         private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = await db.Districts.FindAsync(districtId);
@@ -876,13 +898,25 @@ namespace OneRosterSync.Net.Controllers
                 EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI,
                 PasswordFieldNameForUserAPI = repo.District.PasswordFieldNameForUserAPI;
 
-            var selectQuery = query.Select(s => new
+            var gradeFilters = repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades && w.ShouldBeApplied).ToList();
+            var filterQuery = query.Select(s => new
             {
                 line = s,
                 user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+            })
+            .Select(s => new
+            {
+                s.line,
+                s.user,
+                grades = s.user.grades.Split(",", StringSplitOptions.None),
                 org = JsonConvert.DeserializeObject<CsvOrg>
-                         (orgs.SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).RawData)
-            }).Select(s => new EnrollmentSyncLineViewModel
+                         (orgs.SingleOrDefault(l => l.SourcedId == s.user.orgSourcedIds).RawData)
+            });
+
+            if (gradeFilters.Count > 0)
+                filterQuery = filterQuery.Where(w => gradeFilters.Count > 0 && gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
+
+            var selectQuery = filterQuery.Select(s => new EnrollmentSyncLineViewModel
             {
                 Created = s.line.Created,
                 DataSyncLineId = s.line.DataSyncLineId,

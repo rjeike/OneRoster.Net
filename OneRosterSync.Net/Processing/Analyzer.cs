@@ -140,6 +140,7 @@ namespace OneRosterSync.Net.Processing
             //    },
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
 
+            var gradeFilters = Repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades && w.ShouldBeApplied).ToList();
             var orgs = Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted);
             await orgs.ForEachInChunksAsync(chunkSize: 200,
                 action: async (org) =>
@@ -147,13 +148,25 @@ namespace OneRosterSync.Net.Processing
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
                     var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId)
-                        && w.SyncStatus != SyncStatus.Applied && w.SyncStatus != SyncStatus.ReadyToApply);
+                        && w.SyncStatus != SyncStatus.Applied && w.SyncStatus != SyncStatus.ReadyToApply)
+                        .Select(s => new
+                        {
+                            line = s,
+                            user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+                        }).Select(s => new
+                        {
+                            s.line,
+                            s.user,
+                            grades = s.user.grades.Split(",", StringSplitOptions.None),
+                        });
+                    if (gradeFilters.Count > 0)
+                        users = users.Where(w => gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
 
-                    await users.ForEachAsync(action: async (user) =>
-                    {
-                        IncludeReadyTouch(user);
-                        await Task.Yield();
-                    });
+                    await users.Select(s => s.line).ForEachAsync(action: async (user) =>
+                      {
+                          IncludeReadyTouch(user);
+                          await Task.Yield();
+                      });
                     await Repo.Committer.Invoke();
                     if (Repo.GetStopFlag(Repo.DistrictId))
                     {
