@@ -1208,9 +1208,17 @@ namespace OneRosterSync.Net.Controllers
             district.EmailFieldNameForUserAPI = postedDistrict.EmailFieldNameForUserAPI;
             district.PasswordFieldNameForUserAPI = postedDistrict.PasswordFieldNameForUserAPI;
 
+            if (!postedDistrict.IsCsvBased)
+            {
+                district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
+                district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
+            }
+            else
+            {
+                district.ClassLinkConsumerKey = null;
+                district.ClassLinkConsumerSecret = null;
+            }
             district.IsCsvBased = postedDistrict.IsCsvBased;
-            district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
-            district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
             district.ClassLinkUsersApiUrl = postedDistrict.ClassLinkUsersApiUrl;
             district.ClassLinkOrgsApiUrl = postedDistrict.ClassLinkOrgsApiUrl;
 
