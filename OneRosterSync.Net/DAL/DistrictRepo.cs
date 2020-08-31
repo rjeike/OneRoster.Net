@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,8 @@ namespace OneRosterSync.Net.DAL
         /// Is cached until the next commit
         /// </summary>
         public District District => district ?? (district = Db.Districts.Find(DistrictId));
+
+        public IQueryable<DistrictFilter> DistrictFilters => Db.DistrictFilters.Where(w => w.DistrictId == DistrictId);
 
         /// <summary>
         /// All DataSyncLines assocated with the District
@@ -295,5 +298,33 @@ namespace OneRosterSync.Net.DAL
         //    if (district != null)
         //        district.StopCurrentAction = flag;
         //}
+
+        public async Task PushFilterAsync(FilterType filterType, string value)
+        {
+            var districtFilter = await Db.DistrictFilters.FirstOrDefaultAsync(w => w.DistrictId == DistrictId && w.FilterType == filterType && w.FilterValue == value.Trim());
+            if (districtFilter == null)
+            {
+                await Db.DistrictFilters.AddAsync(new DistrictFilter()
+                {
+                    FilterValue = value.Trim(),
+                    DistrictId = DistrictId,
+                    FilterType = filterType,
+                });
+            }
+        }
+
+        public async Task UpdateFiltersAsync(FilterType filterType, IEnumerable<string> selectedGrades)
+        {
+            var districtFilters = await Db.DistrictFilters.Where(w => w.DistrictId == DistrictId && w.FilterType == filterType).ToListAsync();
+            foreach (var districtFilter in districtFilters)
+            {
+                bool shouldBeApplied = selectedGrades.Contains(districtFilter.FilterValue);
+                if (districtFilter.ShouldBeApplied == shouldBeApplied)
+                    continue;
+                else
+                    districtFilter.ShouldBeApplied = shouldBeApplied;
+                districtFilter.Touch();
+            }
+        }
     }
 }

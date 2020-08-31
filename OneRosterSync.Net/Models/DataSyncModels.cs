@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using OneRosterSync.Net.Authentication;
+using static OneRosterSync.Net.Extensions.CustomValidator;
 
 namespace OneRosterSync.Net.Models
 {
@@ -97,6 +98,11 @@ namespace OneRosterSync.Net.Models
         AnalyzingDone = 5,
         Applying = 7,
         ApplyingDone = 8,
+    }
+
+    public enum FilterType
+    {
+        Grades = 0,
     }
 
     public class District : DataObject
@@ -199,14 +205,16 @@ namespace OneRosterSync.Net.Models
         [Required]
         public string NCESDistrictID { get; set; }
 
+        [RequiredIf("IsCsvBased", true, ErrorMessage = "The FTP Username field is required.")]
         [DisplayName("FTP Username")]
-        [Required]
         public string FTPUsername { get; set; }
+
+        [RequiredIf("IsCsvBased", true, ErrorMessage = "The FTP Password field is required.")]
         [DisplayName("FTP Password")]
-        [Required]
         public string FTPPassword { get; set; }
+
+        [RequiredIf("IsCsvBased", true)]
         [DisplayName("FTP Path")]
-        [Required]
         public string FTPPath { get; set; }
 
         [DisplayName("Enable in Nightly Sync?")]
@@ -221,6 +229,29 @@ namespace OneRosterSync.Net.Models
         public string CronExpression { get; set; } = "0 1 * * *";
         [Required, DisplayName("Password field for user")]
         public string PasswordFieldNameForUserAPI { get; set; } = nameof(CsvUser.password);
+
+        [Required, DisplayName("Load from CSV")]
+        public bool IsCsvBased { get; set; } = true;
+
+        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Users API URL field is required.")]
+        [DisplayName("Class Link Users API URL")]
+        public string ClassLinkUsersApiUrl { get; set; }
+
+        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Orgs API URL field is required.")]
+        [DisplayName("Class Link Orgs API URL")]
+        public string ClassLinkOrgsApiUrl { get; set; }
+
+        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Key URL field is required.")]
+        [DisplayName("Class Link Client ID")]
+        public string ClassLinkConsumerKey { get; set; }
+
+        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Secret field is required.")]
+        [DataType(DataType.Password), DisplayName("Class Link Consumer Secret")]
+        public string ClassLinkConsumerSecret { get; set; }
+
+        public bool IsApiValidated { get; set; } = false;
+        public string ApiError { get; set; }
+        public string UsersLastDateModified { get; set; }
 
         public District ShallowCopy()
         {
@@ -344,5 +375,22 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("State ID")]
         public string StateID { get; set; }
+    }
+
+    public class DistrictFilter : DataObject
+    {
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ID { get; set; }
+        [DisplayName("District ID")]
+        public int DistrictId { get; set; }
+
+        [DisplayName("Filter Type")]
+        public FilterType FilterType { get; set; }
+
+        [DisplayName("Filter Value")]
+        public string FilterValue { get; set; }
+
+        [DisplayName("Filter should be applied?")]
+        public bool ShouldBeApplied { get; set; } = false;
     }
 }

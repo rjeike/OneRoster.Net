@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OAuth;
+using OneRosterSync.Net.Common;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
+using OneRosterSync.Net.Utils;
 using OneRosterSync.Net.Models;
 using ReflectionIT.Mvc.Paging;
 using Renci.SshNet;
@@ -16,6 +19,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeZoneConverter;
@@ -58,13 +63,76 @@ namespace OneRosterSync.Net.Controllers
                 //TimeOfDay = d.DailyProcessingTime.ToString(),
                 ProcessingStatus = d.ProcessingStatus.ToString(),
                 Modified = CSTZone == null ? d.Modified.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.Modified, CSTZone).ToString(),
-                NightlySyncEnabled = d.NightlySyncEnabled
+                NightlySyncEnabled = d.NightlySyncEnabled,
+                IsCsvBased = d.IsCsvBased,
+                IsApiValidated = d.IsApiValidated,
             })
             .OrderByDescending(d => d.Modified)
             .ToListAsync();
 
+            //SampleClasslinkApiCall();
             return View(model);
         }
+
+        public void SampleClasslinkApiCall()
+        {
+            try
+            {
+                // Creating a new instance directly
+                //OAuthRequest client = new OAuthRequest
+                //{
+                //    Method = "GET",
+                //    Type = OAuthRequestType.RequestToken,
+                //    SignatureMethod = OAuthSignatureMethod.HmacSha1,
+                //    ConsumerKey = "d1340e80c0dc4f4cca468b2b",
+                //    ConsumerSecret = "74092de3a093a58f44767f78",
+                //    RequestUrl = "https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users",
+                //    Version = "1.0a",
+                //    Realm = "twitter.com"
+                //};
+
+                // Creating a new instance with a helper method
+                OAuthRequest client = OAuthRequest.ForRequestToken("d1340e80c0dc4f4cca468b2b", "74092de3a093a58f44767f78");
+                client.RequestUrl = "https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users";
+
+                // Using HTTP header authorization
+                string auth = client.GetAuthorizationHeader();
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(client.RequestUrl);
+
+                request.Headers.Add("Authorization", auth);
+                HttpWebResponse httpWebResponse = (HttpWebResponse)request.GetResponse();
+                using (Stream dataStream = httpWebResponse.GetResponseStream())
+                {
+                    // Open the stream using a StreamReader for easy access.
+                    StreamReader reader = new StreamReader(dataStream);
+                    string strResponse = reader.ReadToEnd();
+                    var repsonse = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
+                    //dynamic response = JsonConvert.DeserializeObject(strResponse);
+                    //foreach (var user in response.users)
+                    //{
+                    //    var newUser = Convert.ChangeType(user, typeof(CsvUser));
+                    //}
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        //public void SampleClasslinkApiCall2()
+        //{
+        //    //Generate authorization header
+        //    OAuthRequest oauthRequest = OAuthRequest.ForProtectedResource("GET", "CONSUMER_KEY", "CONSUMER_SECRET", string.Empty, null, OAuthSignatureMethod.RsaSha1);
+        //    oauthRequest.RequestUrl = $"{baseUrl}{resource}?{queryLanguage}{searchOperator}{searchBy}{searchOperator}{searchValue}&user_id={userId}";
+        //    string authorizationHeader = oauthRequest.GetAuthorizationHeader();
+
+        //    //Make request
+        //    var httpClient = new HttpClient();
+        //    // authorizationHeader.Remove(0,6) => Remove "OAuth " from authorizationHeader to avoid to have invalid header
+        //    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", authorizationHeader.Remove(0, 6));
+        //    string result = await httpClient.GetStringAsync(oauthRequest.RequestUrl);
+        //    string formattedJson = JToken.Parse(result).ToString(Formatting.Indented);
+        //}
 
         [HttpGet]
         public async Task<IActionResult> DistrictSyncLineErrors(int districtId, int page = 1)
@@ -377,6 +445,8 @@ namespace OneRosterSync.Net.Controllers
                 LmsUserEndPoint = @"?wstoken=8cb1e91e3fe8922a239856fba8306e26&wsfunction=local_oneroster_user&moodlewsrestformat=json",
                 LmsEnrollmentEndPoint = @"?wstoken=8cb1e91e3fe8922a239856fba8306e26&wsfunction=local_oneroster_enrollment&moodlewsrestformat=json",
                 LmsAcademicSessionEndPoint = @"academicSession",
+                ClassLinkUsersApiUrl = "[base_url]/ims/oneroster/v1p1/users",
+                ClassLinkOrgsApiUrl = "[base_url]/ims/oneroster/v1p1/orgs",
                 SyncAcademicSessions = true,
                 SyncClasses = true,
                 SyncCourses = true,
@@ -441,6 +511,17 @@ namespace OneRosterSync.Net.Controllers
         {
             if (!ModelState.IsValid)
                 return View(district);
+
+            if (!district.IsCsvBased)
+            {
+                district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
+                district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+            }
+            else
+            {
+                district.ClassLinkConsumerKey = null;
+                district.ClassLinkConsumerSecret = null;
+            }
 
             db.Add(district);
             await db.SaveChangesAsync();
@@ -641,6 +722,28 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(SelectOrgs), new { districtId }).WithSuccess("Orgs saved successfully");
         }
 
+
+        [HttpGet]
+        public async Task<IActionResult> SelectGrades(int districtId)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            var grades = await repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades)
+                .OrderBy(o => o.FilterValue)
+                .ToListAsync();
+            ViewBag.districtId = districtId;
+            return View(grades);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> SelectGrades(int districtId, IEnumerable<string> SelectedGrades)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            SelectedGrades = SelectedGrades.Select(s => s ?? string.Empty); // replace null with empty
+            await repo.UpdateFiltersAsync(FilterType.Grades, SelectedGrades);
+            await repo.Committer.Invoke();
+            return RedirectToAction(nameof(SelectGrades), new { districtId }).WithSuccess("Grades filter saved successfully");
+        }
+
         private async Task<IActionResult> Process(int districtId, ProcessingAction processingAction)
         {
             District district = await db.Districts.FindAsync(districtId);
@@ -795,13 +898,25 @@ namespace OneRosterSync.Net.Controllers
                 EmailFieldNameForUserAPI = repo.District.EmailFieldNameForUserAPI,
                 PasswordFieldNameForUserAPI = repo.District.PasswordFieldNameForUserAPI;
 
-            var selectQuery = query.Select(s => new
+            var gradeFilters = repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades && w.ShouldBeApplied).ToList();
+            var filterQuery = query.Select(s => new
             {
                 line = s,
                 user = JsonConvert.DeserializeObject<CsvUser>(s.RawData),
+            })
+            .Select(s => new
+            {
+                s.line,
+                s.user,
+                grades = s.user.grades.Split(",", StringSplitOptions.None),
                 org = JsonConvert.DeserializeObject<CsvOrg>
-                         (orgs.SingleOrDefault(l => l.SourcedId == JsonConvert.DeserializeObject<CsvUser>(s.RawData).orgSourcedIds).RawData)
-            }).Select(s => new EnrollmentSyncLineViewModel
+                         (orgs.SingleOrDefault(l => l.SourcedId == s.user.orgSourcedIds).RawData)
+            });
+
+            if (gradeFilters.Count > 0)
+                filterQuery = filterQuery.Where(w => gradeFilters.Count > 0 && gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
+
+            var selectQuery = filterQuery.Select(s => new EnrollmentSyncLineViewModel
             {
                 Created = s.line.Created,
                 DataSyncLineId = s.line.DataSyncLineId,
@@ -1030,6 +1145,10 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> DistrictEdit(int id)
         {
             var model = await db.Districts.FindAsync(id);
+            if (!string.IsNullOrEmpty(model.ClassLinkConsumerKey))
+                model.ClassLinkConsumerKey = AesOperation.DecryptString(Constants.EncryptKey, model.ClassLinkConsumerKey);
+            if (!string.IsNullOrEmpty(model.ClassLinkConsumerSecret))
+                model.ClassLinkConsumerSecret = AesOperation.DecryptString(Constants.EncryptKey, model.ClassLinkConsumerSecret);
 
             return View(model);
         }
@@ -1088,6 +1207,12 @@ namespace OneRosterSync.Net.Controllers
             district.NightlySyncEnabled = postedDistrict.NightlySyncEnabled;
             district.EmailFieldNameForUserAPI = postedDistrict.EmailFieldNameForUserAPI;
             district.PasswordFieldNameForUserAPI = postedDistrict.PasswordFieldNameForUserAPI;
+
+            district.IsCsvBased = postedDistrict.IsCsvBased;
+            district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
+            district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
+            district.ClassLinkUsersApiUrl = postedDistrict.ClassLinkUsersApiUrl;
+            district.ClassLinkOrgsApiUrl = postedDistrict.ClassLinkOrgsApiUrl;
 
             DistrictRepo.UpdateNextProcessingTime(district);
 

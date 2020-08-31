@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OneRosterSync.Net.Data;
 
 namespace OneRosterSync.Net.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20200727151127_ClassLinkApiColsInDistrict")]
+    partial class ClassLinkApiColsInDistrict
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -428,31 +430,6 @@ namespace OneRosterSync.Net.Data.Migrations
                     b.HasKey("DistrictId");
 
                     b.ToTable("Districts");
-                });
-
-            modelBuilder.Entity("OneRosterSync.Net.Models.DistrictFilter", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<DateTime>("Created");
-
-                    b.Property<int>("DistrictId");
-
-                    b.Property<int>("FilterType");
-
-                    b.Property<string>("FilterValue");
-
-                    b.Property<DateTime>("Modified");
-
-                    b.Property<bool>("ShouldBeApplied");
-
-                    b.Property<int>("Version");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("DistrictFilters");
                 });
 
             modelBuilder.Entity("OneRosterSync.Net.Models.NCESMapping", b =>

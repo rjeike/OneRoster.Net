@@ -153,12 +153,21 @@ namespace OneRosterSync.Net.Processing
 
             try
             {
-                await loader.LoadFile<CsvOrg>(@"orgs.csv");
-                //await loader.LoadFile<CsvCourse>(@"courses.csv");
-                //await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
-                //await loader.LoadFile<CsvClass>(@"classes.csv");
-                await loader.LoadFile<CsvUser>(@"users.csv");
-                //await loader.LoadFile<CsvEnrollment>(@"enrollments.csv"); // Enrollments csv is not available
+                if (Repo.District.IsCsvBased)
+                {
+                    await loader.LoadFile<CsvOrg>(@"orgs.csv");
+                    //await loader.LoadFile<CsvCourse>(@"courses.csv");
+                    //await loader.LoadFile<CsvAcademicSession>(@"academicSessions.csv");
+                    //await loader.LoadFile<CsvClass>(@"classes.csv");
+                    await loader.LoadFile<CsvUser>(@"users.csv");
+                    //await loader.LoadFile<CsvEnrollment>(@"enrollments.csv"); // Enrollments csv is not available
+                }
+                else
+                {
+                    await loader.LoadClassLinkData<CsvOrg>();
+                    await loader.LoadClassLinkData<CsvUser>();
+                }
+
                 if (CurrentProcessingAction == ProcessingAction.FullProcess)
                 {
                     await IncludeInSyncOrgsNightlySync(Repo.DistrictId);
@@ -170,7 +179,7 @@ namespace OneRosterSync.Net.Processing
                     throw;
 
                 // catch unhandled exception and blame sourceId
-                throw new ProcessingException(Logger.Here(), 
+                throw new ProcessingException(Logger.Here(),
                     $"An error occured while processing CSV file of {loader.LastEntity}.  Possible duplicate sourcedId. Error message: {ex.Message} Inner exception: {ex.InnerException?.Message}", ex);
             }
         }
@@ -195,44 +204,44 @@ namespace OneRosterSync.Net.Processing
         }
 
 
-	    private async Task Apply()
-	    {
-		    if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
-		        !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
-			    throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
+        private async Task Apply()
+        {
+            if (!string.IsNullOrEmpty(Repo.CurrentHistory.LoadError) ||
+                !string.IsNullOrEmpty(Repo.CurrentHistory.AnalyzeError))
+                throw new ProcessingException(Logger.Here(), "Can't Apply with active LoadError or AnalyzeError");
 
-		    var applier = new Applier(Services, Repo.DistrictId);
+            var applier = new Applier(Services, Repo.DistrictId);
 
-		    if (Repo.District.SyncOrgs)
-		    {
-			    await applier.ApplyLines<CsvOrg>();
-		    }
+            if (Repo.District.SyncOrgs)
+            {
+                await applier.ApplyLines<CsvOrg>();
+            }
 
-		    //if (Repo.District.SyncCourses)
-		    //{
-			   // await applier.ApplyLines<CsvCourse>();
-		    //}
+            //if (Repo.District.SyncCourses)
+            //{
+            // await applier.ApplyLines<CsvCourse>();
+            //}
 
-		    //if (Repo.District.SyncAcademicSessions)
-		    //{
-			   // await applier.ApplyLines<CsvAcademicSession>();
-		    //}
+            //if (Repo.District.SyncAcademicSessions)
+            //{
+            // await applier.ApplyLines<CsvAcademicSession>();
+            //}
 
-		    //if (Repo.District.SyncClasses)
-		    //{
-			   // await applier.ApplyLines<CsvClass>();
-		    //}
+            //if (Repo.District.SyncClasses)
+            //{
+            // await applier.ApplyLines<CsvClass>();
+            //}
 
-		    if (Repo.District.SyncUsers)
-		    {
-			    await applier.ApplyLines<CsvUser>();
-		    }
+            if (Repo.District.SyncUsers)
+            {
+                await applier.ApplyLines<CsvUser>();
+            }
 
-		    //if (Repo.District.SyncEnrollment)
-		    //{
-			   // await applier.ApplyLines<CsvEnrollment>();
-		    //}
-	    }
+            //if (Repo.District.SyncEnrollment)
+            //{
+            // await applier.ApplyLines<CsvEnrollment>();
+            //}
+        }
 
         public async Task IncludeInSyncOrgsNightlySync(int districtId)
         {

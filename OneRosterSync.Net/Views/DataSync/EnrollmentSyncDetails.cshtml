@@ -63,6 +63,12 @@
             </form>
         </div>
         <div>
+            <form asp-action="SelectGrades" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="submit" value="2.1. Select Grades" class="btn btn-primary" />
+            </form>
+        </div>
+        <div>
             <form asp-action="AnalyzeEnrollmentSyncDetails">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
                 <input type="submit" value="3. Analyze" class="btn btn-primary" />

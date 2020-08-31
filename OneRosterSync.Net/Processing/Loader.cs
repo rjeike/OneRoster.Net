@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OAuth;
+using OneRosterSync.Net.Common;
 using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
@@ -97,6 +102,85 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.Invoke();
                 Logger.Here().LogInformation($"Csv file for {LastEntity} not found {filePath}");
                 throw new ProcessingException(Logger.Here(), $"Csv file for {LastEntity} not found {filePath}");
+            }
+        }
+
+        public async Task LoadClassLinkData<T>() where T : CsvBaseObject
+        {
+            LastEntity = typeof(T).Name; // kludge
+            string table = typeof(T).Name;
+            DateTime now = DateTime.UtcNow;
+            int responseCount = 0;
+            int offset = 0, limit = 2000;
+
+            if (true) //(Repo.District.IsApiValidated)
+            {
+                do
+                {
+                    // Creating a new instance with a helper method
+                    OAuthRequest client = OAuthRequest.ForRequestToken(AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerKey),
+                        AesOperation.DecryptString(Constants.EncryptKey, Repo.District.ClassLinkConsumerSecret));
+
+                    if (typeof(T) == typeof(CsvUser))
+                    {
+                        client.RequestUrl = $"{Repo.District.ClassLinkUsersApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
+                        if (!string.IsNullOrEmpty(Repo.District.UsersLastDateModified))
+                            client.RequestUrl += $"&filter=dateLastModified>'{Repo.District.UsersLastDateModified}'";
+                    }
+                    else if (typeof(T) == typeof(CsvOrg))
+                    {
+                        client.RequestUrl = $"{Repo.District.ClassLinkOrgsApiUrl}?offset={offset}&limit={limit}&sort=dateLastModified";
+                    }
+                    // Using HTTP header authorization
+                    string auth = client.GetAuthorizationHeader();
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(client.RequestUrl);
+
+                    request.Headers.Add("Authorization", auth);
+                    HttpWebResponse httpWebResponse = (HttpWebResponse)await request.GetResponseAsync();
+                    using (Stream dataStream = httpWebResponse.GetResponseStream())
+                    {
+                        // Open the stream using a StreamReader for easy access.
+                        StreamReader reader = new StreamReader(dataStream);
+                        string strResponse = await reader.ReadToEndAsync();
+
+                        if (typeof(T) == typeof(CsvUser))
+                        {
+                            var hashSet = new HashSet<string>();
+                            var classLinkUsers = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
+                            responseCount = classLinkUsers.users.Count;
+                            if (responseCount > 0 && responseCount < limit)
+                                Repo.District.UsersLastDateModified = classLinkUsers.users.Select(s => s.dateLastModified).LastOrDefault();
+
+                            foreach (var user in classLinkUsers.users)
+                            {
+                                var csvUser = GetCsvUser(user);
+                                if (user.grades.Length > 0) foreach (var grade in user.grades) hashSet.Add(grade);
+                                else
+                                    hashSet.Add(string.Empty);
+                                await ProcessRecord(csvUser, table, now);
+                            }
+                            foreach (var grade in hashSet)
+                            {
+                                await Repo.PushFilterAsync(FilterType.Grades, grade);
+                            }
+
+                        }
+                        else if (typeof(T) == typeof(CsvOrg))
+                        {
+                            var classLinkOrgs = JsonConvert.DeserializeObject<ClassLinkOrgs>(strResponse);
+                            responseCount = classLinkOrgs.orgs.Count;
+                            foreach (var org in classLinkOrgs.orgs)
+                            {
+                                await ProcessRecord(org as CsvOrg, table, now);
+                            }
+                        }
+                    }
+
+                    offset += limit;
+                    await Repo.Committer.InvokeIfChunk();
+                    await Repo.Committer.InvokeIfAny(); // commit any last changes
+                } while (responseCount == limit);
+                GC.Collect();
             }
         }
 
@@ -215,6 +299,27 @@ namespace OneRosterSync.Net.Processing
             Repo.PushLineHistory(line, isNewData: true);
 
             return isNewRecord;
+        }
+
+        private CsvUser GetCsvUser(ClassLinkUser classLinkUser)
+        {
+            return new CsvUser()
+            {
+                sourcedId = classLinkUser.sourcedId,
+                dateLastModified = classLinkUser.dateLastModified,
+                status = classLinkUser.status,
+                enabledUser = classLinkUser.enabledUser,
+                orgSourcedIds = classLinkUser.orgs.Select(s => s.sourcedId).FirstOrDefault(),
+                role = classLinkUser.role,
+                username = classLinkUser.username,
+                givenName = classLinkUser.givenName,
+                familyName = classLinkUser.familyName,
+                middleName = classLinkUser.middleName,
+                password = classLinkUser.password,
+                email = classLinkUser.email,
+                grades = string.Join(",", classLinkUser.grades),
+                identifier = classLinkUser.identifier,
+            };
         }
     }
 }
