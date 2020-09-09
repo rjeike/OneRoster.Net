@@ -346,6 +346,7 @@ namespace OneRosterSync.Net.Processing
                 else ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
 
                 if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId)) ncesId = ncesMapping.ncesId;
+                else ncesId = string.Empty;
             }
 
             if (string.IsNullOrEmpty(ncesId))
