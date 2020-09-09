@@ -74,65 +74,56 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
-        public void SampleClasslinkApiCall()
+        public async Task<IActionResult> DistrictValidateApi(int districtId)
+        {
+            string message = string.Empty;
+            var district = db.Districts.FirstOrDefault(w => w.DistrictId == districtId && !w.IsApiValidated);
+            if (district == null)
+                return NotFound("District not found");
+
+            var consumerKey = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
+            var consumerSecret = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+            var isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkOrgsApiUrl);
+            if (isValid)
+                isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkUsersApiUrl);
+
+            district.IsApiValidated = isValid;
+            db.SaveChanges();
+            if (isValid)
+                return RedirectToAction(nameof(DistrictList)).WithSuccess($"API for district '{district.Name}' has been validated successfully.");
+            else
+                return RedirectToAction(nameof(DistrictList)).WithDanger($"API validation for district '{district.Name}' has failed. Please check if orgs and users endpoints are correct or contact your administrator.");
+        }
+
+        private async Task<bool> ClasslinkApiCallAsync(string key, string secret, string url)
         {
             try
             {
-                // Creating a new instance directly
-                //OAuthRequest client = new OAuthRequest
-                //{
-                //    Method = "GET",
-                //    Type = OAuthRequestType.RequestToken,
-                //    SignatureMethod = OAuthSignatureMethod.HmacSha1,
-                //    ConsumerKey = "d1340e80c0dc4f4cca468b2b",
-                //    ConsumerSecret = "74092de3a093a58f44767f78",
-                //    RequestUrl = "https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users",
-                //    Version = "1.0a",
-                //    Realm = "twitter.com"
-                //};
-
                 // Creating a new instance with a helper method
-                OAuthRequest client = OAuthRequest.ForRequestToken("d1340e80c0dc4f4cca468b2b", "74092de3a093a58f44767f78");
-                client.RequestUrl = "https://springisd-tx-v2.oneroster.com/ims/oneroster/v1p1/users";
+                OAuthRequest client = OAuthRequest.ForRequestToken(key, secret);
+                client.RequestUrl = url;
 
                 // Using HTTP header authorization
                 string auth = client.GetAuthorizationHeader();
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(client.RequestUrl);
 
                 request.Headers.Add("Authorization", auth);
-                HttpWebResponse httpWebResponse = (HttpWebResponse)request.GetResponse();
+                HttpWebResponse httpWebResponse = (HttpWebResponse)await request.GetResponseAsync();
                 using (Stream dataStream = httpWebResponse.GetResponseStream())
                 {
                     // Open the stream using a StreamReader for easy access.
                     StreamReader reader = new StreamReader(dataStream);
                     string strResponse = reader.ReadToEnd();
-                    var repsonse = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
-                    //dynamic response = JsonConvert.DeserializeObject(strResponse);
-                    //foreach (var user in response.users)
-                    //{
-                    //    var newUser = Convert.ChangeType(user, typeof(CsvUser));
-                    //}
+                    //var repsonse = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
+                return false;
             }
         }
-
-        //public void SampleClasslinkApiCall2()
-        //{
-        //    //Generate authorization header
-        //    OAuthRequest oauthRequest = OAuthRequest.ForProtectedResource("GET", "CONSUMER_KEY", "CONSUMER_SECRET", string.Empty, null, OAuthSignatureMethod.RsaSha1);
-        //    oauthRequest.RequestUrl = $"{baseUrl}{resource}?{queryLanguage}{searchOperator}{searchBy}{searchOperator}{searchValue}&user_id={userId}";
-        //    string authorizationHeader = oauthRequest.GetAuthorizationHeader();
-
-        //    //Make request
-        //    var httpClient = new HttpClient();
-        //    // authorizationHeader.Remove(0,6) => Remove "OAuth " from authorizationHeader to avoid to have invalid header
-        //    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("OAuth", authorizationHeader.Remove(0, 6));
-        //    string result = await httpClient.GetStringAsync(oauthRequest.RequestUrl);
-        //    string formattedJson = JToken.Parse(result).ToString(Formatting.Indented);
-        //}
 
         [HttpGet]
         public async Task<IActionResult> DistrictSyncLineErrors(int districtId, int page = 1)
@@ -250,7 +241,7 @@ namespace OneRosterSync.Net.Controllers
                 Logger.Here().LogError(ex, ex.Message);
             }
 
-            return RedirectToAction("DistrictList");
+            return RedirectToAction(nameof(DistrictList));
         }
 
         public async Task<Tuple<string, bool>> DownloadFile(District district, ILogger logger)
@@ -531,7 +522,7 @@ namespace OneRosterSync.Net.Controllers
             await db.SaveChangesAsync();
 
             //return RedirectToDistrict(district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
-            return RedirectToAction("DistrictList", district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
+            return RedirectToAction(nameof(DistrictList), district.DistrictId).WithSuccess($"Successfully created District {district.Name}");
         }
 
         [HttpGet]
@@ -963,21 +954,21 @@ namespace OneRosterSync.Net.Controllers
         public async Task<IActionResult> LoadEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Load);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Load has been queued."); ;
+            return RedirectToAction(nameof(EnrollmentSyncDetails), new { districtId }).WithSuccess("Load has been queued."); ;
         }
 
         [HttpPost]
         public async Task<IActionResult> AnalyzeEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Analyze);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Analyze has been queued."); ;
+            return RedirectToAction(nameof(EnrollmentSyncDetails), new { districtId }).WithSuccess("Analyze has been queued."); ;
         }
 
         [HttpPost]
         public async Task<IActionResult> ApplyEnrollmentSyncDetails(int districtId)
         {
             await Process(districtId, ProcessingAction.Apply);
-            return RedirectToAction("EnrollmentSyncDetails", new { districtId }).WithSuccess("Apply has been queued.");
+            return RedirectToAction(nameof(EnrollmentSyncDetails), new { districtId }).WithSuccess("Apply has been queued.");
         }
 
         [HttpPost]
@@ -1229,7 +1220,7 @@ namespace OneRosterSync.Net.Controllers
             await db.SaveChangesAsync();
 
             //return RedirectToDistrict(district.DistrictId);
-            return RedirectToAction("DistrictList").WithSuccess("District updated successfully.");
+            return RedirectToAction(nameof(DistrictList)).WithSuccess("District updated successfully.");
         }
 
         [HttpPost]

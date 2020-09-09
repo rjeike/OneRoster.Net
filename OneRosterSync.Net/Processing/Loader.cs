@@ -113,7 +113,7 @@ namespace OneRosterSync.Net.Processing
             int responseCount = 0;
             int offset = 0, limit = 2000;
 
-            if (true) //(Repo.District.IsApiValidated)
+            if (Repo.District.IsApiValidated)
             {
                 do
                 {
@@ -182,6 +182,12 @@ namespace OneRosterSync.Net.Processing
                 } while (responseCount == limit);
                 GC.Collect();
             }
+            else
+            {
+                await Repo.Committer.Invoke();
+                Logger.Here().LogInformation($"Classlink API for district '{Repo.District}' is not validated.");
+                throw new ProcessingException(Logger.Here(), $"Classlink API is not validated.");
+            }
         }
 
         private async Task<bool> ProcessRecord<T>(T record, string table, DateTime now) where T : CsvBaseObject
@@ -205,8 +211,9 @@ namespace OneRosterSync.Net.Processing
                     rec.enabledUser = "true";
                 if (string.IsNullOrEmpty(rec.familyName))
                     rec.familyName = string.Empty;
-
                 if (isNewRecord && !Helper.ToBoolean(rec.enabledUser))
+                    return false;
+                if (!string.IsNullOrEmpty(rec.role) && !rec.role.Trim().ToLower().Equals("student"))
                     return false;
 
                 rec.familyName = textInfo.ToTitleCase(rec.familyName.Trim().ToLower());
