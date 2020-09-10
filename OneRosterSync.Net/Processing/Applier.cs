@@ -352,7 +352,7 @@ namespace OneRosterSync.Net.Processing
             if (string.IsNullOrEmpty(ncesId))
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
-                line.Error = "NCES school ID not found";
+                line.Error = $"NCES school ID not found for {orgCsv.sourcedId}|{orgCsv.name}";
                 line.Touch();
                 repo.PushLineHistory(line, isNewData: false);
                 if (!listInvalidSchoolIDs.Contains(org.SourcedId))
@@ -364,7 +364,7 @@ namespace OneRosterSync.Net.Processing
             else if (!ncesId.StartsWith(currentDistrict.NCESDistrictID))
             {
                 line.SyncStatus = SyncStatus.ApplyFailed;
-                line.Error = $"NCES school ID {ncesId} is invalid as it does not start with NCES District ID {currentDistrict.NCESDistrictID}";
+                line.Error = $"NCES school ID {ncesId} is invalid for {orgCsv.sourcedId}|{orgCsv.name} as it does not start with NCES District ID {currentDistrict.NCESDistrictID}";
                 line.Touch();
                 repo.PushLineHistory(line, isNewData: false);
                 if (!listInvalidSchoolIDs.Contains(org.SourcedId))
@@ -416,6 +416,7 @@ namespace OneRosterSync.Net.Processing
                 var ErrorCode = string.IsNullOrEmpty(response.ErrorCode) ? string.Empty : response.ErrorCode;
                 if (fromEnrollment && ErrorCode.Equals("106") && orgSourcedId != null && !listInvalidSchoolIDs.Contains(orgSourcedId))
                 {
+                    response.ErrorMessage = string.IsNullOrEmpty(response.ErrorMessage) ? response.ErrorMessage : $"{response.ErrorMessage} (orgSourcedId: {orgSourcedId})";
                     listInvalidSchoolIDs.Add(orgSourcedId);
                 }
             }
