@@ -48,6 +48,7 @@ namespace OneRosterSync.Net.Processing
                     {
                         csv.Configuration.MissingFieldFound = null;
                         csv.Configuration.HasHeaderRecord = true;
+                        csv.Configuration.PrepareHeaderForMatch = (string header) => header.ToLower();
                         if (typeof(T) == typeof(CsvOrg))
                         {
                             csv.Configuration.RegisterClassMap<CsvOrgClassMap>();
