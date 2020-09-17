@@ -13,6 +13,8 @@ namespace OneRosterSync.Net.Models
         public string TimeOfDay { get; set; }
         public string ProcessingStatus { get; set; }
         public string Modified { get; set; }
+        [Display(Name = "Last CSV Upload")]
+        public string LastCsvUploadedOn { get; set; }
         public int NumRecords { get; set; }
         public bool NightlySyncEnabled { get; set; }
         public bool IsCsvBased { get; set; }

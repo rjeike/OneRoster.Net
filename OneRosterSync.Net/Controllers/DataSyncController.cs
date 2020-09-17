@@ -66,6 +66,7 @@ namespace OneRosterSync.Net.Controllers
                 NightlySyncEnabled = d.NightlySyncEnabled,
                 IsCsvBased = d.IsCsvBased,
                 IsApiValidated = d.IsApiValidated,
+                LastCsvUploadedOn = d.LastSyncedOn.HasValue ? (CSTZone == null ? d.LastSyncedOn.Value.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.LastSyncedOn.Value, CSTZone).ToString()) : string.Empty,
             })
             .OrderByDescending(d => d.Modified)
             .ToListAsync();

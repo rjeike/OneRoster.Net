@@ -41,6 +41,9 @@
                 @Html.DisplayNameFor(model => model.Modified)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.LastCsvUploadedOn)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.NumRecords)
             </th>
             <th>
@@ -70,6 +73,9 @@
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Modified)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.LastCsvUploadedOn)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.NumRecords)
