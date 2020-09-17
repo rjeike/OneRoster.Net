@@ -338,6 +338,7 @@ namespace OneRosterSync.Net.Processing
 
             var orgCsv = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
             string ncesId = orgCsv.identifier;
+            ncesId = string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID) ? orgCsv.sourcedId : ncesId;
             // Is NCES school ID given?
             if (string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID))
             {
