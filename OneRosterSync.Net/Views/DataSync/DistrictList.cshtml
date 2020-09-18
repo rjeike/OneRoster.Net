@@ -32,9 +32,6 @@
                 @Html.DisplayNameFor(model => model.Name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.IsCsvBased)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.ProcessingStatus)
             </th>
             <th>
@@ -64,9 +61,6 @@
             <tr>
                 <td>
                     @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @(item.IsCsvBased ? "Yes" : "No")
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.ProcessingStatus)
