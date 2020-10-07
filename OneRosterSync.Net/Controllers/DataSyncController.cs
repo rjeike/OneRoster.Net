@@ -177,8 +177,13 @@ namespace OneRosterSync.Net.Controllers
                 {
                     try
                     {
-                        var tuple = await DownloadFile(district, logger);
-                        district.ReadyForNightlySync = tuple.Item2;
+                        if (district.IsCsvBased)
+                        {
+                            var tuple = await DownloadFile(district, logger);
+                            district.ReadyForNightlySync = tuple.Item2;
+                        }
+                        else
+                            district.ReadyForNightlySync = district.IsApiValidated;
                     }
                     catch (Exception ex)
                     {
@@ -928,7 +933,7 @@ namespace OneRosterSync.Net.Controllers
             });
 
             var orderedQuery = selectQuery.OrderByDescending(l => l.SchoolName);
-            var model = await PagingList.CreateAsync(orderedQuery, 100, page);
+            var model = await PagingList.CreateAsync(orderedQuery, 50, page);
             model.Action = nameof(EnrollmentSyncDetails);
             model.RouteValue = new RouteValueDictionary
             {
@@ -1167,6 +1172,8 @@ namespace OneRosterSync.Net.Controllers
                 }
             }
 
+            bool deleteLines = postedDistrict.IsCsvBased != district.IsCsvBased;
+
             district.BasePath = postedDistrict.BasePath;
             district.DailyProcessingTime = postedDistrict.DailyProcessingTime;
             district.EmailsEachProcess = postedDistrict.EmailsEachProcess;
@@ -1204,6 +1211,7 @@ namespace OneRosterSync.Net.Controllers
             {
                 district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
                 district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
+                district.IsApiValidated = false;
             }
             else
             {
@@ -1219,6 +1227,12 @@ namespace OneRosterSync.Net.Controllers
             district.Touch();
 
             await db.SaveChangesAsync();
+
+            if(deleteLines)
+            {
+                var repo = new DistrictRepo(db, postedDistrict.DistrictId);
+                await repo.DeleteLines();
+            }
 
             //return RedirectToDistrict(district.DistrictId);
             return RedirectToAction(nameof(DistrictList)).WithSuccess("District updated successfully.");

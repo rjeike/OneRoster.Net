@@ -145,6 +145,18 @@ namespace OneRosterSync.Net.DAL
             await Committer.Invoke();
         }
 
+        public async Task DeleteLines()
+        {
+            var lines = await Db.DataSyncLines.Where(w => w.DistrictId == DistrictId).ToListAsync();
+            await lines.AsQueryable().ForEachInChunksAsync(chunkSize: 5000, action: async (line) =>
+               {
+                   line.LoadStatus = LoadStatus.Deleted;
+                   line.IncludeInSync = false;
+                   await Task.Yield();
+               },
+               onChunkComplete: async () => await Committer.Invoke());
+        }
+
         public void RecordProcessingError(string message, ProcessingStage processingStage)
         {
             DataSyncHistory history = CurrentHistory;

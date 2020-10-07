@@ -168,10 +168,10 @@ namespace OneRosterSync.Net.Processing
                     await loader.LoadClassLinkData<CsvUser>();
                 }
 
-                if (CurrentProcessingAction == ProcessingAction.FullProcess)
-                {
-                    await IncludeInSyncOrgsNightlySync(Repo.DistrictId);
-                }
+                //if (CurrentProcessingAction == ProcessingAction.FullProcess)
+                //{
+                //    await IncludeInSyncOrgsNightlySync(Repo.DistrictId);
+                //}
             }
             catch (Exception ex)
             {
@@ -199,7 +199,8 @@ namespace OneRosterSync.Net.Processing
                 throw new ProcessingException(Logger.Here(), "Data has never been loaded.");
 
             var analyzer = new Analyzer(Logger, Repo);
-            await analyzer.MarkDeleted(lastLoaded.Value);
+            if (Repo.District.IsCsvBased)
+                await analyzer.MarkDeleted(lastLoaded.Value);
             await analyzer.Analyze();
         }
 

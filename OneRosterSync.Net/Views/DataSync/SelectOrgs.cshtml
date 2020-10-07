@@ -4,13 +4,26 @@
     ViewData["Title"] = "Select Organizations";
     int districtId = ViewBag.districtId;
 
-    string CourseDescription(DataSyncLine line)
-    {
-        var cvsOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(line.RawData);
-        return $"{line.SourcedId} - {cvsOrg.name}";
-    }
+    //string CourseDescription(DataSyncLine line)
+    //{
+    //    var csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(line.RawData);
+    //    return $"{line.SourcedId} - {csvOrg.name}";
+    //}
 
-    var list = Model.Select(l => new SelectListItem(text: CourseDescription(l), value: l.SourcedId, selected: l.IncludeInSync));
+    var list = Model.Select(line => new
+    {
+        csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(line.RawData),
+        line
+    })
+    .OrderBy(o => o.csvOrg.name)
+    .Select(l => new SelectListItem(text: $"{l.line.SourcedId} - {l.csvOrg.name}", value: l.line.SourcedId, selected: l.line.IncludeInSync));
+
+    var includeList = Model.Where(l => l.IncludeInSync).Select(line => new
+    {
+        csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(line.RawData),
+        line
+    })
+    .OrderBy(o => o.csvOrg.name);
 }
 
 <h2>Select Orgs</h2>
@@ -18,46 +31,46 @@
 <h4>DataSyncLine</h4>
 <hr />
 <div class="row">
-	<div class="col-md-4">
-		<h4>Available Orgs</h4>
-		<form asp-action="SelectOrgs">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-			@Html.Hidden("districtId", districtId)
-			<select name="SelectedOrgs" asp-items="list" multiple size="20" class="form-control"></select>
-			<br/><br/>
-                 <div class="form-group">
-                     <input type="submit" value="Save" class="btn btn-primary" />
-                     @*<a asp-action="DistrictDashboard" asp-route-districtId="@districtId" class="btn btn-default">Back to Dashboard</a>*@
-                     <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@districtId" class="btn btn-default">Back to Details</a>
-                 </div>
-		</form>
-	</div>
+    <div class="col-md-4">
+        <h4>Available Orgs</h4>
+        <form asp-action="SelectOrgs">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @Html.Hidden("districtId", districtId)
+            <select name="SelectedOrgs" asp-items="list" multiple size="20" class="form-control"></select>
+            <br /><br />
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+                @*<a asp-action="DistrictDashboard" asp-route-districtId="@districtId" class="btn btn-default">Back to Dashboard</a>*@
+                <a asp-action="EnrollmentSyncDetails" asp-route-districtId="@districtId" class="btn btn-default">Back to Details</a>
+            </div>
+        </form>
+    </div>
     <div class="col-md-6">
-	    <h4>Currently selected Orgs</h4>
-		
-	    <table class="table table-hover">
-		    <thead>
-		    <tr>
-			    <th scope="col">SourceId</th>
-			    <th scope="col">Name</th>
-			    <th scope="col">Course</th>
-			    <th scope="col"></th>
-		    </tr>
-		    </thead>
-		    <tbody>
-		    @foreach (var org in Model.Where(l => l.IncludeInSync))
-		    {
-			    var csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
-			    <tr>
-				    <td>@csvOrg.sourcedId</td>
-					<td>@csvOrg.name</td>
-				    <td><a asp-action="SelectCourses" asp-route-districtId="@districtId" asp-route-orgSourceId="@org.SourcedId">Select Courses</a></td>
-				    <td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@org.DataSyncLineId">Details</a></td>
-			    </tr>
-		    }
-		    
-		    </tbody>
-	    </table>
+        <h4>Currently selected Orgs</h4>
+
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">SourceId</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Course</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var org in includeList)
+                {
+                    //var csvOrg = Newtonsoft.Json.JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
+                    <tr>
+                        <td>@org.csvOrg.sourcedId</td>
+                        <td>@org.csvOrg.name</td>
+                        <td><a asp-action="SelectCourses" asp-route-districtId="@districtId" asp-route-orgSourceId="@org.line.SourcedId">Select Courses</a></td>
+                        <td><a asp-controller="DataSync" asp-action="DataSyncLineEdit" asp-route-id="@org.line.DataSyncLineId">Details</a></td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
     </div>
 </div>
 
