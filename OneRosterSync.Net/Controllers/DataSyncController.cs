@@ -183,7 +183,11 @@ namespace OneRosterSync.Net.Controllers
                             district.ReadyForNightlySync = tuple.Item2;
                         }
                         else
+                        {
+                            try { await DownloadFile(district, logger); }
+                            catch { }
                             district.ReadyForNightlySync = district.IsApiValidated;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -1228,7 +1232,7 @@ namespace OneRosterSync.Net.Controllers
 
             await db.SaveChangesAsync();
 
-            if(deleteLines)
+            if (deleteLines)
             {
                 district.UsersLastDateModified = null;
                 var repo = new DistrictRepo(db, postedDistrict.DistrictId);
