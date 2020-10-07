@@ -106,7 +106,19 @@ namespace OneRosterSync.Net.DAL
             if (District == null)
                 return;
 
-            // retrieve entire list of histories
+            // remove history
+            await RemoveHistory();
+
+            // now delete the lines
+            await DeleteLines();
+
+            // finally, delete the district itself!
+            Db.Districts.Remove(District);
+            await Committer.Invoke();
+        }
+
+        public async Task RemoveHistory()
+        {
             var histories = await Db.DataSyncHistories
                 .Where(h => h.DistrictId == DistrictId)
                 .ToListAsync();
@@ -129,32 +141,18 @@ namespace OneRosterSync.Net.DAL
 
             Db.DataSyncHistories.RemoveRange(histories);
             await Committer.Invoke();
+        }
 
-            // now delete the lines
+        public async Task DeleteLines()
+        {
             for (; ; )
             {
-                var lines = await Lines().Take(ChunkSize).ToListAsync();
+                var lines = await Lines().Take(5000).ToListAsync();
                 if (!lines.Any())
                     break;
                 Db.DataSyncLines.RemoveRange(lines);
                 await Committer.Invoke();
             }
-
-            // finally, delete the district itself!
-            Db.Districts.Remove(District);
-            await Committer.Invoke();
-        }
-
-        public async Task DeleteLines()
-        {
-            var lines = await Db.DataSyncLines.Where(w => w.DistrictId == DistrictId).ToListAsync();
-            await lines.AsQueryable().ForEachInChunksAsync(chunkSize: 5000, action: async (line) =>
-               {
-                   line.LoadStatus = LoadStatus.Deleted;
-                   line.IncludeInSync = false;
-                   await Task.Yield();
-               },
-               onChunkComplete: async () => await Committer.Invoke());
         }
 
         public void RecordProcessingError(string message, ProcessingStage processingStage)
@@ -337,6 +335,14 @@ namespace OneRosterSync.Net.DAL
                     districtFilter.ShouldBeApplied = shouldBeApplied;
                 districtFilter.Touch();
             }
+        }
+
+        public async Task EmptyFiltersAsync()
+        {
+            var filters = await Db.DistrictFilters.Where(w => w.DistrictId == DistrictId).ToListAsync();
+            if (filters.Any())
+                Db.DistrictFilters.RemoveRange(filters);
+            await Committer.Invoke();
         }
     }
 }

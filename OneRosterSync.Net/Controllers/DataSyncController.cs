@@ -1230,8 +1230,11 @@ namespace OneRosterSync.Net.Controllers
 
             if(deleteLines)
             {
+                district.UsersLastDateModified = null;
                 var repo = new DistrictRepo(db, postedDistrict.DistrictId);
+                await repo.RemoveHistory();
                 await repo.DeleteLines();
+                await repo.EmptyFiltersAsync();
             }
 
             //return RedirectToDistrict(district.DistrictId);
