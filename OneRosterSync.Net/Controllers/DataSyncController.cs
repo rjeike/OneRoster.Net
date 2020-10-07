@@ -913,7 +913,7 @@ namespace OneRosterSync.Net.Controllers
             if (gradeFilters.Count > 0)
                 filterQuery = filterQuery.Where(w => gradeFilters.Count > 0 && gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
 
-            var selectQuery = filterQuery.Select(s => new EnrollmentSyncLineViewModel
+            var selectQuery = filterQuery.Take(500).Select(s => new EnrollmentSyncLineViewModel
             {
                 Created = s.line.Created,
                 DataSyncLineId = s.line.DataSyncLineId,
