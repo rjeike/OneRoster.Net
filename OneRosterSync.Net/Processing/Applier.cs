@@ -26,7 +26,7 @@ namespace OneRosterSync.Net.Processing
         /// How many APIs should we call in parallel?
         /// TODO: make a property of the District
         /// </summary>
-        public int ParallelChunkSize { get; set; } = 20;
+        public int ParallelChunkSize { get; set; } = 50;
 
         public Applier(IServiceProvider services, int districtId)
         {
