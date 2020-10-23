@@ -9,7 +9,7 @@
 <h4>District</h4>
 <hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <form asp-action="DistrictCreate">
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
@@ -111,6 +111,16 @@
             </div>
 
             <div class="form-group">
+                <label asp-for="RosteringApiSource" class="control-label"></label>
+                <select class="form-control" asp-for="RosteringApiSource">
+                    <option value="">--Select--</option>
+                    <option value="@eRosteringApiSource.Classlink">@nameof(eRosteringApiSource.Classlink)</option>
+                    <option value="@eRosteringApiSource.Clever">@nameof(eRosteringApiSource.Clever)</option>
+                </select>
+                <span asp-validation-for="RosteringApiSource" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
                 <label asp-for="ClassLinkConsumerKey" class="control-label"></label>
                 <input asp-for="ClassLinkConsumerKey" class="form-control" />
                 <span asp-validation-for="ClassLinkConsumerKey" class="text-danger"></span>
@@ -120,6 +130,12 @@
                 <label asp-for="ClassLinkConsumerSecret" class="control-label"></label>
                 <input asp-for="ClassLinkConsumerSecret" class="form-control" />
                 <span asp-validation-for="ClassLinkConsumerSecret" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CleverOAuthToken" class="control-label"></label>
+                <input asp-for="CleverOAuthToken" class="form-control" />
+                <span asp-validation-for="CleverOAuthToken" class="text-danger"></span>
             </div>
 
             <div class="form-group">
@@ -136,6 +152,7 @@
                     <option value="password">Password</option>
                     <option value="sourcedId">SourcedId</option>
                     <option value="identifier">Identifier</option>
+                    <option value="username">Username</option>
                 </select>
             </div>
 
@@ -212,6 +229,18 @@
                 <input type="submit" value="Create" class="btn btn-default" />
             </div>
         </form>
+    </div>
+    <div class="col-md-1"></div>
+    <div class="col-md-4">
+        <div>
+            <h3>Some important links / templates:</h3><br />
+            <h4>Classlink End Points:</h4>
+            <p>Users: [base_url]/ims/oneroster/v1p1/users</p>
+            <p>Orgs: [base_url]/ims/oneroster/v1p1/orgs</p><br />
+            <h4>Clever End Points:</h4>
+            <p>Users: https://api.clever.com/v2.1/students </p>
+            <p>Orgs: https://api.clever.com/v2.1/schools </p>
+        </div>
     </div>
 </div>
 

@@ -85,7 +85,7 @@ namespace OneRosterSync.Net.Processing
                             && (l.SyncStatus == SyncStatus.ReadyToApply || l.SyncStatus == SyncStatus.ApplyFailed));
                     }
 
-                    lines = lines.OrderBy(o => o.SyncStatus).ThenByDescending(o => o.ErrorCode);
+                    lines = lines.OrderBy(o => o.SyncStatus).ThenByDescending(o => o.ErrorCode).ThenBy(c => Guid.NewGuid());
 
                     // how many records are remaining to process?
                     int curr = await lines.CountAsync();
@@ -111,7 +111,10 @@ namespace OneRosterSync.Net.Processing
                         .Select(line => ApplyLineParallel<T>(line))
                         .ToListAsync();
 
-                    await Task.WhenAll(tasks);
+                    await Task.Run(() => Parallel.ForEach(tasks,
+                        parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount * 10 },
+                        body: (task) => task.Wait()));
+                    //await Task.WhenAll(tasks);
                 }
             }
         }

@@ -75,7 +75,7 @@
             </form>
         </div>
         @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
-ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
+      ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
         {
             <form asp-action="StopCurrentAction" method="post">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
@@ -287,13 +287,24 @@ ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
             </div>
         </form>
     </div>
-    <div class="col-md-8 form-esd rht">
-        <div class="pull-right">
-            <nav aria-label="Products navigation example">
-                <vc:pager paging-list="@Model" />
-            </nav>
-        </div>
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        @if (ViewBag.TotalRecordsCount > 0)
+        {
+            <form asp-action="EnrollmentSyncDetails" method="get">
+                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
+                <input type="hidden" name="DownloadExcel" value="true" />
+                <input type="submit" value="Download Excel" class="btn btn-primary pull-right" />
+            </form>
+        }
     </div>
+    @*<div class="col-md-8 form-esd rht">
+            <div class="pull-right">
+                <nav aria-label="Products navigation example">
+                    <vc:pager paging-list="@Model" />
+                </nav>
+            </div>
+        </div>*@
 </div>
 
 <script type="text/javascript">

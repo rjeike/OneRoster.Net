@@ -112,7 +112,7 @@ namespace OneRosterSync.Net.Processing
             string table = typeof(T).Name;
             DateTime now = DateTime.UtcNow;
             int responseCount = 0;
-            int offset = 0, limit = 2000;
+            int offset = 0, limit = 5000;
 
             if (Repo.District.IsApiValidated)
             {
@@ -154,7 +154,7 @@ namespace OneRosterSync.Net.Processing
 
                             foreach (var user in classLinkUsers.users)
                             {
-                                var csvUser = GetCsvUser(user);
+                                var csvUser = GetCsvUserClasslink(user);
                                 if (user.grades.Length > 0) foreach (var grade in user.grades) hashSet.Add(grade);
                                 else
                                     hashSet.Add(string.Empty);
@@ -188,6 +188,83 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.Invoke();
                 Logger.Here().LogInformation($"Classlink API for district '{Repo.District}' is not validated.");
                 throw new ProcessingException(Logger.Here(), $"Classlink API is not validated.");
+            }
+        }
+
+        public async Task LoadCleverData<T>() where T : CsvBaseObject
+        {
+            LastEntity = typeof(T).Name; // kludge
+            string table = typeof(T).Name;
+            DateTime now = DateTime.UtcNow;
+            int responseCount = 0;
+            int limit = 5000;
+
+            if (Repo.District.IsApiValidated)
+            {
+                // Creating a new instance with a helper method
+                string url = string.Empty, baseUrl = string.Empty;
+
+                if (typeof(T) == typeof(CsvUser))
+                    url = $"{Repo.District.ClassLinkUsersApiUrl}?limit={limit}";
+                else if (typeof(T) == typeof(CsvOrg))
+                    url = $"{Repo.District.ClassLinkOrgsApiUrl}?limit={limit}";
+
+                var uri = new Uri(url);
+                baseUrl = $"{uri.Scheme}://{uri.Host}";
+
+                do
+                {
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                    request.Headers.Add("Authorization", $"Bearer {AesOperation.DecryptString(Constants.EncryptKey, Repo.District.CleverOAuthToken)}");
+                    HttpWebResponse httpWebResponse = (HttpWebResponse)await request.GetResponseAsync();
+                    using (Stream dataStream = httpWebResponse.GetResponseStream())
+                    {
+                        // Open the stream using a StreamReader for easy access.
+                        StreamReader reader = new StreamReader(dataStream);
+                        string strResponse = await reader.ReadToEndAsync();
+
+                        if (typeof(T) == typeof(CsvUser))
+                        {
+                            var hashSet = new HashSet<string>();
+                            var cleverUsers = JsonConvert.DeserializeObject<CleverUsers>(strResponse);
+                            url = $"{baseUrl}{cleverUsers.links.Where(w => w.rel == "next").Select(s => s.uri).FirstOrDefault()}";
+                            responseCount = cleverUsers.data.Count;
+
+                            foreach (var user in cleverUsers.data)
+                            {
+                                var csvUser = GetCsvUserClever(user);
+                                if (user.data.grade != null) hashSet.Add(user.data.grade);
+                                await ProcessRecord(csvUser, table, now);
+                            }
+                            foreach (var grade in hashSet)
+                            {
+                                await Repo.PushFilterAsync(FilterType.Grades, grade);
+                            }
+
+                        }
+                        else if (typeof(T) == typeof(CsvOrg))
+                        {
+                            var cleverOrgs = JsonConvert.DeserializeObject<CleverOrgs>(strResponse);
+                            url = $"{baseUrl}{cleverOrgs.links.Where(w => w.rel == "next").Select(s => s.uri).FirstOrDefault()}";
+                            responseCount = cleverOrgs.data.Count;
+                            foreach (var org in cleverOrgs.data)
+                            {
+                                var csvOrg = GetCsvOrgClever(org);
+                                await ProcessRecord(csvOrg, table, now);
+                            }
+                        }
+                    }
+
+                    await Repo.Committer.InvokeIfChunk();
+                    await Repo.Committer.InvokeIfAny(); // commit any last changes
+                } while (responseCount == limit);
+                GC.Collect();
+            }
+            else
+            {
+                await Repo.Committer.Invoke();
+                Logger.Here().LogInformation($"Clever API for district '{Repo.District}' is not validated.");
+                throw new ProcessingException(Logger.Here(), $"Clever API is not validated.");
             }
         }
 
@@ -309,7 +386,7 @@ namespace OneRosterSync.Net.Processing
             return isNewRecord;
         }
 
-        private CsvUser GetCsvUser(ClassLinkUser classLinkUser)
+        private CsvUser GetCsvUserClasslink(ClassLinkUser classLinkUser)
         {
             return new CsvUser()
             {
@@ -327,6 +404,40 @@ namespace OneRosterSync.Net.Processing
                 email = classLinkUser.email,
                 grades = string.Join(",", classLinkUser.grades),
                 identifier = classLinkUser.identifier,
+            };
+        }
+
+        private CsvOrg GetCsvOrgClever(CleverOrg cleverOrg)
+        {
+            return new CsvOrg()
+            {
+                sourcedId = cleverOrg.data.id,
+                dateLastModified = cleverOrg.data.last_modified,
+                status = "active",
+                name = cleverOrg.data.name,
+                identifier = cleverOrg.data.state_id,
+                type = "school",
+            };
+        }
+
+        private CsvUser GetCsvUserClever(CleverUser cleverUser)
+        {
+            return new CsvUser()
+            {
+                sourcedId = cleverUser.data.id,
+                dateLastModified = cleverUser.data.last_modified,
+                status = "active",
+                enabledUser = "true",
+                orgSourcedIds = cleverUser.data.schools.FirstOrDefault(),
+                role = "student",
+                username = cleverUser.data.email,
+                givenName = cleverUser.data.name.first,
+                familyName = cleverUser.data.name.last,
+                middleName = cleverUser.data.name.middle,
+                password = cleverUser.data.sis_id,
+                email = cleverUser.data.email,
+                grades = cleverUser.data.grade,
+                identifier = cleverUser.data.sis_id
             };
         }
     }

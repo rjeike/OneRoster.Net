@@ -19,6 +19,7 @@ namespace OneRosterSync.Net.Models
         public bool NightlySyncEnabled { get; set; }
         public bool IsCsvBased { get; set; }
         public bool IsApiValidated { get; set; }
+        public eRosteringApiSource? RosteringSource { get; set; }
     }
 
     public class DataSyncLineReportLine

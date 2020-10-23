@@ -164,8 +164,16 @@ namespace OneRosterSync.Net.Processing
                 }
                 else
                 {
-                    await loader.LoadClassLinkData<CsvOrg>();
-                    await loader.LoadClassLinkData<CsvUser>();
+                    if (Repo.District.RosteringApiSource == eRosteringApiSource.Classlink)
+                    {
+                        await loader.LoadClassLinkData<CsvOrg>();
+                        await loader.LoadClassLinkData<CsvUser>();
+                    }
+                    else if (Repo.District.RosteringApiSource == eRosteringApiSource.Clever)
+                    {
+                        await loader.LoadCleverData<CsvOrg>();
+                        await loader.LoadCleverData<CsvUser>();
+                    }
                 }
 
                 //if (CurrentProcessingAction == ProcessingAction.FullProcess)

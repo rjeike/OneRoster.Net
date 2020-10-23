@@ -24,6 +24,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeZoneConverter;
+using System.Net.Http;
+using CsvHelper;
 
 namespace OneRosterSync.Net.Controllers
 {
@@ -67,6 +69,7 @@ namespace OneRosterSync.Net.Controllers
                 IsCsvBased = d.IsCsvBased,
                 IsApiValidated = d.IsApiValidated,
                 LastCsvUploadedOn = d.FTPFilesLastLoadedOn.HasValue ? (CSTZone == null ? d.FTPFilesLastLoadedOn.Value.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.FTPFilesLastLoadedOn.Value, CSTZone).ToString()) : string.Empty,
+                RosteringSource = d.RosteringApiSource,
             })
             .OrderByDescending(d => d.Modified)
             .ToListAsync();
@@ -82,11 +85,22 @@ namespace OneRosterSync.Net.Controllers
             if (district == null)
                 return NotFound("District not found");
 
-            var consumerKey = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
-            var consumerSecret = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
-            var isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkOrgsApiUrl);
-            if (isValid)
-                isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkUsersApiUrl);
+            bool isValid = false;
+            if (district.RosteringApiSource == eRosteringApiSource.Classlink)
+            {
+                var consumerKey = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
+                var consumerSecret = AesOperation.DecryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+                isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkOrgsApiUrl);
+                if (isValid)
+                    isValid = await ClasslinkApiCallAsync(consumerKey, consumerSecret, district.ClassLinkUsersApiUrl);
+            }
+            else
+            {
+                var oAuthToken = AesOperation.DecryptString(Constants.EncryptKey, district.CleverOAuthToken);
+                isValid = await CleverApiCallAsync(oAuthToken, district.ClassLinkOrgsApiUrl);
+                if (isValid)
+                    isValid = await CleverApiCallAsync(oAuthToken, district.ClassLinkUsersApiUrl);
+            }
 
             district.IsApiValidated = isValid;
             db.SaveChanges();
@@ -116,6 +130,29 @@ namespace OneRosterSync.Net.Controllers
                     StreamReader reader = new StreamReader(dataStream);
                     string strResponse = reader.ReadToEnd();
                     //var repsonse = JsonConvert.DeserializeObject<ClassLinkUsers>(strResponse);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> CleverApiCallAsync(string token, string url)
+        {
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"{url}?count=true");
+
+                request.Headers.Add("Authorization", $"Bearer {token}");
+                HttpWebResponse httpWebResponse = (HttpWebResponse)await request.GetResponseAsync();
+                using (Stream dataStream = httpWebResponse.GetResponseStream())
+                {
+                    // Open the stream using a StreamReader for easy access.
+                    StreamReader reader = new StreamReader(dataStream);
+                    string strResponse = reader.ReadToEnd();
                 }
 
                 return true;
@@ -515,13 +552,26 @@ namespace OneRosterSync.Net.Controllers
 
             if (!district.IsCsvBased)
             {
-                district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
-                district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+                if (!string.IsNullOrEmpty(district.ClassLinkConsumerKey))
+                    district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerKey);
+                else
+                    district.ClassLinkConsumerKey = null;
+
+                if (!string.IsNullOrEmpty(district.ClassLinkConsumerKey))
+                    district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, district.ClassLinkConsumerSecret);
+                else
+                    district.ClassLinkConsumerSecret = null;
+
+                if (!string.IsNullOrEmpty(district.CleverOAuthToken))
+                    district.CleverOAuthToken = AesOperation.EncryptString(Constants.EncryptKey, district.CleverOAuthToken);
+                else
+                    district.CleverOAuthToken = null;
             }
             else
             {
                 district.ClassLinkConsumerKey = null;
                 district.ClassLinkConsumerSecret = null;
+                district.CleverOAuthToken = null;
             }
 
             db.Add(district);
@@ -849,7 +899,7 @@ namespace OneRosterSync.Net.Controllers
 
         [HttpGet]
         public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false,
-                bool Transfers = false, bool NewEnrollments = false)
+                bool Transfers = false, bool NewEnrollments = false, bool DownloadExcel = false)
         {
             var repo = new DistrictRepo(db, districtId);
             if (repo.District == null)
@@ -909,7 +959,7 @@ namespace OneRosterSync.Net.Controllers
             {
                 s.line,
                 s.user,
-                grades = s.user.grades.Split(",", StringSplitOptions.None),
+                grades = s.user.grades == null ? new string[0] : s.user.grades.Split(",", StringSplitOptions.None),
                 org = JsonConvert.DeserializeObject<CsvOrg>
                          (orgs.SingleOrDefault(l => l.SourcedId == s.user.orgSourcedIds).RawData)
             });
@@ -927,7 +977,8 @@ namespace OneRosterSync.Net.Controllers
                     (EmailFieldNameForUserAPI.Equals(nameOfEmail) ? s.user.email : s.user.email),
                 Password = PasswordFieldNameForUserAPI.Equals(nameOfPassword) ? s.user.password :
                     (PasswordFieldNameForUserAPI.Equals(nameOfSourcedId) ? s.user.sourcedId :
-                    (PasswordFieldNameForUserAPI.Equals(nameOfIdentifier) ? s.user.identifier : s.user.identifier)),
+                    (PasswordFieldNameForUserAPI.Equals(nameOfIdentifier) ? s.user.identifier :
+                    (PasswordFieldNameForUserAPI.Equals(nameOfUsername) ? s.user.username : s.user.username))),
                 Name = $"{s.user.givenName} {s.user.familyName}",
                 Version = s.line.Version,
                 SyncStatus = s.line.SyncStatus,
@@ -938,6 +989,14 @@ namespace OneRosterSync.Net.Controllers
             });
 
             var orderedQuery = selectQuery.OrderByDescending(l => l.SchoolName);
+
+            if (DownloadExcel)
+            {
+                string fileName = $"sync_details_{districtId}_{DateTime.Now.Ticks}.csv";
+                var stream = await DownloadExcelFile(orderedQuery, districtId, fileName);
+                return File(stream, "text/csv", fileName);
+            }
+
             var model = await PagingList.CreateAsync(orderedQuery, 50, page);
             model.Action = nameof(EnrollmentSyncDetails);
             model.RouteValue = new RouteValueDictionary
@@ -950,6 +1009,30 @@ namespace OneRosterSync.Net.Controllers
 
             GC.Collect();
             return View(model);
+        }
+
+        private async Task<FileStream> DownloadExcelFile(IQueryable<EnrollmentSyncLineViewModel> orderedQuery, int districtId, string fileName)
+        {
+            string dir = Path.Combine(_hostingEnvironment.ContentRootPath, "DownloadFiles");
+
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            var filePath = Path.Combine(dir, fileName);
+
+            using (StreamWriter sw = new StreamWriter(filePath, false, new UTF8Encoding(true)))
+            {
+                using (CsvWriter cw = new CsvWriter(sw))
+                {
+                    cw.WriteHeader<EnrollmentSyncLineViewModel>();
+                    cw.NextRecord();
+                    foreach (var detail in await orderedQuery.ToListAsync())
+                    {
+                        cw.WriteRecord(detail);
+                        cw.NextRecord();
+                    }
+                }
+            }
+            return System.IO.File.Open(filePath, FileMode.Open);
         }
 
         [HttpPost]
@@ -1151,6 +1234,8 @@ namespace OneRosterSync.Net.Controllers
                 model.ClassLinkConsumerKey = AesOperation.DecryptString(Constants.EncryptKey, model.ClassLinkConsumerKey);
             if (!string.IsNullOrEmpty(model.ClassLinkConsumerSecret))
                 model.ClassLinkConsumerSecret = AesOperation.DecryptString(Constants.EncryptKey, model.ClassLinkConsumerSecret);
+            if (!string.IsNullOrEmpty(model.CleverOAuthToken))
+                model.CleverOAuthToken = AesOperation.DecryptString(Constants.EncryptKey, model.CleverOAuthToken);
 
             return View(model);
         }
@@ -1214,15 +1299,31 @@ namespace OneRosterSync.Net.Controllers
 
             if (!postedDistrict.IsCsvBased)
             {
-                district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
-                district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
+                if (!string.IsNullOrEmpty(postedDistrict.ClassLinkConsumerKey))
+                    district.ClassLinkConsumerKey = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerKey);
+                else
+                    district.ClassLinkConsumerKey = null;
+
+                if (!string.IsNullOrEmpty(postedDistrict.ClassLinkConsumerKey))
+                    district.ClassLinkConsumerSecret = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.ClassLinkConsumerSecret);
+                else
+                    district.ClassLinkConsumerSecret = null;
+
+                if (!string.IsNullOrEmpty(postedDistrict.CleverOAuthToken))
+                    district.CleverOAuthToken = AesOperation.EncryptString(Constants.EncryptKey, postedDistrict.CleverOAuthToken);
+                else
+                    district.CleverOAuthToken = null;
+
                 district.IsApiValidated = false;
             }
             else
             {
                 district.ClassLinkConsumerKey = null;
                 district.ClassLinkConsumerSecret = null;
+                district.CleverOAuthToken = null;
             }
+
+            district.RosteringApiSource = postedDistrict.RosteringApiSource;
             district.IsCsvBased = postedDistrict.IsCsvBased;
             district.ClassLinkUsersApiUrl = postedDistrict.ClassLinkUsersApiUrl;
             district.ClassLinkOrgsApiUrl = postedDistrict.ClassLinkOrgsApiUrl;

@@ -105,6 +105,12 @@ namespace OneRosterSync.Net.Models
         Grades = 0,
     }
 
+    public enum eRosteringApiSource
+    {
+        Classlink = 1,
+        Clever,
+    }
+
     public class District : DataObject
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -233,19 +239,27 @@ namespace OneRosterSync.Net.Models
         [Required, DisplayName("Load from CSV")]
         public bool IsCsvBased { get; set; } = true;
 
-        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Users API URL field is required.")]
-        [DisplayName("Class Link Users API URL")]
+        [RequiredIf("IsCsvBased", false, ErrorMessage = "Rostering API Source is required.")]
+        [DisplayName("Rostering API Source")]
+        public eRosteringApiSource? RosteringApiSource { get; set; }
+
+        [RequiredIf("RosteringApiSource", eRosteringApiSource.Clever, ErrorMessage = "The Clever OAuth Token field is required.")]
+        [DataType(DataType.Password), DisplayName("Clever OAuth Token")]
+        public string CleverOAuthToken { get; set; }
+
+        [RequiredIf("RosteringApiSource", eRosteringApiSource.Classlink, ErrorMessage = "The Class Link Users API URL field is required.")]
+        [DisplayName("Class Link / Clever Users API URL")]
         public string ClassLinkUsersApiUrl { get; set; }
 
-        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Orgs API URL field is required.")]
-        [DisplayName("Class Link Orgs API URL")]
+        [RequiredIf("RosteringApiSource", eRosteringApiSource.Classlink, ErrorMessage = "The Class Link Orgs API URL field is required.")]
+        [DisplayName("Class Link / Clever Orgs API URL")]
         public string ClassLinkOrgsApiUrl { get; set; }
 
-        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Key URL field is required.")]
+        [RequiredIf("RosteringApiSource", eRosteringApiSource.Classlink, ErrorMessage = "The Class Link Consumer Key URL field is required.")]
         [DisplayName("Class Link Client ID")]
         public string ClassLinkConsumerKey { get; set; }
 
-        [RequiredIf("IsCsvBased", false, ErrorMessage = "The Class Link Consumer Secret field is required.")]
+        [RequiredIf("RosteringApiSource", eRosteringApiSource.Classlink, ErrorMessage = "The Class Link Consumer Secret field is required.")]
         [DataType(DataType.Password), DisplayName("Class Link Consumer Secret")]
         public string ClassLinkConsumerSecret { get; set; }
 
