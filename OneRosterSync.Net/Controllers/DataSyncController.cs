@@ -992,8 +992,8 @@ namespace OneRosterSync.Net.Controllers
 
             if (DownloadExcel)
             {
-                string fileName = $"sync_details_{districtId}_{DateTime.Now.Ticks}.csv";
-                var stream = await DownloadExcelFile(orderedQuery, districtId, fileName);
+                string fileName = $"sync_details_{districtId}.csv";
+                var stream = await GenerateExcelFile(orderedQuery, districtId, fileName);
                 return File(stream, "text/csv", fileName);
             }
 
@@ -1011,14 +1011,14 @@ namespace OneRosterSync.Net.Controllers
             return View(model);
         }
 
-        private async Task<FileStream> DownloadExcelFile(IQueryable<EnrollmentSyncLineViewModel> orderedQuery, int districtId, string fileName)
+        private async Task<FileStream> GenerateExcelFile(IQueryable<EnrollmentSyncLineViewModel> orderedQuery, int districtId, string fileName)
         {
             string dir = Path.Combine(_hostingEnvironment.ContentRootPath, "DownloadFiles");
 
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
-            var filePath = Path.Combine(dir, fileName);
 
+            var filePath = Path.Combine(dir, fileName);
             using (StreamWriter sw = new StreamWriter(filePath, false, new UTF8Encoding(true)))
             {
                 using (CsvWriter cw = new CsvWriter(sw))
