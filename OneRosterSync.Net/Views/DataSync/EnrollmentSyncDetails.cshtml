@@ -75,7 +75,7 @@
             </form>
         </div>
         @if (ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Analyzing ||
-      ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
+    ViewBag.CurrentDistrict.ProcessingStatus == ProcessingStatus.Applying)
         {
             <form asp-action="StopCurrentAction" method="post">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
@@ -294,6 +294,9 @@
             <form asp-action="EnrollmentSyncDetails" method="get">
                 <input type="hidden" name="districtId" value="@ViewBag.districtId" />
                 <input type="hidden" name="DownloadExcel" value="true" />
+                <input type="hidden" name="AppliedFlag" value="@(ViewBag.AppliedFlag.ToString())" />
+                <input type="hidden" name="Transfers" value="@(ViewBag.Transfers.ToString())" />
+                <input type="hidden" name="NewEnrollments" value="@(ViewBag.NewEnrollments.ToString())" />
                 <input type="submit" value="Download Excel" class="btn btn-primary pull-right" />
             </form>
         }
