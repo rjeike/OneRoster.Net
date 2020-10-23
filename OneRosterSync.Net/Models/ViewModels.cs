@@ -16,6 +16,7 @@ namespace OneRosterSync.Net.Models
         [Display(Name = "Last CSV Upload")]
         public string LastCsvUploadedOn { get; set; }
         public int NumRecords { get; set; }
+        [Display(Name = "Nightly Sync")]
         public bool NightlySyncEnabled { get; set; }
         public bool IsCsvBased { get; set; }
         public bool IsApiValidated { get; set; }

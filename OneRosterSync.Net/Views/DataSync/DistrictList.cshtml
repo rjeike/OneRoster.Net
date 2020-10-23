@@ -47,14 +47,15 @@
                 @Html.DisplayNameFor(model => model.NightlySyncEnabled)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.IsCsvBased)
+                @Html.DisplayNameFor(model => model.RosteringSource)
             </th>
+            @*<th>
+                @Html.DisplayNameFor(model => model.IsCsvBased)
+            </th>*@
             <th>
                 @Html.DisplayNameFor(model => model.IsApiValidated)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RosteringSource)
-            </th>
+
             <th colspan="3"></th>
         </tr>
     </thead>
@@ -81,13 +82,13 @@
                 @(item.NightlySyncEnabled ? "Yes" : "No")
             </td>
             <td>
-                @(item.IsCsvBased ? "Yes" : "No")
+                @(item.RosteringSource?.ToString() ?? "CSV")
             </td>
+            @*<td>
+                @(item.IsCsvBased ? "Yes" : "No")
+            </td>*@
             <td>
                 @(item.IsApiValidated ? "Yes" : "No")
-            </td>
-            <td>
-                @(item.RosteringSource?.ToString() ?? "CSV")
             </td>
             <td>
                 @*<a asp-action="DistrictDashboard" asp-route-districtId="@item.DistrictId">Dashboard</a>*@
