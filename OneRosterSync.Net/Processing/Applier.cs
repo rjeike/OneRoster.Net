@@ -267,6 +267,10 @@ namespace OneRosterSync.Net.Processing
                 {
                     userCsv.password = userCsv.identifier;
                 }
+                else if (repo.District.PasswordFieldNameForUserAPI.Equals(nameof(userCsv.username)))
+                {
+                    userCsv.password = userCsv.username;
+                }
                 //if (string.IsNullOrEmpty(userCsv.password))
                 //{
                 //    userCsv.password = line.SourcedId;
