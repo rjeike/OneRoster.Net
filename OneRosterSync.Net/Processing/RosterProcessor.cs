@@ -186,9 +186,10 @@ namespace OneRosterSync.Net.Processing
                 if (ex is ProcessingException)
                     throw;
 
+                string errorMessage = Repo.District.IsCsvBased ? $"An error occured while processing CSV file of {loader.LastEntity}. Possible duplicate sourcedId." : "";
                 // catch unhandled exception and blame sourceId
                 throw new ProcessingException(Logger.Here(),
-                    $"An error occured while processing CSV file of {loader.LastEntity}.  Possible duplicate sourcedId. Error message: {ex.Message} Inner exception: {ex.InnerException?.Message}", ex);
+                    $"{errorMessage} Error message: {ex.Message} Inner exception: {ex.InnerException?.Message}", ex);
             }
         }
 
