@@ -205,7 +205,17 @@ namespace OneRosterSync.Net.Processing
                 string url = string.Empty, baseUrl = string.Empty;
 
                 if (typeof(T) == typeof(CsvUser))
-                    url = $"{Repo.District.ClassLinkUsersApiUrl}?limit={limit}";
+                {
+                    var orgs = await Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync).ToListAsync();
+                    if (orgs.Count > 1)
+                        throw new ProcessingException(Logger.Here(), $"Cannot process more than one school for Clever Rostering.");
+                    else if (orgs.Count < 1)
+                        throw new ProcessingException(Logger.Here(), $"At least one school must be selected for Clever Rostering.");
+                    else
+                    {
+                        url = $"{Repo.District.ClassLinkUsersApiUrl.Replace("[school_id]", orgs.FirstOrDefault().SourcedId)}?limit={limit}";
+                    }
+                }
                 else if (typeof(T) == typeof(CsvOrg))
                     url = $"{Repo.District.ClassLinkOrgsApiUrl}?limit={limit}";
 

@@ -98,8 +98,8 @@ namespace OneRosterSync.Net.Controllers
             {
                 var oAuthToken = AesOperation.DecryptString(Constants.EncryptKey, district.CleverOAuthToken);
                 isValid = await CleverApiCallAsync(oAuthToken, district.ClassLinkOrgsApiUrl);
-                if (isValid)
-                    isValid = await CleverApiCallAsync(oAuthToken, district.ClassLinkUsersApiUrl);
+                //if (isValid)
+                //    isValid = await CleverApiCallAsync(oAuthToken, district.ClassLinkUsersApiUrl);
             }
 
             district.IsApiValidated = isValid;
@@ -919,9 +919,11 @@ namespace OneRosterSync.Net.Controllers
             ViewBag.SyncAnalyzeError = SyncHistory?.AnalyzeError;
             ViewBag.SyncApplyError = SyncHistory?.ApplyError;
 
-            var orgs = repo.Lines<CsvOrg>().AsNoTracking().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted).ToList();
+            var allOrgs = repo.Lines<CsvOrg>().AsNoTracking().Where(w => w.LoadStatus != LoadStatus.Deleted).ToList();
+            var orgs = allOrgs.Where(w => w.IncludeInSync).ToList();
             var orgsIds = orgs.Select(s => s.SourcedId).ToList();
 
+            ViewBag.OrgsCountLabel = $"{orgs.Count}/{allOrgs.Count}";
             var query = repo.Lines<CsvUser>().AsNoTracking()
                 .Where(w => w.DistrictId == districtId && w.LoadStatus != LoadStatus.Deleted
                         && orgsIds.Any(a => w.RawData.Contains($"\"orgSourcedIds\":\"{a}\"")));
