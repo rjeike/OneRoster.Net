@@ -56,6 +56,7 @@ namespace OneRosterSync.Net.Models
         public string school_number { get; set; }
         public string sis_id { get; set; }
         public string state_id { get; set; }
+        public string nces_id { get; set; }
 
         [JsonProperty(Order = -2, NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
         public string last_modified { get; set; }

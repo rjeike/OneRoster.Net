@@ -425,7 +425,7 @@ namespace OneRosterSync.Net.Processing
                 dateLastModified = cleverOrg.data.last_modified,
                 status = "active",
                 name = cleverOrg.data.name,
-                identifier = cleverOrg.data.state_id,
+                identifier = !string.IsNullOrEmpty(cleverOrg.data.nces_id) ? cleverOrg.data.nces_id : cleverOrg.data.state_id,
                 type = "school",
             };
         }
