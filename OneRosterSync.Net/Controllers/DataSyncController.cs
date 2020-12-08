@@ -970,7 +970,7 @@ namespace OneRosterSync.Net.Controllers
                 filterQuery = filterQuery.Where(w => gradeFilters.Count > 0 && gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
 
             ViewBag.TotalRecordsCount = await filterQuery.CountAsync();
-            var selectQuery = filterQuery.Take(500).Select(s => new EnrollmentSyncLineViewModel
+            var selectQuery = filterQuery.Select(s => new EnrollmentSyncLineViewModel
             {
                 Created = s.line.Created,
                 DataSyncLineId = s.line.DataSyncLineId,
@@ -990,15 +990,14 @@ namespace OneRosterSync.Net.Controllers
                 SchoolName = s.org.name,
             });
 
-            var orderedQuery = selectQuery.OrderByDescending(l => l.SchoolName);
-
             if (DownloadExcel)
             {
                 string fileName = $"sync_details_{districtId}.csv";
-                var stream = await GenerateExcelFile(orderedQuery, districtId, fileName);
+                var stream = await GenerateExcelFile(selectQuery, districtId, fileName);
                 return File(stream, "text/csv", fileName);
             }
 
+            var orderedQuery = selectQuery.Take(500).OrderByDescending(l => l.SchoolName);
             var model = await PagingList.CreateAsync(orderedQuery, 50, page);
             model.Action = nameof(EnrollmentSyncDetails);
             model.RouteValue = new RouteValueDictionary
