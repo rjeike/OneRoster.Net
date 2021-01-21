@@ -307,7 +307,7 @@ namespace OneRosterSync.Net.Processing
                 rec.familyName = textInfo.ToTitleCase(rec.familyName.Trim().ToLower());
                 rec.givenName = textInfo.ToTitleCase(rec.givenName.Trim().ToLower());
                 rec.middleName = textInfo.ToTitleCase(rec.middleName.Trim().ToLower());
-                rec.password = rec.password.Trim();
+                rec.password = string.IsNullOrEmpty(rec.password) ? string.Empty : rec.password.Trim();
                 rec.email = rec.email.Trim();
                 rec.username = rec.username.Trim();
 
