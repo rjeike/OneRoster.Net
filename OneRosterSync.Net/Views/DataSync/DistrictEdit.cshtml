@@ -342,6 +342,15 @@
             <h4>Clever End Points:</h4>
             <p>Users: https://api.clever.com/v2.1/schools/[school_id]/students </p>
             <p>Orgs: https://api.clever.com/v2.1/schools </p>
+            @if (Model.IsCsvBased)
+            {
+                <div>
+                    <form asp-action="DeleteFiles" method="get">
+                        <input type="hidden" name="districtId" value="@Model.DistrictId" />
+                        <input type="submit" value="Delete CSV Files" class="btn btn-primary" />
+                    </form>
+                </div>
+            }
         </div>
     </div>
 </div>

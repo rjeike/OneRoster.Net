@@ -31,6 +31,23 @@ namespace OneRosterSync.Net.Data
                     SeedNCESMapping(dbContext);
                 }
                 InsertTestSchoolID(dbContext);
+
+                if (!dbContext.EmailConfigs.Any())
+                {
+                    var emailConfig = new EmailConfig()
+                    {
+                        Host = "smtp.mailgun.org",
+                        From = "admin@lms.summitk12.com",
+                        DisplayName = "OneRoster SummitK12",
+                        To = "oliver.huang@summitk12.com",
+                        Cc = "sandeshkumar@folio3.com,john@summitk12.com,szaman@folio3.com",
+                        Bcc = string.Empty,
+                        Subject = "ALARM: OneRoster Sync",
+                        Password = "4XYj2Tq4qEAlRn1psrT4"
+                    };
+                    dbContext.EmailConfigs.Add(emailConfig);
+                    dbContext.SaveChanges();
+                }
             }
         }
 

@@ -291,6 +291,25 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(DistrictList));
         }
 
+        public async Task<IActionResult> DeleteFiles(int districtId)
+        {
+            var district = await db.Districts.FindAsync(districtId);
+            string orgsFilePath = Path.Combine(district.BasePath, "orgs.csv");
+            string usersFilePath = Path.Combine(district.BasePath, "users.csv");
+            try
+            {
+                if (System.IO.File.Exists(orgsFilePath))
+                    System.IO.File.Delete(orgsFilePath);
+                if (System.IO.File.Exists(usersFilePath))
+                    System.IO.File.Delete(usersFilePath);
+                return RedirectToAction(nameof(DistrictEdit), new { id = districtId }).WithSuccess("CSV Files deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return RedirectToAction(nameof(DistrictEdit), new { id = districtId }).WithDanger($"Failed to delete CSV files. {ex.Message}");
+            }
+        }
+
         public async Task<Tuple<string, bool>> DownloadFile(District district, ILogger logger)
         {
             string Host = "sftp.summitk12.com", Message = string.Empty;

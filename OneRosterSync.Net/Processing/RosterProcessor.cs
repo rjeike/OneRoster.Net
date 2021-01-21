@@ -10,6 +10,7 @@ using OneRosterSync.Net.DAL;
 using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
+using OneRosterSync.Net.Utils;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -132,6 +133,16 @@ namespace OneRosterSync.Net.Processing
                 Repo.RecordProcessingError(pe.Message, processingStage);
                 //Repo.SetStopFlag(Repo.DistrictId, false);
                 await Repo.Committer.Invoke();
+                try
+                {
+                    var emailConfig = Db.EmailConfigs.FirstOrDefault();
+                    string subject = $"{emailConfig.Subject} {processingStage.ToString()} Error in \"{Repo.District.Name}\"";
+                    string body = $"You are receiving this email because an error occurred in OneRoster sync at {DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC.\n\n";
+                    body += $"District Name: {Repo.District.Name}\nError: {pe.Message}";
+                    EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
+                }
+                catch (Exception exEmail)
+                { }
                 return false;
             }
             finally
@@ -187,9 +198,10 @@ namespace OneRosterSync.Net.Processing
                     throw;
 
                 string errorMessage = Repo.District.IsCsvBased ? $"An error occured while processing CSV file of {loader.LastEntity}. Possible duplicate sourcedId." : "";
+                string processingError = $"{errorMessage} Error message: {ex.Message} Inner exception: {ex.InnerException?.Message}";
                 // catch unhandled exception and blame sourceId
                 throw new ProcessingException(Logger.Here(),
-                    $"{errorMessage} Error message: {ex.Message} Inner exception: {ex.InnerException?.Message}", ex);
+                    processingError, ex);
             }
         }
 
