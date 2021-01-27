@@ -64,6 +64,7 @@ namespace OneRosterSync.Net.Controllers
                 NumRecords = db.DataSyncLines.Count(l => l.DistrictId == d.DistrictId && l.LoadStatus != LoadStatus.Deleted),
                 //TimeOfDay = d.DailyProcessingTime.ToString(),
                 ProcessingStatus = d.ProcessingStatus.ToString(),
+                dtModified = CSTZone == null ? d.Modified.ToLocalTime() : TimeZoneInfo.ConvertTimeFromUtc(d.Modified, CSTZone),
                 Modified = CSTZone == null ? d.Modified.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.Modified, CSTZone).ToString(),
                 NightlySyncEnabled = d.NightlySyncEnabled,
                 IsCsvBased = d.IsCsvBased,
@@ -71,7 +72,7 @@ namespace OneRosterSync.Net.Controllers
                 LastCsvUploadedOn = d.FTPFilesLastLoadedOn.HasValue ? (CSTZone == null ? d.FTPFilesLastLoadedOn.Value.ToLocalTime().ToString() : TimeZoneInfo.ConvertTimeFromUtc(d.FTPFilesLastLoadedOn.Value, CSTZone).ToString()) : string.Empty,
                 RosteringSource = d.RosteringApiSource,
             })
-            .OrderByDescending(d => d.Modified)
+            .OrderByDescending(d => d.dtModified)
             .ToListAsync();
 
             //SampleClasslinkApiCall();
