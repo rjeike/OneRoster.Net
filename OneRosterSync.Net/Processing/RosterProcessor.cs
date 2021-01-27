@@ -11,6 +11,7 @@ using OneRosterSync.Net.Data;
 using OneRosterSync.Net.Extensions;
 using OneRosterSync.Net.Models;
 using OneRosterSync.Net.Utils;
+using TimeZoneConverter;
 
 namespace OneRosterSync.Net.Processing
 {
@@ -135,10 +136,14 @@ namespace OneRosterSync.Net.Processing
                 await Repo.Committer.Invoke();
                 try
                 {
+                    var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
+                    string time = $"{DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC";
+                    if (CSTZone != null)
+                        time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
                     var emailConfig = Db.EmailConfigs.FirstOrDefault();
                     string subject = $"{emailConfig.Subject} {processingStage.ToString()} Error in \"{Repo.District.Name}\"";
-                    string body = $"You are receiving this email because an error occurred in OneRoster sync at {DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC.\n\n";
-                    body += $"District Name: {Repo.District.Name}\nError: {pe.Message}";
+                    string body = $"You are receiving this email because an error occurred in OneRoster sync at {time}.\n\n";
+                    body += $"District Name: {Repo.District.Name}\n\nError: {pe.Message}\n\nInner Exception: {pe.InnerException?.Message}";
                     EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
                 }
                 catch (Exception exEmail)

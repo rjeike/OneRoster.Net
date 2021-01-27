@@ -350,8 +350,10 @@ namespace OneRosterSync.Net.Processing
             if (string.IsNullOrEmpty(ncesId) || !ncesId.StartsWith(currentDistrict.NCESDistrictID))
             {
                 NCESMappingModel ncesMapping = null;
-                if (!repo.District.IsCsvBased && !string.IsNullOrEmpty(orgCsv.identifier)) ncesMapping = repo.GetNCESMapping(orgCsv.identifier);
-                else ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
+                if (!string.IsNullOrEmpty(orgCsv.identifier))
+                    ncesMapping = repo.GetNCESMapping(orgCsv.identifier);
+                if (ncesMapping == null)
+                    ncesMapping = repo.GetNCESMapping(csvUser.orgSourcedIds);
 
                 if (ncesMapping != null && !string.IsNullOrEmpty(ncesMapping.ncesId)) ncesId = ncesMapping.ncesId;
                 else ncesId = string.Empty;
