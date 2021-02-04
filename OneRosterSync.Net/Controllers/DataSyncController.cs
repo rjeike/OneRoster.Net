@@ -24,11 +24,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TimeZoneConverter;
-using System.Net.Http;
 using CsvHelper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OneRosterSync.Net.Controllers
 {
+    [Authorize]
     public class DataSyncController : Controller
     {
         private readonly ApplicationDbContext db;

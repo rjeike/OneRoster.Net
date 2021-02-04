@@ -83,7 +83,7 @@ namespace OneRosterSync.Net
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ApplicationDbContext dbContext)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ApplicationDbContext dbContext, SignInManager<IdentityUser> signInManager)
         {
             ApplicationLogging.Factory = loggerFactory;
 
@@ -108,7 +108,7 @@ namespace OneRosterSync.Net
 
             app.UseAuthentication();
 
-            app.UseHangfireDashboard("/sk12_hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter() } });
+            app.UseHangfireDashboard("/sk12_hangfire", new DashboardOptions { Authorization = new[] { new HangfireDashboardAuthorizationFilter(signInManager) } });
             app.UseHangfireServer(new BackgroundJobServerOptions() { WorkerCount = 1 });
 
             var cronExpressions = dbContext.Districts.Where(w => !string.IsNullOrEmpty(w.CronExpression)).Select(s => s.CronExpression).Distinct().ToList();

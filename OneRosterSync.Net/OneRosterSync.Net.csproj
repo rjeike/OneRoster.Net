@@ -67,6 +67,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Identity\Pages\Services\" />
     <Folder Include="Logs\" />
   </ItemGroup>
 

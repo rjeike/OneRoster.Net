@@ -2,6 +2,7 @@
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using Hangfire.Storage;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using TimeZoneConverter;
@@ -50,10 +51,16 @@ namespace OneRosterSync.Net.Processing
 
     public class HangfireDashboardAuthorizationFilter : IDashboardAuthorizationFilter
     {
+        private readonly SignInManager<IdentityUser> _signInManager;
+        public HangfireDashboardAuthorizationFilter(SignInManager<IdentityUser> signInManager)
+        {
+            _signInManager = signInManager;
+        }
+
         public bool Authorize(DashboardContext context)
         {
-            //var httpContext = context.GetHttpContext();
-            return true;
+            var httpContext = context.GetHttpContext();
+            return _signInManager.IsSignedIn(httpContext.User);
         }
     }
 }
