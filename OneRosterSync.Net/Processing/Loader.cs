@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -48,7 +49,7 @@ namespace OneRosterSync.Net.Processing
                     {
                         csv.Configuration.MissingFieldFound = null;
                         csv.Configuration.HasHeaderRecord = true;
-                        csv.Configuration.PrepareHeaderForMatch = (string header) => header.ToLower();
+                        csv.Configuration.PrepareHeaderForMatch = (string header) => Regex.Replace(header.ToLower(), @"\s", string.Empty);
                         if (typeof(T) == typeof(CsvOrg))
                         {
                             csv.Configuration.RegisterClassMap<CsvOrgClassMap>();
@@ -302,6 +303,10 @@ namespace OneRosterSync.Net.Processing
                 if (isNewRecord && !Helper.ToBoolean(rec.enabledUser))
                     return false;
                 if (!string.IsNullOrEmpty(rec.role) && !rec.role.Trim().ToLower().Equals("student"))
+                    return false;
+                if (rec.orgSourcedIds.Split(",").Length > 1) // Ignore User Records with Multiple orgSourcedIds, shall be handled manually as per Oliver
+                    return false;
+                if (!string.IsNullOrEmpty(rec.isLep) && !Helper.ToBoolean(rec.isLep)) // Process records with LEP indicator
                     return false;
 
                 rec.familyName = textInfo.ToTitleCase(rec.familyName.Trim().ToLower());

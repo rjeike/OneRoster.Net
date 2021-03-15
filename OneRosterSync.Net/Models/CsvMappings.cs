@@ -20,6 +20,7 @@ namespace OneRosterSync.Net.Models
             Map(m => m.grades).Name("grades", "GRADES");
             Map(m => m.password).Name("password", "PASSWORD", "Password");
             Map(m => m.identifier).Name("identifier", "identifier", "Identifier", "IDENTIFIER");
+            Map(m => m.isLep).Name("metadata.lep");
         }
     }
 

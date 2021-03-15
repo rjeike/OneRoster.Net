@@ -21,12 +21,14 @@ namespace OneRosterSync.Net.Processing
         private readonly IServiceProvider Services;
         private readonly int DistrictId;
         private List<string> listInvalidSchoolIDs;
+        private object lockObject = new object();
 
         /// <summary>
         /// How many APIs should we call in parallel?
         /// TODO: make a property of the District
         /// </summary>
         public int ParallelChunkSize { get; set; } = 50;
+        public long RetryTillTimestamp = 0;
 
         public Applier(IServiceProvider services, int districtId)
         {
@@ -297,9 +299,26 @@ namespace OneRosterSync.Net.Processing
 
             var response = await apiManager.Post(GetEntityEndpoint(data.EntityType.ToLower(), repo), data);
             ReadResponse(line, repo, response, false);
-            if (response.Success && line.Table == nameof(CsvUser))
+            if (response.Success)
             {
-                await ApplyEnrollment(line, repo, apiManager);
+                if (line.Table == nameof(CsvUser))
+                {
+                    await ApplyEnrollment(line, repo, apiManager);
+                }
+            }
+            else if (response.ErrorMessage.Contains("500") || response.ErrorMessage.Contains("502")
+                        || response.ErrorMessage.Contains("503") || response.ErrorMessage.Contains("504")
+                        || response.ErrorMessage.Contains("Error communicating with LMS"))
+            {
+                lock (lockObject)
+                {
+                    if (RetryTillTimestamp == 0)
+                    {
+                        RetryTillTimestamp = DateTime.Now.AddMinutes(1).Ticks;
+                    }
+                }
+                if (DateTime.Now.Ticks < RetryTillTimestamp)
+                    await ApplyLine<T>(repo, line);
             }
         }
 

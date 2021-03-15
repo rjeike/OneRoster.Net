@@ -134,20 +134,20 @@ namespace OneRosterSync.Net.Processing
                 Repo.RecordProcessingError(pe.Message, processingStage);
                 //Repo.SetStopFlag(Repo.DistrictId, false);
                 await Repo.Committer.Invoke();
-                try
-                {
-                    var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
-                    string time = $"{DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC";
-                    if (CSTZone != null)
-                        time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
-                    var emailConfig = Db.EmailConfigs.FirstOrDefault();
-                    string subject = $"{emailConfig.Subject} {processingStage.ToString()} Error in \"{Repo.District.Name}\"";
-                    string body = $"You are receiving this email because an error occurred in OneRoster sync at {time}.\n\n";
-                    body += $"District Name: {Repo.District.Name}\n\nError: {pe.Message}\n\nInner Exception: {pe.InnerException?.Message}";
-                    EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
-                }
-                catch (Exception exEmail)
-                { }
+                //try
+                //{
+                //    var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
+                //    string time = $"{DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC";
+                //    if (CSTZone != null)
+                //        time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
+                //    var emailConfig = Db.EmailConfigs.FirstOrDefault();
+                //    string subject = $"{emailConfig.Subject} {processingStage.ToString()} Error in \"{Repo.District.Name}\"";
+                //    string body = $"You are receiving this email because an error occurred in OneRoster sync at {time}.\n\n";
+                //    body += $"District Name: {Repo.District.Name}\n\nError: {pe.Message}\n\nInner Exception: {pe.InnerException?.Message}";
+                //    EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
+                //}
+                //catch (Exception exEmail)
+                //{ }
                 return false;
             }
             finally

@@ -39,6 +39,8 @@ namespace OneRosterSync.Net.Processing
                     }
                 });
 
+                RecurringJob.AddOrUpdate<NightlyFtpSyncService>(nameof(NightlyFtpSyncService), job => job.SendConsolidatedSyncErrorsEmail(JobCancellationToken.Null),
+                   "0 1 * * *", CSTZone);
                 //RecurringJob.AddOrUpdate<NightlyFtpSyncService>(nameof(NightlyFtpSyncService), job => job.Run(JobCancellationToken.Null),
                 //   Cron.Daily(1), CSTZone);
                 //RecurringJob.AddOrUpdate<NightlyFtpSyncService>(nameof(NightlyFtpSyncService), job => job.Run(JobCancellationToken.Null),

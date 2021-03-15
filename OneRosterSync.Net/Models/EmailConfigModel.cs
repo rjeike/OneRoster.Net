@@ -19,5 +19,6 @@ namespace OneRosterSync.Net.Models
         public string Cc { get; set; }
         public string Bcc { get; set; }
         public string Subject { get; set; }
+        public bool IsActive { get; set; }
     }
 }
