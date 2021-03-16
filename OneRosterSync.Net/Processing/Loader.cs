@@ -448,7 +448,7 @@ namespace OneRosterSync.Net.Processing
                 username = cleverUser.data.email,
                 givenName = cleverUser.data.name.first,
                 familyName = cleverUser.data.name.last,
-                middleName = cleverUser.data.name.middle,
+                middleName = cleverUser.data.name.middle ?? string.Empty,
                 password = cleverUser.data.sis_id,
                 email = cleverUser.data.email,
                 grades = cleverUser.data.grade,
