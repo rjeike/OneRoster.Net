@@ -83,23 +83,27 @@ namespace OneRosterSync.Net.Processing
                    .GroupBy(g => g.DistrictId)
                    .Select(s => s.OrderByDescending(c => c.DistrictId).FirstOrDefault()).Select(s => s.District.Name)
                    .ToListAsync();
-                string districtWithErrors = string.Join("\n", districtsHistories);
 
-                var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
-                string time = $"{DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC";
-                if (CSTZone != null)
-                    time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
-                var emailConfig = _db.EmailConfigs.FirstOrDefault();
-                if (emailConfig != null && emailConfig.IsActive)
+                if (districtsHistories?.Count > 0)
                 {
-                    string subject = $"{emailConfig.Subject} Nightly Sync Error(s)";
-                    string body = $"You are receiving this email at {time} because error(s) occurred in tonight's nightly sync in OneRoster.\n\n";
-                    body += $"District(s):\n\n{districtWithErrors}";
-                    EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
-                }
-                else
-                {
-                    _logger.LogError($"Email configuration not found in database. Not sending email.");
+                    string districtWithErrors = string.Join("\n", districtsHistories);
+
+                    var CSTZone = TZConvert.GetTimeZoneInfo("Central Standard Time");
+                    string time = $"{DateTime.UtcNow.ToString("dddd, dd MMMM yyyy HH:mm:ss")} UTC";
+                    if (CSTZone != null)
+                        time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
+                    var emailConfig = _db.EmailConfigs.FirstOrDefault();
+                    if (emailConfig != null && emailConfig.IsActive)
+                    {
+                        string subject = $"{emailConfig.Subject} Nightly Sync Error(s)";
+                        string body = $"You are receiving this email at {time} because error(s) occurred in tonight's nightly sync in OneRoster.\n\n";
+                        body += $"District(s):\n\n{districtWithErrors}";
+                        EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
+                    }
+                    else
+                    {
+                        _logger.LogError($"Email configuration not found in database. Not sending email.");
+                    }
                 }
             }
             catch (Exception ex)
