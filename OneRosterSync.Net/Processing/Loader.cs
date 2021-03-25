@@ -24,6 +24,7 @@ namespace OneRosterSync.Net.Processing
         private readonly DistrictRepo Repo;
         private readonly string BasePath;
         private readonly TextInfo textInfo;
+        private int usersCsvErrorsCount = 0;
 
         public string LastEntity { get; private set; }
 
@@ -34,7 +35,7 @@ namespace OneRosterSync.Net.Processing
             textInfo = new CultureInfo("en-US", false).TextInfo;
         }
 
-        public async Task LoadFile<T>(string filename) where T : CsvBaseObject
+        public async Task<int> LoadFile<T>(string filename) where T : CsvBaseObject
         {
             LastEntity = typeof(T).Name; // kludge
             DateTime now = DateTime.UtcNow;
@@ -67,17 +68,12 @@ namespace OneRosterSync.Net.Processing
                             try
                             {
                                 record = csv.GetRecord<T>();
+                                if (typeof(T) == typeof(CsvUser) && ValidateUserRecord(record as CsvUser))
+                                {
+                                    usersCsvErrorsCount++;
+                                    continue;
+                                }
                                 await ProcessRecord(record, table, now);
-                                //commenting because it might slow down load process, considering houston isd
-                                //if (i > 2 && i % 100 == 0)
-                                //{
-                                //    if (Repo.GetStopFlag(Repo.DistrictId))
-                                //    {
-                                //        throw new ProcessingException(Logger, $"Current action is stopped by the user.");
-                                //    }
-                                //}
-                                //no need to invoke
-                                //await Repo.Committer.InvokeIfChunk(5000);
                             }
                             catch (Exception ex)
                             {
@@ -96,6 +92,7 @@ namespace OneRosterSync.Net.Processing
                         GC.Collect();
                     }
                     Logger.Here().LogInformation($"Processed Csv file {filePath}");
+                    return usersCsvErrorsCount;
                 }
             }
             else
@@ -454,6 +451,11 @@ namespace OneRosterSync.Net.Processing
                 grades = cleverUser.data.grade,
                 identifier = cleverUser.data.sis_id
             };
+        }
+
+        private bool ValidateUserRecord(CsvUser user)
+        {
+            return string.IsNullOrEmpty(user.sourcedId) || (string.IsNullOrEmpty(user.username) && string.IsNullOrEmpty(user.email));
         }
     }
 }

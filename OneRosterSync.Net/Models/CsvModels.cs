@@ -26,7 +26,7 @@ namespace OneRosterSync.Net.Models
         public string dateLastModified { get; set; }
 
         [JsonIgnore]
-        public bool isDeleted => status?.ToLower() == "deleted";
+        public bool isDeleted => status?.ToLower() == "deleted" || status?.ToLower() == "tobedeleted";
     }
 
     /// <summary>
