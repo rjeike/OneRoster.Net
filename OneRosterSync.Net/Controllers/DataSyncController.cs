@@ -1247,7 +1247,6 @@ namespace OneRosterSync.Net.Controllers
             return RedirectToAction(nameof(DataSyncLineEdit), line.DataSyncLineId).WithSuccess("Dataline updated successfully");
         }
 
-
         [HttpGet]
         public async Task<IActionResult> DistrictEdit(int id)
         {
@@ -1385,6 +1384,61 @@ namespace OneRosterSync.Net.Controllers
             }
 
             return RedirectToDistrict(districtId).WithSuccess($"Uploaded {files.Count} files successfully");
+        }
+
+        /// <summary>
+        /// Display all matching records for the District (DataSyncLines)
+        /// </summary>
+        /// <param name="districtId"></param>
+        /// <param name="page"></param>
+        /// <param name="startDate">Start date filter</param>
+        /// <param name="endDate">End date filter</param>
+        [HttpGet]
+        public async Task<IActionResult> DistrictCsvErrors(int districtId,
+            int page = 1, string startDate = null, string endDate = null)
+        {
+            var repo = new DistrictRepo(db, districtId);
+            if (repo.District == null)
+                return NotFound($"District {districtId} not found");
+            ViewData["DistrictName"] = repo.District.Name;
+
+            var query = repo.DistrictCsvErrors.AsNoTracking();
+
+            if (!string.IsNullOrEmpty(startDate))
+            {
+                var dtStart = Convert.ToDateTime(startDate);
+                query = query.Where(l => l.Created.Date >= dtStart.Date);
+            }
+
+            if (!string.IsNullOrEmpty(endDate))
+            {
+                var dtEnd = Convert.ToDateTime(endDate);
+                query = query.Where(l => l.Created.Date <= dtEnd.Date);
+            }
+
+            var orderedQuery = query.OrderByDescending(l => l.Created);
+
+            const int perPage = 30;
+            var model = await PagingList.CreateAsync(orderedQuery, perPage, page);
+            model.Action = nameof(DistrictCsvErrors);
+            model.RouteValue = new RouteValueDictionary
+            {
+                { "districtId", districtId },
+                { "startDate", startDate},
+                { "endDate", endDate},
+            };
+
+            //// kludge to remove empty values
+            foreach (var kvp in model.RouteValue.Where(kvp => kvp.Value == null).ToList())
+                model.RouteValue.Remove(kvp.Key);
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult ClearDistrictCsvErrors(int districtId)
+        {
+            return RedirectToAction(nameof(DistrictCsvErrors), new { districtId });
         }
     }
 }

@@ -395,7 +395,9 @@ namespace OneRosterSync.Net.Models
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
+
         [DisplayName("District ID")]
+        [ForeignKey("DistrictId")]
         public int DistrictId { get; set; }
 
         [DisplayName("Filter Type")]
@@ -406,5 +408,27 @@ namespace OneRosterSync.Net.Models
 
         [DisplayName("Filter should be applied?")]
         public bool ShouldBeApplied { get; set; } = false;
+
+        public virtual District District { get; set; }
+    }
+
+    public class DistrictCsvError : DataObject
+    {
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int ID { get; set; }
+
+        [DisplayName("District ID")]
+        [ForeignKey("DistrictId")]
+        public int DistrictId { get; set; }
+
+        public string CsvTable { get; set; }
+
+        [DisplayName("CSV data as JSON")]
+        [DataType(DataType.MultilineText)]
+        public string RawData { get; set; }
+
+        public string Error { get; set; }
+
+        public virtual District District { get; set; }
     }
 }

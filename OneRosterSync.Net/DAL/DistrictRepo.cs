@@ -52,6 +52,8 @@ namespace OneRosterSync.Net.DAL
 
         public IQueryable<DistrictFilter> DistrictFilters => Db.DistrictFilters.Where(w => w.DistrictId == DistrictId);
 
+        public IQueryable<DistrictCsvError> DistrictCsvErrors => Db.DistrictCsvErrors.Where(w => w.DistrictId == DistrictId);
+
         /// <summary>
         /// All DataSyncLines assocated with the District
         /// </summary>
@@ -100,6 +102,11 @@ namespace OneRosterSync.Net.DAL
             return currentHistory;
         }
 
+        public void AddCsvError(string record, string table, string error)
+        {
+            var csvError = new DistrictCsvError() { RawData = record, CsvTable = table, Error = error, DistrictId = DistrictId };
+            Db.DistrictCsvErrors.Add(csvError);
+        }
 
         public async Task DeleteDistrict()
         {

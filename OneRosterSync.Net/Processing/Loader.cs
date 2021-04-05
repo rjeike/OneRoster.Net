@@ -24,7 +24,6 @@ namespace OneRosterSync.Net.Processing
         private readonly DistrictRepo Repo;
         private readonly string BasePath;
         private readonly TextInfo textInfo;
-        private int usersCsvErrorsCount = 0;
 
         public string LastEntity { get; private set; }
 
@@ -41,6 +40,7 @@ namespace OneRosterSync.Net.Processing
             DateTime now = DateTime.UtcNow;
             string filePath = Path.Combine(BasePath, filename);
             string table = typeof(T).Name;
+            int csvErrorsCount = 0;
 
             if (File.Exists(filePath))
             {
@@ -68,9 +68,20 @@ namespace OneRosterSync.Net.Processing
                             try
                             {
                                 record = csv.GetRecord<T>();
-                                if (typeof(T) == typeof(CsvUser) && ValidateUserRecord(record as CsvUser))
+                                string error = string.Empty;
+                                if (typeof(T) == typeof(CsvOrg))
                                 {
-                                    usersCsvErrorsCount++;
+                                    error = ValidateOrgRecord(record as CsvOrg);
+                                }
+                                else if (typeof(T) == typeof(CsvUser))
+                                {
+                                    error = ValidateUserRecord(record as CsvUser);
+                                }
+
+                                if (!string.IsNullOrEmpty(error))
+                                {
+                                    csvErrorsCount++;
+                                    Repo.AddCsvError(JsonConvert.SerializeObject(record), typeof(T).Name, error);
                                     continue;
                                 }
                                 await ProcessRecord(record, table, now);
@@ -92,7 +103,7 @@ namespace OneRosterSync.Net.Processing
                         GC.Collect();
                     }
                     Logger.Here().LogInformation($"Processed Csv file {filePath}");
-                    return usersCsvErrorsCount;
+                    return csvErrorsCount;
                 }
             }
             else
@@ -453,9 +464,28 @@ namespace OneRosterSync.Net.Processing
             };
         }
 
-        private bool ValidateUserRecord(CsvUser user)
+        private string ValidateUserRecord(CsvUser user)
         {
-            return string.IsNullOrEmpty(user.sourcedId) || (string.IsNullOrEmpty(user.username) && string.IsNullOrEmpty(user.email));
+            string error = string.Empty;
+            if (string.IsNullOrEmpty(user.sourcedId))
+            {
+                error = "Column SourcedId is empty.";
+            }
+            else if (string.IsNullOrEmpty(user.username) && string.IsNullOrEmpty(user.email))
+            {
+                error = "Columns username and email are empty.";
+            }
+            return error;
+        }
+
+        private string ValidateOrgRecord(CsvOrg org)
+        {
+            string error = string.Empty;
+            if (string.IsNullOrEmpty(org.sourcedId))
+            {
+                error = "Column SourcedId is empty.";
+            }
+            return error;
         }
     }
 }

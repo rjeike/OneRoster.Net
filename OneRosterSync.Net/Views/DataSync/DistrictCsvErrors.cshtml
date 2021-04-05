@@ -1,0 +1,103 @@
+﻿@*@{
+        ViewData["Title"] = "DistrictCsvErrors";
+    }
+
+    <h2>DistrictCsvErrors</h2>*@
+
+@model ReflectionIT.Mvc.Paging.PagingList<OneRosterSync.Net.Models.DistrictCsvError>
+@using ReflectionIT.Mvc.Paging
+@addTagHelper *, ReflectionIT.Mvc.Paging
+
+@using OneRosterSync.Net.Utils;
+
+@{
+    ViewData["Title"] = $"{ViewData["DistrictName"]} - Records";
+    var allRouteData = Model.RouteValue.ToDictionary(rv => rv.Key, rv => rv.Value.ToString());
+
+    var districtId = Model.RouteValue["districtId"];
+    var startDate = Model.RouteValue["startDate"];
+    var endDate = Model.RouteValue["endDate"];
+}
+
+<h2>@ViewData["DistrictName"]: CSV Errors</h2>
+
+<div class="row">
+    <form method="get" class="form-inline col-md-12">
+        <input type="hidden" name="districtId" value="@districtId" />
+        Start Date: <input name="startDate" type="date" class="form-control" placeholder="Start Date" asp-for="@startDate" />
+        End Date: <input name="endDate" type="date" class="form-control" placeholder="Start Date" asp-for="@endDate" />
+
+        <button type="submit" class="btn btn-info">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span> Filter Records
+        </button>
+
+        <a class="btn btn-primary" asp-action="ClearDistrictCsvErrors"
+           asp-all-route-data="@allRouteData" role="button">Clear Filters</a>
+    </form>
+</div>
+
+<br />
+
+<div class="row">
+    <div class="col-md-4">
+        <br />
+        Matching Records: @Model.TotalRecordCount.ToString("N0")
+    </div>
+    <div class="pull-right">
+        <nav aria-label="Products navigation example">
+            <vc:pager paging-list="@Model" />
+        </nav>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ID)
+            </th>
+            <th>
+                CSV File
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Created)
+            </th>
+            <th>
+                Data
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Error)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CsvTable)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Created)
+                </td>
+                <td>
+                    <pre>@JsonUtilities.FormatJson(item.RawData)</pre>
+                </td>
+                <td>
+                    <pre>@item.Error</pre>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="pull-right">
+        <nav aria-label="Products navigation example">
+            <vc:pager paging-list="@Model" />
+        </nav>
+    </div>
+</div>

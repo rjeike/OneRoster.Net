@@ -188,7 +188,7 @@ namespace OneRosterSync.Net.Processing
                             if (CSTZone != null)
                                 time = $"{TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CSTZone).ToString("dddd, dd MMMM yyyy HH:mm:ss")} CST";
                             string subject = $"{emailConfig.Subject} Load Error(s) in \"{Repo.District.Name}\"";
-                            string body = $"You are receiving this email because there were {usersCsvErrorsCount} record(s) with one or more errors while processing Users CSV " +
+                            string body = $"You are receiving this email because there were <a href='http://oneroster.summitk12.com/DataSync/DistrictCsvErrors?districtId={Repo.DistrictId}'>{usersCsvErrorsCount} record(s)</a> with one or more errors while processing Users CSV " +
                                 $"for district \"{Repo.District.Name}\" in OneRoster sync at {time}.\n\nHowever, rest of the records have been processed. " +
                                 $"Please check the CSV for the district to get the issues fixed.";
                             EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, string.Empty, string.Empty, subject, body);

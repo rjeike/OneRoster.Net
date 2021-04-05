@@ -19,12 +19,13 @@ namespace OneRosterSync.Net.Utils
                 EnableSsl = true,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(from, password)
+                Credentials = new NetworkCredential(from, password),
             };
             using (var mail = new MailMessage()
             {
                 Subject = subject,
                 Body = body,
+                IsBodyHtml = true
             })
             {
                 mail.From = new MailAddress(from, displayName);
