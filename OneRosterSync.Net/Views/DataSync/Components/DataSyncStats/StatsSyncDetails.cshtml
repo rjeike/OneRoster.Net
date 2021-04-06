@@ -53,12 +53,6 @@
         <dd>
             @Html.DisplayFor(model => model.ReadyToApply)
         </dd>
-        <dt>
-            <form asp-action="DistrictCsvErrors" method="get">
-                <input type="hidden" name="districtId" value="@ViewBag.districtId" />
-                <input type="submit" value="View CSV Errors" class="btn btn-link" style="padding: 0;" />
-            </form>
-        </dt>
     </dl>
 </div>
 <div class="col-md-6 col-sm-12">
