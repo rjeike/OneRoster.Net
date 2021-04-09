@@ -369,8 +369,8 @@ namespace OneRosterSync.Net.Processing
                     }
                 }
 
-                // no change to the data, skip!
-                if (line.RawData == data)
+                // no change to the data, skip if it's not already marked deleted!
+                if (line.RawData == data && line.LoadStatus != LoadStatus.Deleted)
                 {
                     if (line.SyncStatus != SyncStatus.Loaded)
                         line.LoadStatus = LoadStatus.NoChange;
