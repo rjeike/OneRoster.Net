@@ -30,6 +30,7 @@ namespace OneRosterSync.Net.Processing
             {
                 line.LoadStatus = LoadStatus.Deleted;
                 line.IncludeInSync = false;
+                line.Error = $"Deleted from analyze in MarkDeleted method. Last seen: {line.LastSeen.ToString()}. start: {start.ToString()}";
                 await Repo.Committer.InvokeIfChunk(500);
             }
             await Repo.Committer.InvokeIfAny();
