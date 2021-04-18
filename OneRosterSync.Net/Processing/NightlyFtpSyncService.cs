@@ -98,7 +98,8 @@ namespace OneRosterSync.Net.Processing
                         string subject = $"{emailConfig.Subject} Nightly Sync Error(s)";
                         string body = $"You are receiving this email at {time} because error(s) occurred in tonight's nightly sync in OneRoster.\n\n";
                         body += $"District(s):\n\n{districtWithErrors}";
-                        EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, emailConfig.Cc, emailConfig.Bcc, subject, body);
+                        EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To,
+                            emailConfig.Cc, emailConfig.Bcc, subject, body);
                     }
                     else
                     {

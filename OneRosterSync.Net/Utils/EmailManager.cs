@@ -10,7 +10,7 @@ namespace OneRosterSync.Net.Utils
 {
     public class EmailManager
     {
-        public static void SendEmail(string host, string from, string password, string displayName, string To, string Cc, string Bcc, string subject, string body)
+        public static void SendEmail(string host, string from, string password, string displayName, string To, string Cc, string Bcc, string subject, string body, bool isBodyHtml = false)
         {
             var smtp = new SmtpClient
             {
@@ -25,7 +25,7 @@ namespace OneRosterSync.Net.Utils
             {
                 Subject = subject,
                 Body = body,
-                IsBodyHtml = true
+                IsBodyHtml = isBodyHtml
             })
             {
                 mail.From = new MailAddress(from, displayName);

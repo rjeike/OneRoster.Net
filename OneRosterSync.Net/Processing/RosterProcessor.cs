@@ -191,7 +191,8 @@ namespace OneRosterSync.Net.Processing
                             string body = $"You are receiving this email because there were <a href='http://oneroster.summitk12.com/DataSync/DistrictCsvErrors?districtId={Repo.DistrictId}'>{usersCsvErrorsCount} record(s)</a> with one or more errors while processing Users CSV " +
                                 $"for district \"{Repo.District.Name}\" in OneRoster sync at {time}.\n\nHowever, rest of the records have been processed. " +
                                 $"Please check the CSV for the district to get the issues fixed.";
-                            EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To, string.Empty, string.Empty, subject, body);
+                            EmailManager.SendEmail(emailConfig.Host, emailConfig.From, emailConfig.Password, emailConfig.DisplayName, emailConfig.To,
+                                string.Empty, string.Empty, subject, body, true);
                         }
                         catch (Exception exEmail)
                         { }
