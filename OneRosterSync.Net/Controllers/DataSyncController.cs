@@ -919,8 +919,8 @@ namespace OneRosterSync.Net.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, int page = 1, bool AppliedFlag = false,
-                bool Transfers = false, bool NewEnrollments = false, bool DownloadExcel = false)
+        public async Task<IActionResult> EnrollmentSyncDetails(int districtId, string filter, int page = 1, bool AppliedFlag = false,
+                bool Transfers = false, bool NewEnrollments = false, bool DownloadExcel = false, string sortExpression = "Name")
         {
             var repo = new DistrictRepo(db, districtId);
             if (repo.District == null)
@@ -988,7 +988,15 @@ namespace OneRosterSync.Net.Controllers
             });
 
             if (gradeFilters.Count > 0)
+            {
                 filterQuery = filterQuery.Where(w => gradeFilters.Count > 0 && gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                filterQuery = filterQuery.Where(w => w.line.RawData.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                || w.org.name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+            }
 
             ViewBag.TotalRecordsCount = await filterQuery.CountAsync();
             var selectQuery = filterQuery.Select(s => new EnrollmentSyncLineViewModel
@@ -1011,6 +1019,7 @@ namespace OneRosterSync.Net.Controllers
                 SchoolName = s.org.name,
             });
 
+
             if (DownloadExcel)
             {
                 string fileName = $"sync_details_{districtId}.csv";
@@ -1019,11 +1028,12 @@ namespace OneRosterSync.Net.Controllers
             }
 
             var orderedQuery = selectQuery.Take(500).OrderByDescending(l => l.SchoolName);
-            var model = await PagingList.CreateAsync(orderedQuery, 50, page);
+            var model = await PagingList.CreateAsync(orderedQuery, 50, page, sortExpression, "Name");
             model.Action = nameof(EnrollmentSyncDetails);
             model.RouteValue = new RouteValueDictionary
             {
                 { "districtId", districtId },
+                { "filter", filter},
                 { "AppliedFlag", AppliedFlag },
                 { "Transfers", Transfers },
                 { "NewEnrollments",NewEnrollments }
