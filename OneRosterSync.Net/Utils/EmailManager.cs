@@ -79,7 +79,9 @@ namespace OneRosterSync.Net.Utils
                     var successCodes = new string[] { "126", "128", "129" };
                     var groupErrors = db.DataSyncLines.Where(w => w.DistrictId == dbHistory.DistrictId && w.LoadStatus != LoadStatus.Deleted
                             && (w.ErrorCode == null || !successCodes.Contains(w.ErrorCode))
-                            && w.Error != null && !w.Error.StartsWith("Deleted from analyze in MarkDeleted method."))
+                            && w.Error != null 
+                            && !w.Error.StartsWith("User (")
+                            && !w.Error.StartsWith("Deleted from analyze in MarkDeleted method."))
                         .GroupBy(g => g.Error).ToList();
                     if (groupErrors.Count > 1)
                     {
