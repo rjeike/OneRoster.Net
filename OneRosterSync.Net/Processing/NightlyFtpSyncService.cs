@@ -77,7 +77,8 @@ namespace OneRosterSync.Net.Processing
                 token.ThrowIfCancellationRequested();
                 var districtsHistory = await _db.DataSyncHistories
                    .Include(i => i.District)
-                   .Where(w => w.District.NightlySyncEnabled && w.Created.Date == DateTime.Today && (w.LoadError != null || w.AnalyzeError != null || w.ApplyError != null))
+                   .Where(w => w.District.NightlySyncEnabled && w.Created.Date == DateTime.Today
+                        && (w.LoadError != null || w.AnalyzeError != null || w.ApplyError != null))
                    .GroupBy(g => g.DistrictId)
                    .Select(s => s.OrderByDescending(c => c.DistrictId).FirstOrDefault())
                    .ToListAsync();
