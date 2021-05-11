@@ -83,7 +83,7 @@ namespace OneRosterSync.Net.Utils
                             && !w.Error.StartsWith("User (")
                             && !w.Error.StartsWith("Deleted from analyze in MarkDeleted method."))
                         .GroupBy(g => g.Error).ToList();
-                    if (groupErrors.Count > 1)
+                    if (groupErrors.Count > 0)
                     {
                         body += $"<ul>";
                         foreach (var err in groupErrors)
