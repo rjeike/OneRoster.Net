@@ -423,7 +423,7 @@ namespace OneRosterSync.Net.Processing
                 givenName = classLinkUser.givenName,
                 familyName = classLinkUser.familyName,
                 middleName = classLinkUser.middleName,
-                password = classLinkUser.password,
+                password = classLinkUser.password ?? "",
                 email = classLinkUser.email,
                 grades = string.Join(",", classLinkUser.grades),
                 identifier = classLinkUser.identifier,
