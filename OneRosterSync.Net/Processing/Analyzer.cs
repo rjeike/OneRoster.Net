@@ -142,10 +142,11 @@ namespace OneRosterSync.Net.Processing
             //    onChunkComplete: async () => await Repo.Committer.Invoke());
 
             var gradeFilters = Repo.DistrictFilters.Where(w => w.FilterType == FilterType.Grades && w.ShouldBeApplied).ToList();
-            var orgs = Repo.Lines<CsvOrg>().Where(w => w.IncludeInSync && w.LoadStatus != LoadStatus.Deleted);
+            var orgs = Repo.Lines<CsvOrg>().Where(w => w.LoadStatus != LoadStatus.Deleted);
             await orgs.ForEachInChunksAsync(chunkSize: 200,
                 action: async (org) =>
                 {
+                    if (!org.IncludeInSync) return;
                     CsvOrg csvOrg = JsonConvert.DeserializeObject<CsvOrg>(org.RawData);
                     string orgId = $"\"orgSourcedIds\":\"{csvOrg.sourcedId}\"";
                     var users = Repo.Lines<CsvUser>().Where(w => w.RawData.Contains(orgId)
@@ -163,10 +164,9 @@ namespace OneRosterSync.Net.Processing
                     if (gradeFilters.Count > 0)
                         users = users.Where(w => gradeFilters.Any(a => w.grades.Contains($"{a.FilterValue}")));
 
-                    await users.Select(s => s.line).ForEachAsync(action: async (user) =>
+                    await users.Select(s => s.line).ForEachAsync(action: (user) =>
                       {
                           IncludeReadyTouch(user);
-                          await Task.Yield();
                       });
                     await Repo.Committer.Invoke();
                     if (Repo.GetStopFlag(Repo.DistrictId))
