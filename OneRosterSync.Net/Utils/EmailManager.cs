@@ -77,7 +77,7 @@ namespace OneRosterSync.Net.Utils
                 else if (!string.IsNullOrEmpty(dbHistory.ApplyError))
                 {
                     var successCodes = new string[] { "126", "128", "129" };
-                    var groupErrors = db.DataSyncLines.Where(w => w.DistrictId == dbHistory.DistrictId && w.LoadStatus != LoadStatus.Deleted
+                    var groupErrors = db.DataSyncLines.Where(w => w.IncludeInSync && w.DistrictId == dbHistory.DistrictId && w.LoadStatus != LoadStatus.Deleted
                             && (w.ErrorCode == null || !successCodes.Contains(w.ErrorCode))
                             && w.Error != null 
                             && !w.Error.StartsWith("User (")
